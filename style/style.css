@@ -1,20 +1,32 @@
 body{
     margin: 0;
-    background-color: rgb(192, 192, 192);
+    background-color: rgb(245, 243, 243);
     font-family: sans-serif;
 }
-.presentacion{
-    width: 100%;
-    text-align: center;
-    text-wrap: wrap;
+
+/*Barra de navegacion*/
+.nav_bar{
+    padding: 20px;
+    height: 100%;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    position: fixed;
+    margin: 0;
+    background-color: rgb(107, 183, 255);
+}
+.nav_bar--list{
+    display: flex;
     flex-direction: column;
+    justify-content: space-around;
+    margin: 0;
+    list-style: none;
+    padding: 0;
 }
-.presentacion-content {
-    max-width: 400px;
+.nav_bar--list-link{
+    text-decoration: none;
+    color: rgb(253, 253, 253);
 }
-h1{
-    text-align: center;
+.nav_bar--list-link:hover{
+    text-decoration: underline;
+    font-weight: bolder;
 }
+/**/
