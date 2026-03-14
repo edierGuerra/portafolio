@@ -29,3 +29,85 @@ export interface RefreshTokenPayload {
 export interface MeResponse {
   user: CmsUser;
 }
+
+// ─── Projects ────────────────────────────────────────────────────────────────
+
+export type ProjectState = "En desarrollo" | "Completado";
+
+export interface ProjectTechnology {
+  id: number;
+  name: string;
+  logo: string;
+}
+
+export interface Project {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  demo_url?: string | null;
+  repository_url?: string | null;
+  year: number;
+  team: number;
+  state: ProjectState;
+  main: boolean;
+  published: boolean;
+  technologies?: ProjectTechnology[];
+}
+
+export interface ProjectCreate {
+  title: string;
+  description: string;
+  image: string;
+  demo_url?: string | null;
+  repository_url?: string | null;
+  year: number;
+  team: number;
+  state: ProjectState;
+  main: boolean;
+  published: boolean;
+  technology_ids: number[];
+}
+
+export interface ProjectUpdate {
+  title?: string;
+  description?: string;
+  image?: string;
+  demo_url?: string | null;
+  repository_url?: string | null;
+  year?: number;
+  team?: number;
+  state?: ProjectState;
+  main?: boolean;
+  published?: boolean;
+  technology_ids?: number[];
+}
+
+export interface Technology {
+  id: number;
+  name: string;
+  logo: string;
+}
+
+export interface TechnologyCreate {
+  name: string;
+  logo: string;
+}
+
+export interface TechnologyUpdate {
+  name?: string;
+  logo?: string;
+}
+
+export interface FileUploadResponse {
+  object_key: string;
+  file_url: string;
+  content_type: string;
+  size_bytes: number;
+}
+
+export interface PresignedDownloadResponse {
+  object_key: string;
+  download_url: string;
+  expires_in: number;
+}

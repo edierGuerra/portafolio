@@ -1,56 +1,154 @@
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { useEffect, useMemo, useState } from "react";
+import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { ExternalLink, Github, Calendar, Users } from "lucide-react";
+import { ExternalLink, Calendar, Users, Github, Lock } from "lucide-react";
+import { http } from "../api/http";
+import "./ProjectsSection.css";
+
+type ApiTechnology = {
+  id: number;
+  name: string;
+  logo: string;
+};
+
+type ApiProject = {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  demo_url?: string | null;
+  repository_url?: string | null;
+  year: number;
+  team: number;
+  state: "En desarrollo" | "Completado";
+  main: boolean;
+  published: boolean;
+  technologies?: ApiTechnology[];
+};
+
+type UiProject = {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  technologies: string[];
+  demoUrl: string | null;
+  repositoryUrl: string | null;
+  status: "En desarrollo" | "Completado";
+  date: string;
+  team: string;
+  featured: boolean;
+};
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1742072594003-abf6ca86e154?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
+
+function normalizeProjectImageUrl(rawImage: string): string {
+  const trimmed = rawImage.trim();
+  if (!trimmed) {
+    return FALLBACK_IMAGE;
+  }
+
+  // Algunos registros guardan la key con %2F; intentamos el formato de ruta esperado.
+  const unescaped = trimmed.replace(/%2F/gi, "/");
+
+  try {
+    const parsed = new URL(unescaped);
+
+    // No tocar rutas firmadas (X-Amz-*) para no invalidar la firma.
+    if (/x-amz-/i.test(parsed.search)) {
+      return unescaped;
+    }
+
+    const decodedPath = decodeURIComponent(parsed.pathname);
+    return `${parsed.origin}${decodedPath}${parsed.search}${parsed.hash}`;
+  } catch {
+    return unescaped;
+  }
+}
+
+function normalizeExternalUrl(rawUrl?: string | null): string | null {
+  const trimmed = (rawUrl ?? "").trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.startsWith("//")) {
+    return `https:${trimmed}`;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Evita que el navegador lo trate como ruta relativa del sitio actual.
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
+function mapProjectToUi(project: ApiProject): UiProject {
+  const technologies = (project.technologies ?? [])
+    .map((technology) => technology.name)
+    .filter(Boolean);
+
+  return {
+    id: project.id,
+    title: project.title,
+    description: project.description,
+    image: normalizeProjectImageUrl(project.image),
+    technologies,
+    demoUrl: normalizeExternalUrl(project.demo_url),
+    repositoryUrl: normalizeExternalUrl(project.repository_url),
+    status: project.state,
+    date: String(project.year),
+    team: project.team === 1 ? "1 persona" : `${project.team} personas`,
+    featured: project.main,
+  };
+}
 
 export function ProjectsSection() {
-  const projects = [
-    {
-      id: 1,
-      title: "E-Commerce Platform",
-      description: "Plataforma completa de comercio electrónico con dashboard administrativo, sistema de pagos y análisis en tiempo real.",
-      image: "https://images.unsplash.com/photo-1742072594003-abf6ca86e154?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3ZWIlMjBkZXZlbG9wbWVudCUyMGNvZGUlMjBzY3JlZW58ZW58MXx8fHwxNzU4NTIyMDk5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-      technologies: ["React", "Node.js", "PostgreSQL", "Stripe", "AWS"],
-      status: "Completado",
-      date: "2023",
-      team: "4 personas",
-      featured: true
-    },
-    {
-      id: 2,
-      title: "Task Management App",
-      description: "Aplicación de gestión de tareas con colaboración en tiempo real, notificaciones push y sincronización offline.",
-      image: "https://images.unsplash.com/photo-1549399905-5d1bad747576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB3b3Jrc3BhY2UlMjB0ZWNobm9sb2d5fGVufDF8fHx8MTc1ODQ4MTA5NXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-      technologies: ["React Native", "Firebase", "Redux", "TypeScript"],
-      status: "En desarrollo",
-      date: "2024",
-      team: "2 personas",
-      featured: false
-    },
-    {
-      id: 3,
-      title: "AI Content Generator",
-      description: "Herramienta de generación de contenido con IA que ayuda a crear textos, imágenes y estrategias de marketing.",
-      image: "https://images.unsplash.com/photo-1576558656222-ba66febe3dec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0JTIwYnVzaW5lc3N8ZW58MXx8fHwxNzU4NTUxMDg2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-      technologies: ["Python", "OpenAI API", "FastAPI", "React", "Docker"],
-      status: "Completado",
-      date: "2023",
-      team: "Solo",
-      featured: true
-    },
-    {
-      id: 4,
-      title: "Healthcare Dashboard",
-      description: "Dashboard para profesionales de la salud con visualización de datos médicos, historial de pacientes y reportes.",
-      image: "https://images.unsplash.com/photo-1742072594003-abf6ca86e154?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3ZWIlMjBkZXZlbG9wbWVudCUyMGNvZGUlMjBzY3JlZW58ZW58MXx8fHwxNzU4NTIyMDk5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-      technologies: ["Vue.js", "D3.js", "Express", "MySQL", "Chart.js"],
-      status: "Completado",
-      date: "2022",
-      team: "3 personas",
-      featured: false
-    }
-  ];
+  const [projects, setProjects] = useState<UiProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [missingDemoProject, setMissingDemoProject] =
+    useState<UiProject | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const data = await http<ApiProject[]>("/api/projects?published=true");
+        if (!ignore) {
+          setProjects(data.map(mapProjectToUi));
+        }
+      } catch {
+        if (!ignore) {
+          setProjects([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchProjects();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const featuredProjects = useMemo(
+    () => projects.filter((project) => project.featured),
+    [projects],
+  );
+
+  const otherProjects = useMemo(
+    () => projects.filter((project) => !project.featured),
+    [projects],
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -67,28 +165,45 @@ export function ProjectsSection() {
     <div className="min-h-screen p-4 lg:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 lg:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Mis Proyectos</h2>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
+            Mis Proyectos
+          </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-            Una selección de proyectos que demuestran mis habilidades técnicas y creatividad
+            Una selección de proyectos que demuestran mis habilidades técnicas y
+            creatividad
           </p>
         </div>
 
-        <div className="grid gap-8">
-          {/* Proyectos destacados */}
-          <div className="space-y-8">
-            {projects
-              .filter(project => project.featured)
-              .map((project) => (
-                <Card key={project.id} className="overflow-hidden">
-                  <div className="grid lg:grid-cols-2 gap-0">
-                    <div className="aspect-video lg:aspect-square">
+        {loading && (
+          <div className="text-center text-muted-foreground py-8">
+            Cargando proyectos...
+          </div>
+        )}
+
+        {!loading && projects.length === 0 && (
+          <div className="text-center text-muted-foreground py-8">
+            Aún no hay proyectos publicados para mostrar.
+          </div>
+        )}
+
+        {!loading && projects.length > 0 && (
+          <div className="grid gap-8">
+            {/* Proyectos destacados */}
+            <div className="projects-featured-grid">
+              {featuredProjects.map((project) => (
+                <Card
+                  key={project.id}
+                  className="projects-featured-card overflow-hidden"
+                >
+                  <div className="projects-featured-layout">
+                    <div className="projects-featured-media">
                       <ImageWithFallback
                         src={project.image}
                         alt={project.title}
-                        className="w-full h-full object-cover"
+                        className="projects-featured-image"
                       />
                     </div>
-                    <div className="p-4 sm:p-6 lg:p-8 flex flex-col justify-between">
+                    <div className="projects-featured-content">
                       <div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
                           <Badge className={getStatusColor(project.status)}>
@@ -105,45 +220,83 @@ export function ProjectsSection() {
                             </span>
                           </div>
                         </div>
-                        
-                        <h3 className="text-xl sm:text-2xl font-bold mb-3">{project.title}</h3>
-                        <p className="text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed">
+
+                        <h3 className="text-xl sm:text-2xl font-bold mb-3">
+                          {project.title}
+                        </h3>
+                        <p className="projects-featured-description text-sm sm:text-base text-muted-foreground mb-6 leading-relaxed">
                           {project.description}
                         </p>
-                        
+
                         <div className="flex flex-wrap gap-2 mb-6">
-                          {project.technologies.map((tech) => (
-                            <Badge key={tech} variant="secondary" className="text-xs sm:text-sm">
+                          {(project.technologies.length > 0
+                            ? project.technologies
+                            : ["Sin tecnologias"]
+                          ).map((tech) => (
+                            <Badge
+                              key={tech}
+                              variant="secondary"
+                              className="text-xs sm:text-sm"
+                            >
                               {tech}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                        <Button className="flex-1">
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Ver Demo
-                        </Button>
-                        <Button variant="outline" className="flex-1 sm:flex-none">
-                          <Github className="mr-2 h-4 w-4" />
-                          Código
-                        </Button>
+                        {project.demoUrl ? (
+                          <Button className="flex-1" asChild>
+                            <a
+                              href={project.demoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Ver demo
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button
+                            className="flex-1 opacity-60"
+                            aria-disabled="true"
+                            title="Este proyecto no cuenta con demo"
+                            onClick={() => setMissingDemoProject(project)}
+                          >
+                            <Lock className="mr-2 h-4 w-4" />
+                            Sin demo
+                          </Button>
+                        )}
+                        {project.repositoryUrl && (
+                          <Button className="flex-1" variant="outline" asChild>
+                            <a
+                              href={project.repositoryUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <Github className="mr-2 h-4 w-4" />
+                              Repositorio
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
                 </Card>
               ))}
-          </div>
+            </div>
 
-          {/* Otros proyectos */}
-          <div className="space-y-6">
-            <h3 className="text-xl sm:text-2xl font-semibold">Otros Proyectos</h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {projects
-                .filter(project => !project.featured)
-                .map((project) => (
-                  <Card key={project.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+            {/* Otros proyectos */}
+            <div className="space-y-6">
+              <h3 className="text-xl sm:text-2xl font-semibold">
+                Otros Proyectos
+              </h3>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                {otherProjects.map((project) => (
+                  <Card
+                    key={project.id}
+                    className="overflow-hidden group hover:shadow-lg transition-shadow"
+                  >
                     <div className="aspect-video">
                       <ImageWithFallback
                         src={project.image}
@@ -167,15 +320,22 @@ export function ProjectsSection() {
                           </span>
                         </div>
                       </div>
-                      
+
                       <h4 className="font-semibold mb-2">{project.title}</h4>
                       <p className="text-sm text-muted-foreground mb-4">
                         {project.description}
                       </p>
-                      
+
                       <div className="flex flex-wrap gap-1 mb-4">
-                        {project.technologies.slice(0, 3).map((tech) => (
-                          <Badge key={tech} variant="outline" className="text-xs">
+                        {(project.technologies.length > 0
+                          ? project.technologies.slice(0, 3)
+                          : ["Sin tecnologias"]
+                        ).map((tech) => (
+                          <Badge
+                            key={tech}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {tech}
                           </Badge>
                         ))}
@@ -185,22 +345,95 @@ export function ProjectsSection() {
                           </Badge>
                         )}
                       </div>
-                      
+
                       <div className="flex gap-2">
-                        <Button size="sm" className="flex-1">
-                          <ExternalLink className="mr-1 h-3 w-3" />
-                          Demo
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Github className="h-3 w-3" />
-                        </Button>
+                        {project.demoUrl ? (
+                          <Button size="sm" className="flex-1" asChild>
+                            <a
+                              href={project.demoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <ExternalLink className="mr-1 h-3 w-3" />
+                              Ver demo
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="flex-1 opacity-60"
+                            aria-disabled="true"
+                            title="Este proyecto no cuenta con demo"
+                            onClick={() => setMissingDemoProject(project)}
+                          >
+                            <Lock className="mr-1 h-3 w-3" />
+                            Sin demo
+                          </Button>
+                        )}
+                        {project.repositoryUrl && (
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            variant="outline"
+                            asChild
+                          >
+                            <a
+                              href={project.repositoryUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <Github className="mr-1 h-3 w-3" />
+                              Repo
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                 ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {missingDemoProject && (
+          <div
+            className="projects-demo-modal-backdrop"
+            role="button"
+            tabIndex={0}
+            onClick={() => setMissingDemoProject(null)}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Escape" ||
+                event.key === "Enter" ||
+                event.key === " "
+              ) {
+                setMissingDemoProject(null);
+              }
+            }}
+          >
+            <div
+              className="projects-demo-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Proyecto sin demo"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h4 className="projects-demo-modal-title">
+                Este proyecto no cuenta con demo
+              </h4>
+              <p className="projects-demo-modal-description">
+                El proyecto "{missingDemoProject.title}" no tiene un enlace de
+                demo disponible por ahora.
+              </p>
+              <div className="projects-demo-modal-actions">
+                <Button onClick={() => setMissingDemoProject(null)}>
+                  Entendido
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

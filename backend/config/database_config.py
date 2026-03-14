@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -6,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase
 
 
-DATABASE_URL = "mysql+aiomysql://Edier:admin@localhost/portafolio_db"
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql+aiomysql://Edier:admin@localhost/portafolio_db")
 
 engine = create_async_engine(
     DATABASE_URL,

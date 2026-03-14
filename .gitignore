@@ -1,8 +1,11 @@
 # Created by https://www.toptal.com/developers/gitignore/api/pythonvanilla,python,react,reactnative,windows,archlinuxpackages,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=pythonvanilla,python,react,reactnative,windows,archlinuxpackages,linux
+
 # Files
 *.docx
 *.pdf
+*.md
+!*.README.md
 ### ArchLinuxPackages ###
 *.tar
 *.tar.*

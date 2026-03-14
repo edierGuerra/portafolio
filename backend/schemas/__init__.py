@@ -15,6 +15,7 @@ from .my_philosophy import MyPhilosophyCreate, MyPhilosophyRead, MyPhilosophyUpd
 from .projects import ProjectCreate, ProjectRead, ProjectReadWithTechnologies, ProjectState, ProjectUpdate
 from .projects_technologies import ProjectTechnologyCreate, ProjectTechnologyRead, ProjectTechnologyUpdate
 from .social_networks import SocialNetworkCreate, SocialNetworkRead, SocialNetworkUpdate
+from .storage import FileUploadResponse, PresignedUploadRequest, PresignedUploadResponse
 from .technologies import TechnologyCreate, TechnologyRead, TechnologyUpdate
 from .auth import AuthTokenResponse, LoginRequest, MeResponse
 
@@ -63,6 +64,9 @@ __all__ = [
     "SocialNetworkCreate",
     "SocialNetworkRead",
     "SocialNetworkUpdate",
+    "FileUploadResponse",
+    "PresignedUploadRequest",
+    "PresignedUploadResponse",
     "TechnologyCreate",
     "TechnologyRead",
     "TechnologyUpdate",

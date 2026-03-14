@@ -53,34 +53,39 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header 
-        darkMode={darkMode} 
+      <Header
+        darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
       />
-      
+
       <div className="flex">
         {/* Desktop Navigation */}
-        <div className="hidden lg:block">
-          <Navigation 
-            activeSection={activeSection} 
-            setActiveSection={setActiveSection} 
+        <div
+          className="hidden lg:block self-start"
+          style={{
+            position: "sticky",
+            top: "4rem",
+            height: "calc(100vh - 4rem)",
+          }}
+        >
+          <Navigation
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
           />
         </div>
-        
+
         {/* Mobile Navigation */}
-        <Navigation 
-          activeSection={activeSection} 
+        <Navigation
+          activeSection={activeSection}
           setActiveSection={setActiveSection}
           isMobile={true}
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
         />
-        
-        <main className="flex-1 min-h-screen">
-          {renderActiveSection()}
-        </main>
+
+        <main className="flex-1 min-h-screen">{renderActiveSection()}</main>
       </div>
     </div>
   );
