@@ -1,0 +1,785 @@
+﻿@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+/* ============================================================
+   CMS THEME  â€”  Verde + Gris oscuro (estilo FastAPI)
+   Scoped a .cms-root para no afectar el portafolio publico.
+   Sobreescribe las variables de shadcn dentro del scope.
+   ============================================================ */
+
+.cms-root {
+    /* â”€â”€ Shadcn CSS var overrides (cascadan a bg-card, bg-input, etc.) â”€â”€ */
+    --background: #0d1210;
+    --foreground: #e5ede8;
+    --card: #181f1c;
+    --card-foreground: #e5ede8;
+    --popover: #1e2723;
+    --popover-foreground: #e5ede8;
+    --border: #253028;
+    --input: #111815;
+    --input-background: #111815;
+    --primary: #2dcc85;
+    --primary-foreground: #062012;
+    --secondary: #1b2520;
+    --secondary-foreground: #d0e8d8;
+    --muted: #182018;
+    --muted-foreground: #7a9488;
+    --accent: #1b2520;
+    --accent-foreground: #d0e8d8;
+    --ring: rgba(45, 204, 133, 0.35);
+    --radius: 0.6rem;
+
+    /* â”€â”€ CMS custom tokens â”€â”€ */
+    --cms-sidebar-w: 260px;
+    --cms-navbar-h: 58px;
+    --cms-accent: #2dcc85;
+    --cms-border: #253028;
+    --cms-panel: #181f1c;
+    --cms-shadow: 0 4px 28px rgba(4, 8, 6, 0.55);
+
+    font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    color: var(--foreground);
+    background: var(--background);
+    min-height: 100vh;
+}
+
+/* ============================================================
+   AUTH â€” pantalla de login centrada verticalmente
+   ============================================================ */
+
+.cms-auth-shell {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: 1.5rem;
+    background:
+        radial-gradient(circle at 14% 22%, rgba(45, 204, 133, 0.14) 0%, transparent 44%),
+        radial-gradient(circle at 80% 75%, rgba(45, 204, 133, 0.07) 0%, transparent 44%),
+        var(--background);
+}
+
+.cms-auth-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 900px;
+    min-height: 540px;
+    border-radius: 1.25rem;
+    border: 1px solid var(--cms-border);
+    background: var(--cms-panel);
+    box-shadow: var(--cms-shadow), 0 0 0 1px rgba(45, 204, 133, 0.05);
+    overflow: hidden;
+    animation: cms-appear 0.45s ease;
+}
+
+@media (min-width: 1024px) {
+    .cms-auth-container {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.cms-auth-hero {
+    padding: 2.5rem;
+    background: rgba(10, 14, 12, 0.55);
+    border-right: 1px solid var(--cms-border);
+}
+
+.cms-auth-form-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 2rem;
+}
+
+.cms-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgba(37, 48, 40, 0.8);
+    border-radius: 0.55rem;
+    background: rgba(13, 18, 15, 0.6);
+}
+
+/* ============================================================
+   NAVBAR â€” posicion fija en la parte superior
+   ============================================================ */
+
+.cms-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--cms-navbar-h);
+    z-index: 50;
+    background: rgba(12, 17, 14, 0.97);
+    border-bottom: 1px solid var(--cms-border);
+    backdrop-filter: blur(8px);
+}
+
+.cms-navbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 1.25rem;
+    gap: 1rem;
+}
+
+.cms-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cms-brand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--cms-accent);
+    box-shadow: 0 0 8px rgba(45, 204, 133, 0.65);
+}
+
+.cms-brand-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ddeae2;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.cms-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 0.5rem;
+    border: 1px solid var(--cms-border);
+    background: rgba(22, 30, 26, 0.8);
+    color: #7a9488;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.cms-icon-btn:hover:not(:disabled) {
+    border-color: rgba(45, 204, 133, 0.4);
+    color: var(--cms-accent);
+}
+
+.cms-icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cms-icon-btn-danger:hover:not(:disabled) {
+    border-color: rgba(220, 60, 60, 0.4);
+    color: #f87171;
+}
+
+/* ============================================================
+   SIDEBAR â€” posicion fija a la izquierda
+   ============================================================ */
+
+.cms-sidebar-fixed {
+    position: fixed;
+    top: var(--cms-navbar-h);
+    left: 0;
+    width: var(--cms-sidebar-w);
+    height: calc(100vh - var(--cms-navbar-h));
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 40;
+    background: rgba(11, 15, 13, 0.99);
+    border-right: 1px solid var(--cms-border);
+    padding: 1rem 0.75rem 2rem;
+    scrollbar-width: thin;
+    scrollbar-color: #253028 transparent;
+    /* En desktop siempre visible */
+}
+
+/* En mobile: oculto por defecto, aparece con .cms-sidebar-open */
+@media (max-width: 1023px) {
+    .cms-sidebar-fixed {
+        transform: translateX(-100%);
+        transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 6px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .cms-sidebar-open {
+        transform: translateX(0);
+    }
+}
+
+/* Scrollbar webkit */
+.cms-sidebar-fixed::-webkit-scrollbar {
+    width: 4px;
+}
+
+.cms-sidebar-fixed::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cms-sidebar-fixed::-webkit-scrollbar-thumb {
+    background: #253028;
+    border-radius: 4px;
+}
+
+/* Overlay oscuro detras del sidebar en mobile */
+.cms-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+}
+
+/* Perfil en la parte superior del sidebar */
+.cms-sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(45, 204, 133, 0.14);
+    border-radius: 0.75rem;
+    background: rgba(22, 30, 26, 0.7);
+}
+
+.cms-avatar {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1aaa6a, #2dcc85);
+    color: #062012;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cms-sidebar-section-label {
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #3d5248;
+    padding: 0 0.4rem;
+    margin-bottom: 0.35rem;
+}
+
+/* ============================================================
+   NAV ITEMS
+   ============================================================ */
+
+.cms-nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.55rem;
+    border: 1px solid transparent;
+    font-size: 0.845rem;
+    color: #7a9488;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.14s, border-color 0.14s, color 0.14s;
+}
+
+.cms-nav-item:hover:not(:disabled) {
+    background: rgba(22, 30, 26, 0.9);
+    border-color: rgba(45, 204, 133, 0.18);
+    color: #c8dfd1;
+}
+
+.cms-nav-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.cms-nav-item-active {
+    background: rgba(45, 204, 133, 0.1);
+    border-color: rgba(45, 204, 133, 0.32);
+    color: #e5f5ec;
+}
+
+.cms-nav-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.42rem;
+    border-radius: 9999px;
+    background: rgba(37, 48, 40, 0.8);
+    color: #5a7a6a;
+}
+
+.cms-nav-badge-active {
+    background: rgba(45, 204, 133, 0.15);
+    color: #6ee5af;
+}
+
+/* ============================================================
+   MAIN CONTENT AREA
+   ============================================================ */
+
+.cms-main {
+    margin-left: var(--cms-sidebar-w);
+    padding-top: var(--cms-navbar-h);
+    min-height: 100vh;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-bottom: 3rem;
+}
+
+@media (max-width: 1023px) {
+    .cms-main {
+        margin-left: 0;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Cabecera de pagina dentro del main */
+.cms-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.25rem 0 1rem;
+    border-bottom: 1px solid var(--cms-border);
+    margin-bottom: 1.25rem;
+}
+
+.cms-breadcrumb {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #3d5248;
+    margin-bottom: 0.25rem;
+}
+
+/* ============================================================
+   STATS GRID
+   ============================================================ */
+
+.cms-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+    .cms-stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.cms-stat-card {
+    border-radius: 0.75rem;
+    border: 1px solid var(--cms-border) !important;
+    background: var(--cms-panel) !important;
+}
+
+.cms-stat-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 0.45rem;
+    border: 1px solid rgba(45, 204, 133, 0.18);
+    background: rgba(45, 204, 133, 0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================================
+   CONTENT GRID (tabla + columna lateral)
+   ============================================================ */
+
+.cms-content-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 1280px) {
+    .cms-content-grid {
+        grid-template-columns: 1.45fr 0.8fr;
+    }
+}
+
+/* ============================================================
+   ANALYTICS DASHBOARD (Resumen)
+   ============================================================ */
+
+.cms-analytics-shell {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+.cms-analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.cms-analytics-grid-bottom {
+    margin-top: 1rem;
+}
+
+@media (min-width: 1280px) {
+    .cms-analytics-grid {
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.8fr);
+    }
+
+    .cms-analytics-card-wide {
+        min-width: 0;
+    }
+}
+
+.cms-analytics-card-header {
+    padding-bottom: 0.55rem !important;
+}
+
+.cms-analytics-card-content {
+    padding-top: 0 !important;
+}
+
+.cms-analytics-title {
+    font-size: 0.91rem;
+    font-weight: 600;
+    color: #e5ede8;
+}
+
+.cms-analytics-subtitle {
+    font-size: 0.74rem;
+    color: #7a9488;
+}
+
+.cms-chart-large {
+    width: 100%;
+    height: 270px;
+    margin: 0 auto;
+}
+
+.cms-chart-medium {
+    width: 100%;
+    height: 220px;
+    margin: 0 auto;
+}
+
+.cms-traffic-legend {
+    display: grid;
+    gap: 0.38rem;
+    margin-top: 0.5rem;
+    font-size: 0.74rem;
+}
+
+.cms-traffic-legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #94a89e;
+}
+
+.cms-traffic-legend-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cms-traffic-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.cms-traffic-legend-value {
+    font-weight: 600;
+    color: #d9e7df;
+}
+
+.cms-hours-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.cms-hours-row {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.74rem;
+}
+
+.cms-hours-time {
+    color: #71867b;
+}
+
+.cms-hours-track {
+    height: 10px;
+    border-radius: 9999px;
+    background: rgba(18, 24, 20, 0.95);
+    overflow: hidden;
+}
+
+.cms-hours-bar {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #13a35f, #6de8b1);
+}
+
+.cms-hours-value {
+    color: #c7d9cf;
+    text-align: right;
+}
+
+/* ============================================================
+   PANEL CARDS â€” sobreescritura de shadcn Card
+   ============================================================ */
+
+.cms-panel-card {
+    border: 1px solid var(--cms-border) !important;
+    background: var(--cms-panel) !important;
+    box-shadow: 0 2px 16px rgba(4, 8, 6, 0.3) !important;
+    border-radius: 0.875rem !important;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+
+.cms-table-head {
+    background: rgba(9, 13, 11, 0.65);
+    color: #5a7a6a;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    border-bottom: 1px solid var(--cms-border);
+}
+
+.cms-table-head th {
+    vertical-align: middle;
+    padding: 0.75rem 1.25rem;
+}
+
+.cms-table-row {
+    border-top: 1px solid rgba(37, 48, 40, 0.5);
+    transition: background 0.1s ease;
+}
+
+.cms-table-row:hover {
+    background: rgba(22, 30, 26, 0.55);
+}
+
+.cms-table-row td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.75rem 1.25rem;
+}
+
+.cms-table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1.25rem;
+    border-top: 1px solid var(--cms-border);
+    font-size: 0.72rem;
+    color: #3d5248;
+}
+
+/* ============================================================
+   ROADMAP
+   ============================================================ */
+
+.cms-roadmap-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.85rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--cms-border);
+    background: rgba(9, 13, 11, 0.55);
+}
+
+.cms-roadmap-step {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--cms-accent);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+
+.cms-chip {
+    border: 1px solid rgba(45, 204, 133, 0.38) !important;
+    background: rgba(45, 204, 133, 0.1) !important;
+    color: #8ef2c8 !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.03em;
+}
+
+.cms-chip-draft {
+    border: 1px solid rgba(60, 80, 68, 0.55) !important;
+    background: rgba(30, 42, 36, 0.5) !important;
+    color: #7a9488 !important;
+    font-size: 0.68rem !important;
+}
+
+/* ============================================================
+   INPUTS â€” forzados con !important para ganar sobre shadcn inline
+   ============================================================ */
+
+.cms-input {
+    border-color: var(--cms-border) !important;
+    background: rgba(11, 15, 13, 0.9) !important;
+    color: #ddeae2 !important;
+}
+
+.cms-input::placeholder {
+    color: #3d5248 !important;
+}
+
+.cms-input:focus-visible {
+    border-color: rgba(45, 204, 133, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(45, 204, 133, 0.12) !important;
+    outline: none !important;
+}
+
+.cms-input:read-only {
+    opacity: 0.75;
+    cursor: default;
+}
+
+.cms-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 32px;
+    border: 1px solid var(--cms-border);
+    border-radius: 0.5rem;
+    background: rgba(11, 15, 13, 0.9);
+    padding: 0 0.55rem;
+}
+
+.cms-search-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: #4f675b;
+}
+
+.cms-search-input {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.cms-search-input:focus-visible {
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.cms-primary-btn {
+    background: linear-gradient(110deg, #18a864 0%, #2dcc85 55%, #52d9a0 100%) !important;
+    color: #062012 !important;
+    border: 1px solid rgba(30, 150, 90, 0.5) !important;
+    font-weight: 600;
+    transition: filter 0.15s ease;
+}
+
+.cms-primary-btn:hover:not(:disabled) {
+    filter: brightness(1.07);
+}
+
+.cms-primary-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+.cms-outline-btn {
+    border-color: var(--cms-border) !important;
+    background: rgba(18, 25, 21, 0.9) !important;
+    color: #a8c0b0 !important;
+    transition: border-color 0.14s, background 0.14s, color 0.14s;
+}
+
+.cms-outline-btn:hover:not(:disabled) {
+    border-color: rgba(45, 204, 133, 0.32) !important;
+    background: rgba(22, 32, 27, 0.95) !important;
+    color: #c8dfd1 !important;
+}
+
+.cms-outline-btn:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+}
+
+.cms-outline-btn-danger {
+  color: #f87171 !important;
+}
+
+.cms-outline-btn-danger:hover:not(:disabled) {
+  border-color: rgba(220, 60, 60, 0.4) !important;
+  background: rgba(40, 15, 15, 0.95) !important;
+  color: #fca5a5 !important;
+}
+
+@keyframes cms-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cms-auth-container,
+.cms-panel-card,
+.cms-stat-card {
+    animation: cms-appear 0.4s ease;
+}
+
+/* ============================================================
+   TOOLTIP
+   ============================================================ */
+
+.cms-tooltip {
+    background: #1e2723 !important;
+    border: 1px solid #2dcc85 !important;
+    color: #c8dfd1 !important;
+    font-size: 0.75rem;
+    max-width: 220px;
+    text-align: center;
+}
+
+/* ============================================================
+   TOAST (sonner)
+   ============================================================ */
+
+.cms-toast {
+    background: #181f1c !important;
+    border: 1px solid #253028 !important;
+    color: #c8dfd1 !important;
+    font-size: 0.85rem;
+}
