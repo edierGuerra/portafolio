@@ -3,6 +3,7 @@ from .admin_repository import AdminRepository
 from .available_service_repository import AvailableServiceRepository
 from .blog_category_repository import BlogCategoryRepository
 from .blog_repository import BlogRepository
+from .blog_tag_repository import BlogTagRepository
 from .contact_info_repository import ContactInfoRepository
 from .experience_repository import ExperienceRepository
 from .faq_repository import FaqRepository
@@ -18,6 +19,7 @@ __all__ = [
     "AvailableServiceRepository",
     "BlogCategoryRepository",
     "BlogRepository",
+    "BlogTagRepository",
     "ContactInfoRepository",
     "ExperienceRepository",
     "FaqRepository",

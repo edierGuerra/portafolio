@@ -2,6 +2,7 @@ from .achievements_endpoint import router as achievements_router
 from .auth_endpoint import router as auth_router
 from .available_services_endpoint import router as available_services_router
 from .blog_categories_endpoint import router as blog_categories_router
+from .blog_tags_endpoint import router as blog_tags_router
 from .blog_endpoint import router as blog_router
 from .contact_info_endpoint import router as contact_info_router
 from .experience_endpoint import router as experience_router
@@ -18,6 +19,7 @@ __all__ = [
     "auth_router",
     "available_services_router",
     "blog_categories_router",
+    "blog_tags_router",
     "blog_router",
     "contact_info_router",
     "experience_router",

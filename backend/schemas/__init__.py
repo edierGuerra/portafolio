@@ -3,6 +3,7 @@ from .admin import UserCreate, UserRead, UserReadWithPassword, UserUpdate
 from .available_services import AvailableServiceCreate, AvailableServiceRead, AvailableServiceUpdate
 from .blog import BlogCreate, BlogRead, BlogReadWithCategory, BlogUpdate
 from .blog_category import BlogCategoryCreate, BlogCategoryRead, BlogCategoryUpdate
+from .blog_tag import BlogTagCreate, BlogTagRead, BlogTagUpdate
 from .contact_info import ContactInfoCreate, ContactInfoRead, ContactInfoUpdate
 from .experience import ExperienceCreate, ExperienceRead, ExperienceUpdate
 from .frequently_asked_questions import (
@@ -38,6 +39,9 @@ __all__ = [
     "BlogCategoryCreate",
     "BlogCategoryRead",
     "BlogCategoryUpdate",
+    "BlogTagCreate",
+    "BlogTagRead",
+    "BlogTagUpdate",
     "ContactInfoCreate",
     "ContactInfoRead",
     "ContactInfoUpdate",

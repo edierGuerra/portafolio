@@ -106,6 +106,93 @@ export interface TechnologyUpdate {
   logo?: string;
 }
 
+// ─── Blog ───────────────────────────────────────────────────────────────────
+
+export interface BlogCategory {
+  id: number;
+  name: string;
+}
+
+export interface BlogCategoryCreate {
+  name: string;
+}
+
+export interface BlogCategoryUpdate {
+  name?: string;
+}
+
+export interface BlogTag {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface BlogTagCreate {
+  name: string;
+  slug: string;
+}
+
+export interface BlogTagUpdate {
+  name?: string;
+  slug?: string;
+}
+
+export type BlogStatus = "draft" | "published" | "scheduled" | "archived";
+
+export interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content?: string | null;
+  image: string;
+  date: string;
+  status: BlogStatus;
+  is_featured: boolean;
+  published_at?: string | null;
+  read_time_minutes: number;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  category_id: number;
+  category?: BlogCategory | null;
+  tags?: BlogTag[];
+  content_images?: Array<{ id: number; image_url: string; position: number }>;
+}
+
+export interface BlogPostCreate {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content?: string | null;
+  image: string;
+  date: string;
+  status: BlogStatus;
+  is_featured: boolean;
+  published_at?: string | null;
+  read_time_minutes: number;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  category_id: number;
+  tag_ids: number[];
+}
+
+export interface BlogPostUpdate {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string | null;
+  image?: string;
+  date?: string;
+  status?: BlogStatus;
+  is_featured?: boolean;
+  published_at?: string | null;
+  read_time_minutes?: number;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  category_id?: number;
+  tag_ids?: number[];
+}
+
 export interface FileUploadResponse {
   object_key: string;
   file_url: string;

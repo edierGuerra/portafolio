@@ -5,6 +5,9 @@ from .admin import User
 from .available_services import AvailableService
 from .blog import Blog
 from .blog_category import BlogCategory
+from .blog_image import BlogImage
+from .blog_post_tags import BlogPostTags
+from .blog_tag import BlogTag
 from .contact_info import ContactInfo
 from .experience import Experience
 from .frequently_asked_questions import FrequentlyAskedQuestion
@@ -22,6 +25,9 @@ __all__ = [
     "AvailableService",
     "Blog",
     "BlogCategory",
+    "BlogImage",
+    "BlogPostTags",
+    "BlogTag",
     "ContactInfo",
     "Experience",
     "FrequentlyAskedQuestion",

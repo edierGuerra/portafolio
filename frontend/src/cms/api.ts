@@ -2,6 +2,15 @@ import { http } from "../api/http";
 import { httpWithAuth } from "./session";
 import type {
   AuthTokenResponse,
+  BlogCategory,
+  BlogCategoryCreate,
+  BlogCategoryUpdate,
+  BlogPost,
+  BlogPostCreate,
+  BlogPostUpdate,
+  BlogTag,
+  BlogTagCreate,
+  BlogTagUpdate,
   CmsUser,
   FileUploadResponse,
   LoginPayload,
@@ -188,6 +197,113 @@ export async function uploadTechnologyLogoCms(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("folder", "technologies");
+
+  return httpWithAuth<FileUploadResponse>("/api/files/upload", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+// ─── Blog ───────────────────────────────────────────────────────────────────
+
+export async function getBlogsCms(): Promise<BlogPost[]> {
+  return httpWithAuth<BlogPost[]>("/api/blog/cms");
+}
+
+export async function createBlogCms(
+  payload: BlogPostCreate,
+): Promise<BlogPost> {
+  return httpWithAuth<BlogPost>("/api/blog", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateBlogCms(
+  id: number,
+  payload: BlogPostUpdate,
+): Promise<BlogPost> {
+  return httpWithAuth<BlogPost>(`/api/blog/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteBlogCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/blog/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getBlogCategoriesCms(): Promise<BlogCategory[]> {
+  return http<BlogCategory[]>("/api/blog-categories");
+}
+
+export async function createBlogCategoryCms(
+  payload: BlogCategoryCreate,
+): Promise<BlogCategory> {
+  return httpWithAuth<BlogCategory>("/api/blog-categories", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateBlogCategoryCms(
+  id: number,
+  payload: BlogCategoryUpdate,
+): Promise<BlogCategory> {
+  return httpWithAuth<BlogCategory>(`/api/blog-categories/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteBlogCategoryCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/blog-categories/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getBlogTagsCms(): Promise<BlogTag[]> {
+  return http<BlogTag[]>("/api/blog-tags");
+}
+
+export async function createBlogTagCms(
+  payload: BlogTagCreate,
+): Promise<BlogTag> {
+  return httpWithAuth<BlogTag>("/api/blog-tags", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateBlogTagCms(
+  id: number,
+  payload: BlogTagUpdate,
+): Promise<BlogTag> {
+  return httpWithAuth<BlogTag>(`/api/blog-tags/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteBlogTagCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/blog-tags/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function uploadBlogImageCms(
+  file: File,
+  variant: "cover" | "content" = "cover",
+): Promise<FileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append(
+    "folder",
+    variant === "content" ? "blog/content" : "blog/cover",
+  );
+  formData.append("image_variant", variant);
 
   return httpWithAuth<FileUploadResponse>("/api/files/upload", {
     method: "POST",

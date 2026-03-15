@@ -97,6 +97,7 @@ import {
 import {
   createTechnologyCms,
   createProjectCms,
+  getBlogsCms,
   deleteTechnologyCms,
   getTechnologiesCms,
   deleteProjectCms,
@@ -112,6 +113,7 @@ import {
   updateTechnologyCms,
   updateProjectCms,
 } from "./api";
+import { BlogView } from "./BlogView";
 import "./cms-theme.css";
 
 type ModuleItem = {
@@ -2879,6 +2881,9 @@ function DashboardView({
   const [projectsCount, setProjectsCount] = useState(
     MODULES.find((module) => module.id === "projects")?.records ?? 0,
   );
+  const [blogsCount, setBlogsCount] = useState(
+    MODULES.find((module) => module.id === "blog")?.records ?? 0,
+  );
   const [technologiesCount, setTechnologiesCount] = useState(
     MODULES.find((module) => module.id === "technologies")?.records ?? 0,
   );
@@ -2890,12 +2895,15 @@ function DashboardView({
         if (module.id === "projects") {
           return { ...module, records: projectsCount };
         }
+        if (module.id === "blog") {
+          return { ...module, records: blogsCount };
+        }
         if (module.id === "technologies") {
           return { ...module, records: technologiesCount };
         }
         return module;
       }),
-    [projectsCount, technologiesCount],
+    [projectsCount, blogsCount, technologiesCount],
   );
 
   const selectedModule = useMemo(
@@ -2910,22 +2918,24 @@ function DashboardView({
   useEffect(() => {
     let cancelled = false;
 
-    const loadProjectsCount = async () => {
+    const loadModulesCount = async () => {
       try {
-        const [projects, technologies] = await Promise.all([
+        const [projects, blogs, technologies] = await Promise.all([
           getProjects(),
+          getBlogsCms(),
           getTechnologiesCms(),
         ]);
         if (!cancelled) {
           setProjectsCount(projects.length);
+          setBlogsCount(blogs.length);
           setTechnologiesCount(technologies.length);
         }
       } catch {
-        // Mantenemos el valor actual si falla la carga del contador.
+        // Evitar toasts intrusivos en el dashboard inicial.
       }
     };
 
-    void loadProjectsCount();
+    void loadModulesCount();
 
     return () => {
       cancelled = true;
@@ -3095,27 +3105,29 @@ function DashboardView({
           </div>
 
           {/* Metricas */}
-          {activeModule !== "projects" && activeModule !== "profile" && (
-            <div className="cms-stats-grid">
-              {topMetrics.map(({ label, value, icon: Icon }) => (
-                <Card key={label} className="cms-stat-card">
-                  <CardContent className="flex items-start justify-between p-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-zinc-500">
-                        {label}
-                      </p>
-                      <p className="mt-2 text-2xl font-semibold text-zinc-100">
-                        {value}
-                      </p>
-                    </div>
-                    <div className="cms-stat-icon">
-                      <Icon className="h-4 w-4 text-emerald-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          {activeModule !== "projects" &&
+            activeModule !== "blog" &&
+            activeModule !== "profile" && (
+              <div className="cms-stats-grid">
+                {topMetrics.map(({ label, value, icon: Icon }) => (
+                  <Card key={label} className="cms-stat-card">
+                    <CardContent className="flex items-start justify-between p-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-zinc-500">
+                          {label}
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-zinc-100">
+                          {value}
+                        </p>
+                      </div>
+                      <div className="cms-stat-icon">
+                        <Icon className="h-4 w-4 text-emerald-400" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
           {isDashboard ? (
             <SummaryAnalyticsView />
@@ -3124,6 +3136,8 @@ function DashboardView({
               onProjectsCountChange={setProjectsCount}
               onTechnologiesCountChange={setTechnologiesCount}
             />
+          ) : activeModule === "blog" ? (
+            <BlogView onBlogsCountChange={setBlogsCount} />
           ) : activeModule === "technologies" ? (
             <TechnologiesView
               onTechnologiesCountChange={setTechnologiesCount}

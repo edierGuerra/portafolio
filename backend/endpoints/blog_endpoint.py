@@ -32,7 +32,22 @@ async def _get_or_404(db: AsyncSession, blog_id: int):
     response_description="Listado de publicaciones con categoria.",
 )
 async def list_blogs(db: AsyncSession = Depends(get_db)):
-    return await BlogRepository(db).list_all()
+    return await BlogRepository(db).list_all(include_unpublished=False)
+
+
+@router.get(
+    "/cms",
+    response_model=list[BlogReadWithCategory],
+    summary="Listar publicaciones del blog para CMS",
+    description="Devuelve todas las publicaciones (incluye borradores y archivadas). Requiere autenticacion.",
+    response_description="Listado completo de publicaciones con categoria y tags.",
+    responses={401: {"description": "No autenticado."}},
+)
+async def list_blogs_cms(
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(require_authenticated_user),
+):
+    return await BlogRepository(db).list_all(include_unpublished=True)
 
 
 @router.get(
@@ -61,7 +76,10 @@ async def create_blog(
     db: AsyncSession = Depends(get_db),
     _: None = Depends(require_authenticated_user),
 ):
-    return await BlogRepository(db).create(payload)
+    try:
+        return await BlogRepository(db).create(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.patch(
@@ -79,7 +97,10 @@ async def update_blog(
     _: None = Depends(require_authenticated_user),
 ):
     obj = await _get_or_404(db, blog_id)
-    return await BlogRepository(db).update(obj, payload)
+    try:
+        return await BlogRepository(db).update(obj, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.delete(

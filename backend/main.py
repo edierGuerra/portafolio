@@ -8,6 +8,7 @@ from endpoints import (
     auth_router,
     available_services_router,
     blog_categories_router,
+    blog_tags_router,
     blog_router,
     contact_info_router,
     experience_router,
@@ -53,6 +54,10 @@ TAGS_METADATA = [
     {
         "name": "blog",
         "description": "CRUD de publicaciones del blog.",
+    },
+    {
+        "name": "blog-tags",
+        "description": "CRUD de tags para publicaciones del blog.",
     },
     {
         "name": "contact-info",
@@ -118,6 +123,7 @@ app.include_router(experience_router, prefix="/api")
 app.include_router(achievements_router, prefix="/api")
 app.include_router(available_services_router, prefix="/api")
 app.include_router(blog_categories_router, prefix="/api")
+app.include_router(blog_tags_router, prefix="/api")
 app.include_router(blog_router, prefix="/api")
 app.include_router(contact_info_router, prefix="/api")
 app.include_router(faq_router, prefix="/api")

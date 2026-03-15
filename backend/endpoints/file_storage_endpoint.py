@@ -1,4 +1,11 @@
+import io
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+try:
+    from PIL import Image, UnidentifiedImageError
+except ModuleNotFoundError:  # pragma: no cover - depende del entorno
+    Image = None
+    UnidentifiedImageError = OSError
 
 from endpoints.dependencies import require_authenticated_user
 from schemas.storage import (
@@ -19,6 +26,52 @@ router = APIRouter(
 )
 
 storage_service = ObjectStorageService()
+
+CONTENT_IMAGE_SIZE = (1280, 720)
+
+
+def _resize_content_image(content: bytes) -> tuple[bytes, str]:
+    if Image is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Falta dependencia Pillow para procesar imagenes. Ejecuta: pip install pillow",
+        )
+
+    try:
+        with Image.open(io.BytesIO(content)) as image:
+            if image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGB")
+
+            width, height = image.size
+            target_width, target_height = CONTENT_IMAGE_SIZE
+            if width <= 0 or height <= 0:
+                raise ValueError("Dimensiones de imagen invalidas")
+
+            source_ratio = width / height
+            target_ratio = target_width / target_height
+
+            if source_ratio > target_ratio:
+                new_height = height
+                new_width = int(height * target_ratio)
+                left = (width - new_width) // 2
+                top = 0
+            else:
+                new_width = width
+                new_height = int(width / target_ratio)
+                left = 0
+                top = (height - new_height) // 2
+
+            cropped = image.crop((left, top, left + new_width, top + new_height))
+            resized = cropped.resize(CONTENT_IMAGE_SIZE, Image.Resampling.LANCZOS)
+
+            output = io.BytesIO()
+            resized.save(output, format="JPEG", quality=88, optimize=True)
+            return output.getvalue(), "image/jpeg"
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se pudo procesar la imagen. Verifica que sea un archivo valido.",
+        ) from exc
 
 
 def _raise_storage_error(exc: Exception):
@@ -44,6 +97,7 @@ def _raise_storage_error(exc: Exception):
 async def upload_file(
     file: UploadFile = File(...),
     folder: str | None = Form(default=None),
+    image_variant: str | None = Form(default="cover"),
     _: None = Depends(require_authenticated_user),
 ):
     if not file.filename:
@@ -61,12 +115,31 @@ async def upload_file(
 
     content_type = file.content_type or "application/octet-stream"
 
+    normalized_variant = (image_variant or "cover").strip().lower()
+    if normalized_variant not in {"cover", "content"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="image_variant invalida. Usa 'cover' o 'content'.",
+        )
+
+    if normalized_variant == "content":
+        if not content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Para image_variant='content' debes subir una imagen.",
+            )
+        content, content_type = _resize_content_image(content)
+
+    upload_folder = folder
+    if not upload_folder:
+        upload_folder = "blog/content" if normalized_variant == "content" else "blog/cover"
+
     try:
         object_key, file_url = await storage_service.upload_file(
             file_name=file.filename,
             content=content,
             content_type=content_type,
-            folder=folder,
+            folder=upload_folder,
         )
     except (StorageConfigurationError, StorageOperationError) as exc:
         _raise_storage_error(exc)
