@@ -19,3 +19,17 @@ class AdminRepository:
         stmt = select(User).where(User.id == user_id)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def get_first(self) -> Optional[User]:
+        stmt = select(User).limit(1)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def update_user(self, user: User, updates: dict) -> User:
+        for field, value in updates.items():
+            setattr(user, field, value)
+
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user

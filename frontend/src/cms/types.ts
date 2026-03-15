@@ -1,3 +1,9 @@
+export type AvailabilityStatus =
+  | "available"
+  | "not_available"
+  | "busy"
+  | "open_to_talk";
+
 export interface CmsUser {
   id: number;
   email: string;
@@ -6,6 +12,7 @@ export interface CmsUser {
   about_me: string;
   profile_image: string;
   location: string;
+  availability_status: AvailabilityStatus;
 }
 
 export interface LoginPayload {

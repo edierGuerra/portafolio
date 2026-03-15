@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     about_me: str
     profile_image: str
     location: str
+    availability_status: str = "available"
 
 
 class UserCreate(UserBase):
@@ -24,6 +25,7 @@ class UserUpdate(BaseModel):
     about_me: Optional[str] = None
     profile_image: Optional[str] = None
     location: Optional[str] = None
+    availability_status: Optional[str] = None
 
 
 class UserRead(UserBase):
@@ -33,3 +35,13 @@ class UserRead(UserBase):
 
 class UserReadWithPassword(UserRead):
     password: str
+
+
+class PublicProfileRead(BaseModel):
+    name: str
+    professional_profile: str
+    about_me: str
+    profile_image: str
+    location: str
+    availability_status: str = "available"
+    model_config = ConfigDict(from_attributes=True)

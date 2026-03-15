@@ -2,6 +2,7 @@ import { http } from "../api/http";
 import { httpWithAuth } from "./session";
 import type {
   AuthTokenResponse,
+  CmsUser,
   FileUploadResponse,
   LoginPayload,
   MeResponse,
@@ -29,6 +30,25 @@ export async function getMe(token: string): Promise<MeResponse> {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+}
+
+export async function updateMeCms(
+  payload: Partial<
+    Pick<
+      CmsUser,
+      | "name"
+      | "email"
+      | "professional_profile"
+      | "location"
+      | "about_me"
+      | "profile_image"
+    >
+  >,
+): Promise<MeResponse> {
+  return httpWithAuth<MeResponse>("/api/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   });
 }
 
@@ -101,6 +121,19 @@ export async function uploadProjectImageCms(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("folder", "projects");
+
+  return httpWithAuth<FileUploadResponse>("/api/files/upload", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function uploadAdminProfileImageCms(
+  file: File,
+): Promise<FileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", "admin-profile");
 
   return httpWithAuth<FileUploadResponse>("/api/files/upload", {
     method: "POST",

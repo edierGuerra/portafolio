@@ -37,7 +37,7 @@ export default function App() {
   const renderActiveSection = () => {
     switch (activeSection) {
       case "home":
-        return <HeroSection />;
+        return <HeroSection onNavigate={setActiveSection} />;
       case "about":
         return <AboutSection />;
       case "projects":
@@ -47,7 +47,7 @@ export default function App() {
       case "contact":
         return <ContactSection />;
       default:
-        return <HeroSection />;
+        return <HeroSection onNavigate={setActiveSection} />;
     }
   };
 

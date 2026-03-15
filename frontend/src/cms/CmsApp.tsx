@@ -61,6 +61,13 @@ import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -72,6 +79,7 @@ import {
   ChartTooltipContent,
 } from "../components/ui/chart";
 import type {
+  AvailabilityStatus,
   CmsUser,
   Project,
   ProjectCreate,
@@ -97,6 +105,8 @@ import {
   loginCms,
   logoutCms,
   setProjectPublishedCms,
+  updateMeCms,
+  uploadAdminProfileImageCms,
   uploadProjectImageCms,
   uploadTechnologyLogoCms,
   updateTechnologyCms,
@@ -2273,14 +2283,595 @@ function TechnologiesView({
   );
 }
 
+type AdminProfileForm = Pick<
+  CmsUser,
+  | "name"
+  | "email"
+  | "professional_profile"
+  | "location"
+  | "about_me"
+  | "profile_image"
+  | "availability_status"
+>;
+
+function mapUserToAdminProfileForm(user: CmsUser): AdminProfileForm {
+  return {
+    name: user.name,
+    email: user.email,
+    professional_profile: user.professional_profile,
+    location: user.location,
+    about_me: user.about_me,
+    profile_image: user.profile_image,
+    availability_status: user.availability_status,
+  };
+}
+
+function AdminProfileView({
+  user,
+  onUserUpdate,
+}: {
+  user: CmsUser;
+  onUserUpdate: (updatedUser: CmsUser) => void;
+}) {
+  const [form, setForm] = useState<AdminProfileForm>(() =>
+    mapUserToAdminProfileForm(user),
+  );
+  const [saving, setSaving] = useState(false);
+  const [profileImageLoadFailed, setProfileImageLoadFailed] = useState(false);
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
+  const [isProfileImageDragActive, setIsProfileImageDragActive] =
+    useState(false);
+  const [pendingProfileImageFile, setPendingProfileImageFile] =
+    useState<File | null>(null);
+  const [localProfileImagePreviewUrl, setLocalProfileImagePreviewUrl] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    setForm(mapUserToAdminProfileForm(user));
+  }, [user]);
+
+  useEffect(() => {
+    setProfileImageLoadFailed(false);
+  }, [form.profile_image]);
+
+  const clearLocalProfileImagePreview = useCallback(() => {
+    setLocalProfileImagePreviewUrl((currentUrl) => {
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+      return null;
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (localProfileImagePreviewUrl) {
+        URL.revokeObjectURL(localProfileImagePreviewUrl);
+      }
+    };
+  }, [localProfileImagePreviewUrl]);
+
+  const hasChanges = useMemo(
+    () =>
+      form.name !== user.name ||
+      form.email !== user.email ||
+      form.professional_profile !== user.professional_profile ||
+      form.location !== user.location ||
+      form.about_me !== user.about_me ||
+      form.profile_image !== user.profile_image ||
+      form.availability_status !== user.availability_status ||
+      pendingProfileImageFile !== null,
+    [form, pendingProfileImageFile, user],
+  );
+
+  const handleChange =
+    (field: keyof AdminProfileForm) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = event.target.value;
+      setForm((prev) => ({ ...prev, [field]: value }));
+    };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!hasChanges) {
+      toast.info("Sin cambios", {
+        description: "No hay modificaciones pendientes en el perfil.",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const nextForm = { ...form };
+
+      if (pendingProfileImageFile) {
+        setUploadingProfileImage(true);
+        const uploaded = await uploadAdminProfileImageCms(
+          pendingProfileImageFile,
+        );
+        nextForm.profile_image = uploaded.file_url;
+        setForm((currentForm) => ({
+          ...currentForm,
+          profile_image: uploaded.file_url,
+        }));
+        setPendingProfileImageFile(null);
+        clearLocalProfileImagePreview();
+      }
+
+      const response = await updateMeCms(nextForm);
+      onUserUpdate(response.user);
+      toast.success("Perfil actualizado", {
+        description:
+          "Los datos del administrador se actualizaron en el panel actual.",
+      });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "No se pudo guardar el perfil",
+      );
+    } finally {
+      setUploadingProfileImage(false);
+      setSaving(false);
+    }
+  };
+
+  const handleReset = () => {
+    clearLocalProfileImagePreview();
+    setPendingProfileImageFile(null);
+    setForm(mapUserToAdminProfileForm(user));
+  };
+
+  const normalizedProfileImageUrl = form.profile_image.trim()
+    ? normalizeTechnologyLogoUrl(form.profile_image)
+    : "";
+  const profileImagePreviewSrc =
+    localProfileImagePreviewUrl || normalizedProfileImageUrl;
+
+  const prepareProfileImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
+
+    const maxSizeBytes = 10 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      toast.error("La imagen supera el limite de 10 MB");
+      return;
+    }
+
+    clearLocalProfileImagePreview();
+    setLocalProfileImagePreviewUrl(URL.createObjectURL(file));
+    setPendingProfileImageFile(file);
+    setProfileImageLoadFailed(false);
+
+    toast.info("Imagen lista", {
+      description:
+        "La imagen se subira al bucket cuando pulses Guardar perfil.",
+    });
+  };
+
+  const handleProfileImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
+
+    prepareProfileImageFile(selectedFile);
+    event.target.value = "";
+  };
+
+  const handleProfileImageDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsProfileImageDragActive(false);
+
+    const droppedFile = event.dataTransfer.files?.[0];
+    if (!droppedFile) return;
+
+    prepareProfileImageFile(droppedFile);
+  };
+
+  return (
+    <div className="cms-content-grid">
+      <Card style={{ padding: "3%" }} className="cms-panel-card">
+        <CardHeader className="border-b border-zinc-800 px-5 py-4">
+          <CardTitle className="text-sm font-medium text-zinc-100">
+            Perfil del administrador
+          </CardTitle>
+          <CardDescription className="mt-0.5 text-xs text-zinc-500">
+            Configura los datos que identifican tu perfil en el CMS.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-5 py-5">
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="admin-name"
+                  className="text-xs uppercase tracking-wider text-zinc-500"
+                >
+                  Nombre
+                </Label>
+                <Input
+                  id="admin-name"
+                  className="cms-input h-9 text-sm"
+                  value={form.name}
+                  onChange={handleChange("name")}
+                  placeholder="Nombre de administrador"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="admin-email"
+                  className="text-xs uppercase tracking-wider text-zinc-500"
+                >
+                  Correo
+                </Label>
+                <Input
+                  id="admin-email"
+                  type="email"
+                  className="cms-input h-9 text-sm"
+                  value={form.email}
+                  onChange={handleChange("email")}
+                  placeholder="admin@dominio.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="admin-professional-profile"
+                  className="text-xs uppercase tracking-wider text-zinc-500"
+                >
+                  Perfil profesional
+                </Label>
+                <Input
+                  id="admin-professional-profile"
+                  className="cms-input h-9 text-sm"
+                  value={form.professional_profile}
+                  onChange={handleChange("professional_profile")}
+                  placeholder="Ej: Full Stack Developer"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="admin-location"
+                  className="text-xs uppercase tracking-wider text-zinc-500"
+                >
+                  Ubicacion
+                </Label>
+                <Input
+                  id="admin-location"
+                  className="cms-input h-9 text-sm"
+                  value={form.location}
+                  onChange={handleChange("location")}
+                  placeholder="Ciudad, Pais"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="cms-profile-image-field">
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                  Vista previa
+                </Label>
+                <div className="cms-profile-image-preview-shell">
+                  {profileImagePreviewSrc && !profileImageLoadFailed ? (
+                    <img
+                      src={profileImagePreviewSrc}
+                      alt={form.name || "Imagen de perfil"}
+                      className="cms-profile-image-preview"
+                      onError={() => setProfileImageLoadFailed(true)}
+                    />
+                  ) : (
+                    <div className="cms-profile-image-fallback">
+                      <div className="cms-avatar h-14 w-14 text-lg">
+                        {form.name.charAt(0) || "A"}
+                      </div>
+                      <p className="px-3 text-[11px] leading-relaxed text-zinc-500">
+                        {form.profile_image.trim()
+                          ? "No se pudo cargar la imagen"
+                          : "Agrega una URL para ver la imagen"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="admin-profile-image"
+                  className="text-xs uppercase tracking-wider text-zinc-500"
+                >
+                  Imagen de perfil
+                </Label>
+                <div className="cms-profile-image-control-card">
+                  <div className="cms-profile-image-control-header">
+                    <div>
+                      <p className="cms-profile-image-title">
+                        Foto principal del administrador
+                      </p>
+                      <p className="cms-profile-image-subtitle">
+                        Selecciona una imagen desde tu PC o arrastrala aqui.
+                      </p>
+                    </div>
+                    <Badge className="cms-chip-draft">Avatar</Badge>
+                  </div>
+                  <label
+                    htmlFor="admin-profile-image-file"
+                    className={`cms-profile-image-dropzone ${
+                      isProfileImageDragActive
+                        ? "cms-profile-image-dropzone-active"
+                        : ""
+                    } ${uploadingProfileImage ? "pointer-events-none opacity-70" : ""}`}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setIsProfileImageDragActive(true);
+                    }}
+                    onDragLeave={() => setIsProfileImageDragActive(false)}
+                    onDrop={handleProfileImageDrop}
+                  >
+                    <span className="cms-profile-image-dropzone-title">
+                      {uploadingProfileImage
+                        ? "Subiendo imagen..."
+                        : pendingProfileImageFile
+                          ? `Lista para guardar: ${pendingProfileImageFile.name}`
+                          : "Haz clic para seleccionar una imagen"}
+                    </span>
+                    <span className="cms-profile-image-dropzone-copy">
+                      O arrastrala desde tu PC y sueltala aqui.
+                    </span>
+                    <span className="cms-profile-image-dropzone-meta">
+                      JPG, PNG o WEBP. Tamano maximo: 10 MB.
+                    </span>
+                  </label>
+                  <input
+                    id="admin-profile-image-file"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      void handleProfileImageChange(event);
+                    }}
+                    disabled={uploadingProfileImage || saving}
+                  />
+                  <div className="cms-profile-image-url-block">
+                    <Label
+                      htmlFor="admin-profile-image"
+                      className="text-[11px] font-medium uppercase tracking-wider text-zinc-600"
+                    >
+                      URL de referencia
+                    </Label>
+                    <Input
+                      id="admin-profile-image"
+                      className="cms-input h-9 text-sm"
+                      value={form.profile_image}
+                      onChange={(event) => {
+                        clearLocalProfileImagePreview();
+                        setPendingProfileImageFile(null);
+                        handleChange("profile_image")(event);
+                      }}
+                      placeholder="La URL se completa al guardar o puedes pegarla manualmente"
+                      required
+                    />
+                  </div>
+
+                  <div className="cms-profile-image-helper-row">
+                    <p className="cms-profile-image-helper-text">
+                      Usa formato cuadrado para un recorte mas limpio en el
+                      avatar.
+                    </p>
+                    {pendingProfileImageFile && (
+                      <span className="cms-profile-image-pending-badge">
+                        Pendiente de guardar
+                      </span>
+                    )}
+                  </div>
+
+                  {profileImageLoadFailed && (
+                    <p className="text-xs text-amber-400">
+                      La URL actual no devolvio una imagen valida o accesible.
+                    </p>
+                  )}
+
+                  <div className="cms-profile-image-actions">
+                    {localProfileImagePreviewUrl && (
+                      <button
+                        type="button"
+                        className="cms-profile-image-link"
+                        onClick={() => {
+                          clearLocalProfileImagePreview();
+                          setPendingProfileImageFile(null);
+                          setForm((currentForm) => ({
+                            ...currentForm,
+                            profile_image: user.profile_image,
+                          }));
+                        }}
+                        disabled={uploadingProfileImage || saving}
+                      >
+                        Restaurar imagen actual
+                      </button>
+                    )}
+                    {normalizedProfileImageUrl && !profileImageLoadFailed && (
+                      <a
+                        href={normalizedProfileImageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="cms-profile-image-link"
+                      >
+                        Abrir imagen en una pestana nueva
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="admin-about-me"
+                className="text-xs uppercase tracking-wider text-zinc-500"
+              >
+                Sobre mi
+              </Label>
+              <textarea
+                id="admin-about-me"
+                className="cms-input min-h-[110px] w-full resize-y px-3 py-2 text-sm"
+                value={form.about_me}
+                onChange={handleChange("about_me")}
+                placeholder="Descripcion profesional breve"
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="admin-availability"
+                className="text-xs uppercase tracking-wider text-zinc-500"
+              >
+                Estado de disponibilidad
+              </Label>
+              <Select
+                value={form.availability_status}
+                onValueChange={(value: string) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    availability_status: value as AvailabilityStatus,
+                  }))
+                }
+              >
+                <SelectTrigger
+                  id="admin-availability"
+                  className="cms-input h-9 text-sm"
+                >
+                  <SelectValue placeholder="Selecciona un estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">🚀 Disponible</SelectItem>
+                  <SelectItem value="not_available">
+                    ⛔ No disponible
+                  </SelectItem>
+                  <SelectItem value="busy">🔧 Trabajando</SelectItem>
+                  <SelectItem value="open_to_talk">
+                    💬 En conversaciones
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button
+                type="submit"
+                className="cms-primary-btn h-8 text-sm"
+                disabled={!hasChanges || saving}
+              >
+                {saving ? "Guardando..." : "Guardar perfil"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="cms-outline-btn h-8 text-sm"
+                onClick={handleReset}
+                disabled={!hasChanges || saving}
+              >
+                Restablecer
+              </Button>
+              {hasChanges && (
+                <Badge className="cms-chip-draft">Cambios pendientes</Badge>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-4">
+        <Card className="cms-panel-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-zinc-100">
+              Vista previa
+            </CardTitle>
+            <CardDescription className="text-xs text-zinc-500">
+              Asi se mostraran tus datos en el panel.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
+              {profileImagePreviewSrc && !profileImageLoadFailed ? (
+                <div className="cms-profile-image-mini-preview">
+                  <img
+                    src={profileImagePreviewSrc}
+                    alt={form.name || "Imagen de perfil"}
+                    className="h-full w-full object-cover"
+                    onError={() => setProfileImageLoadFailed(true)}
+                  />
+                </div>
+              ) : (
+                <div className="cms-avatar">{form.name.charAt(0) || "A"}</div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-zinc-100">
+                  {form.name}
+                </p>
+                <p className="truncate text-xs text-zinc-500">{form.email}</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm text-zinc-400">
+              <p>
+                <span className="text-zinc-500">Rol:</span>{" "}
+                {form.professional_profile}
+              </p>
+              <p>
+                <span className="text-zinc-500">Ubicacion:</span>{" "}
+                {form.location}
+              </p>
+              <p>
+                <span className="text-zinc-500">Disponibilidad:</span>{" "}
+                {{
+                  available: "🚀 Disponible",
+                  not_available: "⛔ No disponible",
+                  busy: "🔧 Trabajando",
+                  open_to_talk: "💬 En conversaciones",
+                }[form.availability_status] ?? form.availability_status}
+              </p>
+              <p className="text-zinc-500">Bio</p>
+              <p className="rounded-md border border-zinc-800 bg-zinc-950/40 px-3 py-2 text-xs leading-relaxed text-zinc-300">
+                {form.about_me}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="cms-panel-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-zinc-100">
+              Estado
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs text-zinc-400">
+            <p>
+              Los datos de esta seccion se sincronizan con la sesion actual del
+              CMS.
+            </p>
+            <Badge className="cms-chip">Perfil activo</Badge>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 // â”€â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DashboardView({
   user,
   onLogout,
+  onUserUpdate,
 }: {
   user: CmsUser;
   onLogout: () => void;
+  onUserUpdate: (updatedUser: CmsUser) => void;
 }) {
+  const [currentUser, setCurrentUser] = useState(user);
   const [activeModule, setActiveModule] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -2311,6 +2902,10 @@ function DashboardView({
     () => modules.find((m) => m.id === activeModule) ?? modules[0],
     [activeModule, modules],
   );
+
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2405,12 +3000,17 @@ function DashboardView({
       });
   };
 
+  const handleUserUpdate = (updatedUser: CmsUser) => {
+    setCurrentUser(updatedUser);
+    onUserUpdate(updatedUser);
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
       <div className="cms-root">
         {/* Navbar fija */}
         <CmsNavbar
-          user={user}
+          user={currentUser}
           onLogout={handleLogout}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
         />
@@ -2423,7 +3023,7 @@ function DashboardView({
             setSidebarOpen(false);
           }}
           isOpen={sidebarOpen}
-          user={user}
+          user={currentUser}
           modules={modules}
         />
 
@@ -2495,7 +3095,7 @@ function DashboardView({
           </div>
 
           {/* Metricas */}
-          {activeModule !== "projects" && (
+          {activeModule !== "projects" && activeModule !== "profile" && (
             <div className="cms-stats-grid">
               {topMetrics.map(({ label, value, icon: Icon }) => (
                 <Card key={label} className="cms-stat-card">
@@ -2527,6 +3127,11 @@ function DashboardView({
           ) : activeModule === "technologies" ? (
             <TechnologiesView
               onTechnologiesCountChange={setTechnologiesCount}
+            />
+          ) : activeModule === "profile" ? (
+            <AdminProfileView
+              user={currentUser}
+              onUserUpdate={handleUserUpdate}
             />
           ) : (
             <>
@@ -2746,7 +3351,7 @@ function DashboardView({
                         </Label>
                         <Input
                           className="cms-input h-8 text-sm"
-                          value={user.name}
+                          value={currentUser.name}
                           readOnly
                         />
                       </div>
@@ -2887,5 +3492,11 @@ export default function CmsApp() {
     return <LoginView onLogin={(u) => setUser(u)} />;
   }
 
-  return <DashboardView user={user} onLogout={() => setUser(null)} />;
+  return (
+    <DashboardView
+      user={user}
+      onLogout={() => setUser(null)}
+      onUserUpdate={setUser}
+    />
+  );
 }

@@ -5,9 +5,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
-from schemas.admin import UserRead
+from schemas.admin import PublicProfileRead, UserRead, UserUpdate
 from schemas.auth import AuthTokenResponse, LoginRequest, LogoutRequest, MeResponse, RefreshTokenRequest
+from repositories.admin_repository import AdminRepository
 from services.auth_service import AuthService
+from services.security import hash_password
 
 
 router = APIRouter(
@@ -100,6 +102,40 @@ async def me(
     return MeResponse(user=UserRead.model_validate(user))
 
 
+@router.patch(
+    "/me",
+    response_model=MeResponse,
+    summary="Actualizar usuario autenticado",
+    description="Actualiza los campos del perfil del usuario autenticado.",
+    response_description="Perfil del usuario autenticado actualizado.",
+    responses={
+        401: {"description": "Access token invalido o ausente."},
+    },
+)
+async def update_me(
+    payload: UserUpdate,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db),
+):
+    token = _extract_bearer_token(credentials)
+    user = await auth_service.get_current_user(db=db, token=token)
+
+    updates = payload.model_dump(exclude_unset=True)
+    if not updates:
+        return MeResponse(user=UserRead.model_validate(user))
+
+    if "password" in updates:
+        password = updates.get("password")
+        if password is None or not str(password).strip():
+            del updates["password"]
+        else:
+            updates["password"] = hash_password(str(password))
+
+    repository = AdminRepository(db)
+    updated_user = await repository.update_user(user, updates)
+    return MeResponse(user=UserRead.model_validate(updated_user))
+
+
 @router.post(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -122,4 +158,22 @@ async def logout(
     _ = credentials
     refresh_token = payload.refresh_token if payload else None
     auth_service.logout(refresh_token=refresh_token)
+
+
+@router.get(
+    "/profile",
+    response_model=PublicProfileRead,
+    summary="Perfil publico",
+    description="Devuelve los datos publicos del perfil del portafolio sin requerir autenticacion.",
+    response_description="Datos publicos del perfil.",
+    responses={
+        404: {"description": "Perfil no encontrado."},
+    },
+)
+async def get_public_profile(db: AsyncSession = Depends(get_db)):
+    repository = AdminRepository(db)
+    user = await repository.get_first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Perfil no encontrado")
+    return PublicProfileRead.model_validate(user)
     return None
