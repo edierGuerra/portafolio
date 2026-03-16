@@ -9,6 +9,7 @@ from .blog_image import BlogImage
 from .blog_post_tags import BlogPostTags
 from .blog_tag import BlogTag
 from .contact_info import ContactInfo
+from .contact_message import ContactMessage
 from .experience import Experience
 from .frequently_asked_questions import FrequentlyAskedQuestion
 from .interests import Interests
@@ -29,6 +30,7 @@ __all__ = [
     "BlogPostTags",
     "BlogTag",
     "ContactInfo",
+    "ContactMessage",
     "Experience",
     "FrequentlyAskedQuestion",
     "Interests",

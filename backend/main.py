@@ -11,6 +11,7 @@ from endpoints import (
     blog_tags_router,
     blog_router,
     contact_info_router,
+    contact_messages_router,
     experience_router,
     file_storage_router,
     faq_router,
@@ -62,6 +63,10 @@ TAGS_METADATA = [
     {
         "name": "contact-info",
         "description": "CRUD de informacion de contacto.",
+    },
+    {
+        "name": "contact-messages",
+        "description": "Recepcion de mensajes enviados desde el formulario de contacto.",
     },
     {
         "name": "faq",
@@ -126,6 +131,7 @@ app.include_router(blog_categories_router, prefix="/api")
 app.include_router(blog_tags_router, prefix="/api")
 app.include_router(blog_router, prefix="/api")
 app.include_router(contact_info_router, prefix="/api")
+app.include_router(contact_messages_router, prefix="/api")
 app.include_router(faq_router, prefix="/api")
 app.include_router(interests_router, prefix="/api")
 app.include_router(my_philosophy_router, prefix="/api")

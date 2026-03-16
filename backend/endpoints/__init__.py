@@ -5,6 +5,7 @@ from .blog_categories_endpoint import router as blog_categories_router
 from .blog_tags_endpoint import router as blog_tags_router
 from .blog_endpoint import router as blog_router
 from .contact_info_endpoint import router as contact_info_router
+from .contact_messages_endpoint import router as contact_messages_router
 from .experience_endpoint import router as experience_router
 from .file_storage_endpoint import router as file_storage_router
 from .faq_endpoint import router as faq_router
@@ -22,6 +23,7 @@ __all__ = [
     "blog_tags_router",
     "blog_router",
     "contact_info_router",
+    "contact_messages_router",
     "experience_router",
     "file_storage_router",
     "faq_router",

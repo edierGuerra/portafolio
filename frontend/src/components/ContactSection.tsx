@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -6,7 +6,12 @@ import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Mail, Phone, MapPin, Clock, Send, Coffee, MessageCircle } from "lucide-react";
-import { getContactInfo, type ContactInfo } from "../api/contact";
+import {
+  getContactInfo,
+  sendContactMessage,
+  type ContactInfo,
+  type ContactMessagePayload,
+} from "../api/contact";
 import { getServices, type Service } from "../api/services";
 import { getFaqs, type Faq } from "../api/faq";
 
@@ -15,6 +20,19 @@ export function ContactSection() {
   const [services, setServices] = useState<Service[]>([]);
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitFeedback, setSubmitFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [form, setForm] = useState<ContactMessagePayload>({
+    name: "",
+    email: "",
+    company: "",
+    budget: "",
+    subject: "",
+    message: "",
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +90,67 @@ export function ContactSection() {
         },
       ]
     : [];
+
+  const handleFormChange = (
+    field: keyof ContactMessagePayload,
+    value: string,
+  ) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitMessage = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitFeedback(null);
+
+    if (!form.name.trim() || !form.email.trim() || !form.subject.trim() || !form.message.trim()) {
+      setSubmitFeedback({
+        type: "error",
+        message: "Completa los campos obligatorios: nombre, email, asunto y mensaje.",
+      });
+      return;
+    }
+
+    if (form.message.trim().length < 10) {
+      setSubmitFeedback({
+        type: "error",
+        message: "El mensaje debe tener al menos 10 caracteres.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await sendContactMessage({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        company: form.company.trim(),
+        budget: form.budget.trim(),
+        subject: form.subject.trim(),
+        message: form.message.trim(),
+      });
+
+      setSubmitFeedback({
+        type: "success",
+        message: "Mensaje enviado. Te responderé lo antes posible.",
+      });
+      setForm({
+        name: "",
+        email: "",
+        company: "",
+        budget: "",
+        subject: "",
+        message: "",
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "No se pudo enviar el mensaje.";
+      setSubmitFeedback({
+        type: "error",
+        message: detail,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen p-4 lg:p-6">
@@ -168,31 +247,58 @@ export function ContactSection() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
+                <form className="space-y-6" onSubmit={handleSubmitMessage}>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm sm:text-base">Nombre completo</Label>
-                    <Input id="name" placeholder="Tu nombre" />
+                    <Input
+                      id="name"
+                      placeholder="Tu nombre"
+                      value={form.name}
+                      onChange={(event) => handleFormChange("name", event.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
-                    <Input id="email" type="email" placeholder="tu@email.com" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={form.email}
+                      onChange={(event) => handleFormChange("email", event.target.value)}
+                    />
                   </div>
                 </div>
                 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="company" className="text-sm sm:text-base">Empresa (opcional)</Label>
-                    <Input id="company" placeholder="Tu empresa" />
+                    <Input
+                      id="company"
+                      placeholder="Tu empresa"
+                      value={form.company}
+                      onChange={(event) => handleFormChange("company", event.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="budget" className="text-sm sm:text-base">Presupuesto estimado</Label>
-                    <Input id="budget" placeholder="ej. €5,000 - €10,000" />
+                    <Input
+                      id="budget"
+                      placeholder="ej. €5,000 - €10,000"
+                      value={form.budget}
+                      onChange={(event) => handleFormChange("budget", event.target.value)}
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subject" className="text-sm sm:text-base">Asunto</Label>
-                  <Input id="subject" placeholder="¿En qué puedo ayudarte?" />
+                  <Input
+                    id="subject"
+                    placeholder="¿En qué puedo ayudarte?"
+                    value={form.subject}
+                    onChange={(event) => handleFormChange("subject", event.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -201,6 +307,8 @@ export function ContactSection() {
                     id="message" 
                     placeholder="Describe tu proyecto, objetivos, timeline y cualquier detalle relevante..."
                     className="min-h-32"
+                    value={form.message}
+                    onChange={(event) => handleFormChange("message", event.target.value)}
                   />
                 </div>
 
@@ -215,15 +323,28 @@ export function ContactSection() {
                     </ul>
                   </div>
 
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full" size="lg" type="submit" disabled={isSubmitting}>
                     <Send className="mr-2 h-4 w-4" />
-                    Enviar mensaje
+                    {isSubmitting ? "Enviando..." : "Enviar mensaje"}
                   </Button>
+
+                  {submitFeedback && (
+                    <p
+                      className={`text-xs sm:text-sm text-center ${
+                        submitFeedback.type === "success"
+                          ? "text-emerald-500"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {submitFeedback.message}
+                    </p>
+                  )}
 
                   <p className="text-xs sm:text-sm text-muted-foreground text-center">
                     Normalmente respondo en menos de 24 horas
                   </p>
                 </div>
+                </form>
               </CardContent>
             </Card>
 
