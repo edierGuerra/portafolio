@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -5,43 +6,72 @@ import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Mail, Phone, MapPin, Clock, Send, Coffee, MessageCircle } from "lucide-react";
+import { getContactInfo, type ContactInfo } from "../api/contact";
+import { getServices, type Service } from "../api/services";
+import { getFaqs, type Faq } from "../api/faq";
 
 export function ContactSection() {
-  const contactInfo = [
-    {
-      icon: Mail,
-      label: "Email",
-      value: "hola@alejandrogarcia.dev",
-      href: "mailto:hola@alejandrogarcia.dev"
-    },
-    {
-      icon: Phone,
-      label: "Teléfono",
-      value: "+34 600 123 456",
-      href: "tel:+34600123456"
-    },
-    {
-      icon: MapPin,
-      label: "Ubicación",
-      value: "Madrid, España",
-      href: "https://maps.google.com"
-    },
-    {
-      icon: Clock,
-      label: "Disponibilidad",
-      value: "Lun - Vie, 9:00 - 18:00",
-      href: null
-    }
-  ];
+  const [contactInfo, setContactInfo] = useState<ContactInfo[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const services = [
-    "Desarrollo Web Frontend",
-    "Desarrollo Backend/APIs",
-    "Aplicaciones Móviles",
-    "UI/UX Design",
-    "Consultoría Técnica",
-    "Optimización de Performance"
-  ];
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [contactData, servicesData, faqsData] = await Promise.all([
+          getContactInfo(),
+          getServices(),
+          getFaqs(),
+        ]);
+        if (cancelled) return;
+        setContactInfo(contactData);
+        setServices(servicesData);
+        setFaqs(faqsData);
+      } catch {
+        // fallback silente — secciones muestran estado vacío
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const primaryContact = contactInfo[0] ?? null;
+
+  const contactRows = primaryContact
+    ? [
+        {
+          icon: Mail,
+          label: "Email",
+          value: primaryContact.email,
+          href: `mailto:${primaryContact.email}`,
+        },
+        {
+          icon: Phone,
+          label: "Teléfono",
+          value: primaryContact.phone,
+          href: `tel:${primaryContact.phone.replace(/\s/g, "")}`,
+        },
+        {
+          icon: MapPin,
+          label: "Ubicación",
+          value: primaryContact.location,
+          href: null as string | null,
+        },
+        {
+          icon: Clock,
+          label: "Disponibilidad",
+          value: primaryContact.availability,
+          href: null as string | null,
+        },
+      ]
+    : [];
 
   return (
     <div className="min-h-screen p-4 lg:p-6">
@@ -64,26 +94,32 @@ export function ContactSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {contactInfo.map((info) => {
-                  const Icon = info.icon;
-                  const content = (
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                      <Icon className="h-5 w-5 mt-0.5 text-primary" />
-                      <div>
-                        <p className="font-medium text-xs sm:text-sm">{info.label}</p>
-                        <p className="text-muted-foreground text-sm sm:text-base">{info.value}</p>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Cargando...</p>
+                ) : contactRows.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sin datos de contacto aún.</p>
+                ) : (
+                  contactRows.map((info) => {
+                    const Icon = info.icon;
+                    const content = (
+                      <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        <Icon className="h-5 w-5 mt-0.5 text-primary" />
+                        <div>
+                          <p className="font-medium text-xs sm:text-sm">{info.label}</p>
+                          <p className="text-muted-foreground text-sm sm:text-base">{info.value}</p>
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
 
-                  return info.href ? (
-                    <a key={info.label} href={info.href} className="block">
-                      {content}
-                    </a>
-                  ) : (
-                    <div key={info.label}>{content}</div>
-                  );
-                })}
+                    return info.href ? (
+                      <a key={info.label} href={info.href} className="block">
+                        {content}
+                      </a>
+                    ) : (
+                      <div key={info.label}>{content}</div>
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
 
@@ -92,13 +128,19 @@ export function ContactSection() {
                 <CardTitle className="text-base sm:text-lg">Servicios Disponibles</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {services.map((service) => (
-                    <Badge key={service} variant="secondary" className="mr-2 mb-2 text-xs">
-                      {service}
-                    </Badge>
-                  ))}
-                </div>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Cargando...</p>
+                ) : services.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sin servicios registrados.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {services.map((s) => (
+                      <Badge key={s.id} variant="secondary" className="mr-2 mb-2 text-xs">
+                        {s.service}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -201,39 +243,27 @@ export function ContactSection() {
           </div>
         </div>
 
-        {/* FAQ rápido */}
+        {/* FAQ */}
         <div className="mt-8 lg:mt-12">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">Preguntas Frecuentes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid sm:grid-cols-2 gap-4 lg:gap-6">
-                <div>
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">¿Cuánto tiempo toma un proyecto?</h4>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Depende del alcance, pero proyectos típicos toman 4-12 semanas desde el inicio hasta el lanzamiento.
-                  </p>
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Cargando preguntas...</p>
+              ) : faqs.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin preguntas frecuentes registradas.</p>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4 lg:gap-6">
+                  {faqs.map((faq) => (
+                    <div key={faq.id}>
+                      <h4 className="font-medium mb-2 text-sm sm:text-base">{faq.question}</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{faq.answer}</p>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">¿Trabajas con equipos remotos?</h4>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Sí, tengo experiencia trabajando con equipos distribuidos globalmente usando metodologías ágiles.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">¿Ofreces soporte post-lanzamiento?</h4>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Absolutamente. Incluyo soporte y mantenimiento como parte de mis servicios a largo plazo.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">¿Qué tecnologías prefieres?</h4>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Especializado en React, Node.js, TypeScript, pero adapto las tecnologías a las necesidades del proyecto.
-                  </p>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
