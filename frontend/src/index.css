@@ -1311,6 +1311,7 @@
   }
 
   .px-3 {
+    padding: 2%;
     padding-inline: calc(var(--spacing) * 3);
   }
 

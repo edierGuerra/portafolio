@@ -1,5 +1,27 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Globe, Mail, MapPin, Phone, Pencil, Trash2, Users } from "lucide-react";
+import {
+  AtSign,
+  Dribbble,
+  Facebook,
+  Figma,
+  Github,
+  Globe,
+  Instagram,
+  Linkedin,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Music2,
+  Pencil,
+  Phone,
+  Send,
+  Twitch,
+  Trash2,
+  Twitter,
+  Users,
+  Youtube,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "../components/ui/button";
@@ -11,6 +33,14 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 
 import {
   createContactInfoCms,
@@ -34,8 +64,42 @@ const EMPTY_CONTACT_FORM = {
 const EMPTY_NETWORK_FORM = {
   name: "",
   url: "",
-  icon: "",
+  icon: "globe",
 };
+
+type SocialIconOption = {
+  key: string;
+  label: string;
+  Icon: LucideIcon;
+};
+
+const BASE_SOCIAL_ICON_OPTIONS: SocialIconOption[] = [
+  { key: "github", label: "GitHub", Icon: Github },
+  { key: "linkedin", label: "LinkedIn", Icon: Linkedin },
+  { key: "twitter", label: "X / Twitter", Icon: Twitter },
+  { key: "instagram", label: "Instagram", Icon: Instagram },
+  { key: "facebook", label: "Facebook", Icon: Facebook },
+  { key: "youtube", label: "YouTube", Icon: Youtube },
+  { key: "twitch", label: "Twitch", Icon: Twitch },
+  { key: "discord", label: "Discord", Icon: MessageCircle },
+  { key: "telegram", label: "Telegram", Icon: Send },
+  { key: "whatsapp", label: "WhatsApp", Icon: MessageCircle },
+  { key: "tiktok", label: "TikTok", Icon: Music2 },
+  { key: "figma", label: "Figma", Icon: Figma },
+  { key: "dribbble", label: "Dribbble", Icon: Dribbble },
+  { key: "email", label: "Email", Icon: Mail },
+  { key: "website", label: "Website", Icon: Globe },
+  { key: "portfolio", label: "Portafolio", Icon: AtSign },
+  { key: "other", label: "Otro", Icon: Globe },
+];
+
+function getSocialIconByKey(iconKey: string): LucideIcon {
+  const normalized = iconKey.trim().toLowerCase();
+  const option = BASE_SOCIAL_ICON_OPTIONS.find(
+    (item) => item.key === normalized,
+  );
+  return option?.Icon ?? Globe;
+}
 
 export function ContactView({
   onContactCountChange,
@@ -49,8 +113,12 @@ export function ContactView({
   const [contacts, setContacts] = useState<ContactInfo[]>([]);
   const [networks, setNetworks] = useState<SocialNetwork[]>([]);
 
-  const [editingContact, setEditingContact] = useState<ContactInfo | null>(null);
-  const [editingNetwork, setEditingNetwork] = useState<SocialNetwork | null>(null);
+  const [editingContact, setEditingContact] = useState<ContactInfo | null>(
+    null,
+  );
+  const [editingNetwork, setEditingNetwork] = useState<SocialNetwork | null>(
+    null,
+  );
 
   const [contactForm, setContactForm] = useState(EMPTY_CONTACT_FORM);
   const [networkForm, setNetworkForm] = useState(EMPTY_NETWORK_FORM);
@@ -59,6 +127,26 @@ export function ContactView({
     () => contacts.length + networks.length,
     [contacts.length, networks.length],
   );
+
+  const socialIconOptions = useMemo(() => {
+    const knownKeys = new Set(BASE_SOCIAL_ICON_OPTIONS.map((item) => item.key));
+    const dynamicOptions = networks
+      .map((network) => network.icon.trim().toLowerCase())
+      .filter((iconKey) => iconKey && !knownKeys.has(iconKey))
+      .map((iconKey) => ({
+        key: iconKey,
+        label: `Icono guardado (${iconKey})`,
+        Icon: Globe,
+      }));
+
+    return [...BASE_SOCIAL_ICON_OPTIONS, ...dynamicOptions];
+  }, [networks]);
+
+  const selectedNetworkIcon = useMemo(
+    () => getSocialIconByKey(networkForm.icon),
+    [networkForm.icon],
+  );
+  const SelectedNetworkIcon = selectedNetworkIcon;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,7 +196,9 @@ export function ContactView({
       setContactForm(EMPTY_CONTACT_FORM);
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar contacto");
+      toast.error(
+        err instanceof Error ? err.message : "No se pudo guardar contacto",
+      );
     } finally {
       setSavingContact(false);
     }
@@ -140,14 +230,20 @@ export function ContactView({
       setNetworkForm(EMPTY_NETWORK_FORM);
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo guardar red social");
+      toast.error(
+        err instanceof Error ? err.message : "No se pudo guardar red social",
+      );
     } finally {
       setSavingNetwork(false);
     }
   };
 
   const handleDeleteContact = async (item: ContactInfo) => {
-    if (!window.confirm(`Se eliminara el contacto ${item.email}. Deseas continuar?`)) {
+    if (
+      !window.confirm(
+        `Se eliminara el contacto ${item.email}. Deseas continuar?`,
+      )
+    ) {
       return;
     }
 
@@ -156,12 +252,18 @@ export function ContactView({
       toast.success("Contacto eliminado");
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo eliminar contacto");
+      toast.error(
+        err instanceof Error ? err.message : "No se pudo eliminar contacto",
+      );
     }
   };
 
   const handleDeleteNetwork = async (item: SocialNetwork) => {
-    if (!window.confirm(`Se eliminara la red social ${item.name}. Deseas continuar?`)) {
+    if (
+      !window.confirm(
+        `Se eliminara la red social ${item.name}. Deseas continuar?`,
+      )
+    ) {
       return;
     }
 
@@ -170,7 +272,9 @@ export function ContactView({
       toast.success("Red social eliminada");
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo eliminar red social");
+      toast.error(
+        err instanceof Error ? err.message : "No se pudo eliminar red social",
+      );
     }
   };
 
@@ -200,7 +304,10 @@ export function ContactView({
                 className="cms-input h-9 text-sm"
                 value={contactForm.email}
                 onChange={(event) =>
-                  setContactForm((prev) => ({ ...prev, email: event.target.value }))
+                  setContactForm((prev) => ({
+                    ...prev,
+                    email: event.target.value,
+                  }))
                 }
                 placeholder="Correo"
               />
@@ -208,7 +315,10 @@ export function ContactView({
                 className="cms-input h-9 text-sm"
                 value={contactForm.phone}
                 onChange={(event) =>
-                  setContactForm((prev) => ({ ...prev, phone: event.target.value }))
+                  setContactForm((prev) => ({
+                    ...prev,
+                    phone: event.target.value,
+                  }))
                 }
                 placeholder="Telefono"
               />
@@ -216,7 +326,10 @@ export function ContactView({
                 className="cms-input h-9 text-sm"
                 value={contactForm.location}
                 onChange={(event) =>
-                  setContactForm((prev) => ({ ...prev, location: event.target.value }))
+                  setContactForm((prev) => ({
+                    ...prev,
+                    location: event.target.value,
+                  }))
                 }
                 placeholder="Ubicacion"
               />
@@ -224,13 +337,19 @@ export function ContactView({
                 className="cms-input h-9 text-sm"
                 value={contactForm.availability}
                 onChange={(event) =>
-                  setContactForm((prev) => ({ ...prev, availability: event.target.value }))
+                  setContactForm((prev) => ({
+                    ...prev,
+                    availability: event.target.value,
+                  }))
                 }
                 placeholder="Disponibilidad"
               />
 
               <div className="flex gap-2">
-                <Button className="cms-primary-btn h-8 text-sm" disabled={savingContact}>
+                <Button
+                  className="cms-primary-btn h-8 text-sm"
+                  disabled={savingContact}
+                >
                   {savingContact
                     ? "Guardando..."
                     : editingContact
@@ -256,7 +375,9 @@ export function ContactView({
             {loading ? (
               <p className="text-sm text-zinc-500">Cargando contactos...</p>
             ) : contacts.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sin datos de contacto registrados.</p>
+              <p className="text-sm text-zinc-500">
+                Sin datos de contacto registrados.
+              </p>
             ) : (
               <div className="space-y-2">
                 {contacts.map((item) => (
@@ -273,7 +394,9 @@ export function ContactView({
                     <p className="mt-1 text-xs text-zinc-400 flex items-center gap-2">
                       <MapPin className="h-3.5 w-3.5" /> {item.location}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-400">Disponibilidad: {item.availability}</p>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Disponibilidad: {item.availability}
+                    </p>
                     <div className="mt-2 flex justify-end gap-1">
                       <Button
                         type="button"
@@ -321,7 +444,10 @@ export function ContactView({
                 className="cms-input h-9 text-sm"
                 value={networkForm.name}
                 onChange={(event) =>
-                  setNetworkForm((prev) => ({ ...prev, name: event.target.value }))
+                  setNetworkForm((prev) => ({
+                    ...prev,
+                    name: event.target.value,
+                  }))
                 }
                 placeholder="Nombre"
               />
@@ -329,21 +455,47 @@ export function ContactView({
                 className="cms-input h-9 text-sm"
                 value={networkForm.url}
                 onChange={(event) =>
-                  setNetworkForm((prev) => ({ ...prev, url: event.target.value }))
+                  setNetworkForm((prev) => ({
+                    ...prev,
+                    url: event.target.value,
+                  }))
                 }
                 placeholder="URL"
               />
-              <Input
-                className="cms-input h-9 text-sm"
-                value={networkForm.icon}
-                onChange={(event) =>
-                  setNetworkForm((prev) => ({ ...prev, icon: event.target.value }))
-                }
-                placeholder="Icono (emoji o clase)"
-              />
+              <div className="space-y-1">
+                <p className="text-xs text-zinc-500">Icono</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60">
+                    <SelectedNetworkIcon className="h-4 w-4 text-zinc-200" />
+                  </div>
+                  <Select
+                    value={networkForm.icon}
+                    onValueChange={(value: string) =>
+                      setNetworkForm((prev) => ({ ...prev, icon: value }))
+                    }
+                  >
+                    <SelectTrigger className="cms-input h-9 flex-1 text-sm">
+                      <SelectValue placeholder="Selecciona un icono" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {socialIconOptions.map(({ key, label, Icon }) => (
+                        <SelectItem key={key} value={key}>
+                          <span className="inline-flex items-center gap-2">
+                            <Icon className="h-3.5 w-3.5" />
+                            {label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
               <div className="flex gap-2">
-                <Button className="cms-primary-btn h-8 text-sm" disabled={savingNetwork}>
+                <Button
+                  className="cms-primary-btn h-8 text-sm"
+                  disabled={savingNetwork}
+                >
                   {savingNetwork
                     ? "Guardando..."
                     : editingNetwork
@@ -367,9 +519,13 @@ export function ContactView({
             </form>
 
             {loading ? (
-              <p className="text-sm text-zinc-500">Cargando redes sociales...</p>
+              <p className="text-sm text-zinc-500">
+                Cargando redes sociales...
+              </p>
             ) : networks.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sin redes sociales registradas.</p>
+              <p className="text-sm text-zinc-500">
+                Sin redes sociales registradas.
+              </p>
             ) : (
               <div className="space-y-2">
                 {networks.map((item) => (
@@ -388,7 +544,16 @@ export function ContactView({
                     >
                       {item.url}
                     </a>
-                    <p className="mt-1 text-xs text-zinc-500">Icono: {item.icon}</p>
+                    <p className="mt-1 text-xs text-zinc-500 inline-flex items-center gap-2">
+                      Icono:
+                      {(() => {
+                        const Icon = getSocialIconByKey(item.icon);
+                        return <Icon className="h-3.5 w-3.5" />;
+                      })()}
+                      <span className="uppercase tracking-wide">
+                        {item.icon}
+                      </span>
+                    </p>
                     <div className="mt-2 flex justify-end gap-1">
                       <Button
                         type="button"

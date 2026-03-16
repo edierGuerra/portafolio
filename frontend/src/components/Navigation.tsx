@@ -4,14 +4,21 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import {
+  AtSign,
+  Dribbble,
+  Facebook,
+  Figma,
   Home,
   User,
   Briefcase,
   MessageCircle,
+  Music2,
   FileText,
   Mail,
+  Send,
   Github,
   Linkedin,
+  Twitch,
   Twitter,
   Instagram,
   Youtube,
@@ -28,6 +35,31 @@ function getSocialIcon(name: string): LucideIcon {
   if (n.includes("instagram")) return Instagram;
   if (n.includes("youtube")) return Youtube;
   if (n.includes("mail") || n.includes("email") || n.includes("correo")) return Mail;
+  return Link2;
+}
+
+function getSocialIconFromKey(iconKey: string): LucideIcon {
+  const normalized = iconKey.trim().toLowerCase();
+
+  if (normalized === "github") return Github;
+  if (normalized === "linkedin") return Linkedin;
+  if (normalized === "twitter" || normalized === "x") return Twitter;
+  if (normalized === "instagram") return Instagram;
+  if (normalized === "facebook") return Facebook;
+  if (normalized === "youtube") return Youtube;
+  if (normalized === "twitch") return Twitch;
+  if (normalized === "discord" || normalized === "whatsapp")
+    return MessageCircle;
+  if (normalized === "telegram") return Send;
+  if (normalized === "tiktok") return Music2;
+  if (normalized === "figma") return Figma;
+  if (normalized === "dribbble") return Dribbble;
+  if (normalized === "email") return Mail;
+  if (normalized === "portfolio") return AtSign;
+  if (normalized === "website" || normalized === "other") {
+    return Link2;
+  }
+
   return Link2;
 }
 
@@ -100,7 +132,9 @@ export function Navigation({
           </h4>
           <div className="space-y-2">
             {socialNetworks.map((network) => {
-              const Icon = getSocialIcon(network.name);
+              const Icon = network.icon?.trim()
+                ? getSocialIconFromKey(network.icon)
+                : getSocialIcon(network.name);
               return (
                 <Button
                   key={network.id}
