@@ -1,61 +1,221 @@
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Calendar, Award, Target, Heart } from "lucide-react";
+import {
+  getAchievements,
+  getExperience,
+  getInterests,
+  getPhilosophies,
+  type Achievement,
+  type Experience,
+  type Interest,
+  type Philosophy,
+} from "../api/about";
+import {
+  getPublicProfile,
+  getTechnologies,
+  type Technology,
+} from "../api/profile";
+
+const TECHNOLOGY_LOGO_FALLBACKS: Record<string, string> = {
+  react:
+    "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg",
+  python:
+    "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
+};
+
+function formatDateLabel(rawDate: string): string {
+  if (!rawDate) return "";
+  const parsed = new Date(rawDate);
+  if (Number.isNaN(parsed.getTime())) return rawDate;
+  return parsed.toLocaleDateString("es-ES", {
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function normalizeLogoUrl(rawLogo: string): string {
+  const trimmed = rawLogo.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+
+  try {
+    const parsed = new URL(trimmed);
+
+    if (
+      parsed.hostname === "commons.wikimedia.org" &&
+      parsed.pathname.startsWith("/wiki/File:")
+    ) {
+      const rawFileName = decodeURIComponent(
+        parsed.pathname.replace("/wiki/File:", ""),
+      );
+      return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(rawFileName)}`;
+    }
+
+    return parsed.toString();
+  } catch {
+    return trimmed;
+  }
+}
+
+function getLogoFallbackByTechnologyName(technologyName: string): string {
+  const normalizedName = technologyName.trim().toLowerCase();
+
+  if (normalizedName.includes("react")) {
+    return TECHNOLOGY_LOGO_FALLBACKS.react;
+  }
+
+  if (normalizedName.includes("python")) {
+    return TECHNOLOGY_LOGO_FALLBACKS.python;
+  }
+
+  return "";
+}
+
+function TechnologyLogo({ name, logo }: { name: string; logo: string }) {
+  const fallbackLogo = useMemo(
+    () => getLogoFallbackByTechnologyName(name),
+    [name],
+  );
+  const normalizedLogo = useMemo(() => normalizeLogoUrl(logo), [logo]);
+  const [logoSrc, setLogoSrc] = useState(normalizedLogo || fallbackLogo);
+
+  useEffect(() => {
+    setLogoSrc(normalizedLogo || fallbackLogo);
+  }, [normalizedLogo, fallbackLogo]);
+
+  if (!logoSrc) {
+    return <span className="text-[11px] text-muted-foreground">N/A</span>;
+  }
+
+  return (
+    <img
+      src={logoSrc}
+      alt={name}
+      className="h-full w-full object-contain"
+      loading="lazy"
+      onError={() => {
+        if (fallbackLogo && logoSrc !== fallbackLogo) {
+          setLogoSrc(fallbackLogo);
+        }
+      }}
+    />
+  );
+}
 
 export function AboutSection() {
-  const experience = [
-    { company: "TechCorp", role: "Senior Full-Stack Developer", period: "2022 - Presente", duration: "2 años" },
-    { company: "StartupXYZ", role: "Frontend Developer", period: "2020 - 2022", duration: "2 años" },
-    { company: "DesignStudio", role: "UI/UX Designer", period: "2019 - 2020", duration: "1 año" },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [technologies, setTechnologies] = useState<Technology[]>([]);
+  const [experience, setExperience] = useState<Experience[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [interests, setInterests] = useState<Interest[]>([]);
+  const [philosophies, setPhilosophies] = useState<Philosophy[]>([]);
+  const [aboutMe, setAboutMe] = useState("");
 
-  const skills = [
-    { name: "JavaScript/TypeScript", level: 95 },
-    { name: "React/Next.js", level: 90 },
-    { name: "Node.js/Express", level: 85 },
-    { name: "UI/UX Design", level: 80 },
-    { name: "Python/Django", level: 75 },
-    { name: "AWS/DevOps", level: 70 },
-  ];
+  useEffect(() => {
+    let cancelled = false;
 
-  const interests = [
-    "Inteligencia Artificial", "Diseño Sostenible", "Tecnologías Emergentes", 
-    "Fotografía", "Viajes", "Café de Especialidad"
-  ];
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [profile, techs, exp, ach, ints, philo] = await Promise.all([
+          getPublicProfile(),
+          getTechnologies(),
+          getExperience(),
+          getAchievements(),
+          getInterests(),
+          getPhilosophies(),
+        ]);
+
+        if (cancelled) return;
+        setAboutMe(profile.about_me ?? "");
+        setTechnologies(techs);
+        setExperience(exp);
+        setAchievements(ach);
+        setInterests(ints);
+        setPhilosophies(philo);
+      } catch {
+        if (!cancelled) {
+          setTechnologies([]);
+          setExperience([]);
+          setAchievements([]);
+          setInterests([]);
+          setPhilosophies([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const primaryPhilosophy = useMemo(() => philosophies[0], [philosophies]);
+  const philosophyImage = primaryPhilosophy?.image?.trim() ?? "";
+  const philosophyText = primaryPhilosophy?.philosophy?.trim() ?? "";
 
   return (
     <div className="min-h-screen p-4 lg:p-6 space-y-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 lg:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Sobre mí</h2>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
+            Sobre mi
+          </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-            Descubre mi trayectoria profesional, habilidades técnicas y lo que me motiva como desarrollador
+            Trayectoria profesional, stack tecnologico y enfoque de trabajo.
           </p>
+          {aboutMe && (
+            <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-3xl mx-auto px-4 leading-relaxed">
+              {aboutMe}
+            </p>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Historia Profesional */}
           <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <Calendar className="h-5 w-5" />
-                  Experiencia Profesional
+                  Experiencia profesional
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {experience.map((job, index) => (
-                  <div key={index} className="relative pl-6 border-l-2 border-primary/20 last:border-l-0">
-                    <div className="absolute -left-2 top-0 w-4 h-4 bg-primary rounded-full"></div>
-                    <div className="mb-2">
-                      <h4 className="font-semibold text-base sm:text-lg">{job.role}</h4>
-                      <p className="text-primary text-sm sm:text-base">{job.company}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{job.period} • {job.duration}</p>
+              <CardContent className="space-y-5">
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Cargando experiencia...
+                  </p>
+                ) : experience.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aun no hay experiencia registrada.
+                  </p>
+                ) : (
+                  experience.map((job) => (
+                    <div
+                      key={job.id}
+                      className="relative pl-6 border-l-2 border-primary/20 last:border-l-0"
+                    >
+                      <div className="absolute -left-2 top-0 w-4 h-4 bg-primary rounded-full" />
+                      <div className="mb-1">
+                        <h4 className="font-semibold text-base sm:text-lg">
+                          {job.position}
+                        </h4>
+                        <p className="text-primary text-sm sm:text-base">
+                          {job.company}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {formatDateLabel(job.start_date)} -{" "}
+                          {formatDateLabel(job.end_date)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -63,38 +223,60 @@ export function AboutSection() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <Target className="h-5 w-5" />
-                  Habilidades Técnicas
+                  Habilidades tecnicas
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {skills.map((skill) => (
-                  <div key={skill.name} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-sm sm:text-base">{skill.name}</span>
-                      <span className="text-xs sm:text-sm text-muted-foreground">{skill.level}%</span>
-                    </div>
-                    <Progress value={skill.level} className="h-2" />
+              <CardContent>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Cargando tecnologias...
+                  </p>
+                ) : technologies.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No hay tecnologias registradas.
+                  </p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {technologies.map((technology) => (
+                      <div
+                        key={technology.id}
+                        className="flex items-center gap-3 rounded-lg border border-border/70 bg-card/70 px-3 py-2"
+                      >
+                        <div className="h-8 w-8 rounded-md bg-muted/40 p-1 flex items-center justify-center">
+                          <TechnologyLogo
+                            name={technology.name}
+                            logo={technology.logo}
+                          />
+                        </div>
+                        <span className="text-sm sm:text-base font-medium truncate">
+                          {technology.name}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Información Personal */}
           <div className="space-y-6 order-1 lg:order-2">
             <Card>
               <CardContent className="p-4 sm:p-6">
-                <div className="aspect-square rounded-lg overflow-hidden mb-6">
-                  <ImageWithFallback
-                    src="https://images.unsplash.com/photo-1549399905-5d1bad747576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB3b3Jrc3BhY2UlMjB0ZWNobm9sb2d5fGVufDF8fHx8MTc1ODQ4MTA5NXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                    alt="Workspace"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="font-semibold mb-3 text-base sm:text-lg">Mi Filosofía</h3>
+                {philosophyImage ? (
+                  <div className="aspect-square rounded-lg overflow-hidden mb-6">
+                    <ImageWithFallback
+                      src={philosophyImage}
+                      alt="Imagen de filosofia"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : null}
+                <h3 className="font-semibold mb-3 text-base sm:text-lg">
+                  Mi filosofia
+                </h3>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  Creo en el poder de la tecnología para resolver problemas reales y mejorar la vida de las personas. 
-                  Mi enfoque combina excelencia técnica con diseño centrado en el usuario.
+                  {philosophyText ||
+                    "Construyo experiencias digitales con foco en claridad, rendimiento y valor real para las personas."}
                 </p>
               </CardContent>
             </Card>
@@ -103,22 +285,28 @@ export function AboutSection() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Award className="h-5 w-5" />
-                  Logros Destacados
+                  Logros destacados
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="text-sm">
-                  <p className="font-medium">🏆 Mejor Proyecto del Año 2023</p>
-                  <p className="text-muted-foreground text-xs sm:text-sm">TechCorp Innovation Awards</p>
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium">🎯 +50 Proyectos Completados</p>
-                  <p className="text-muted-foreground text-xs sm:text-sm">Alta satisfacción del cliente</p>
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium">📈 200% Mejora de Performance</p>
-                  <p className="text-muted-foreground text-xs sm:text-sm">En aplicaciones optimizadas</p>
-                </div>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Cargando logros...
+                  </p>
+                ) : achievements.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Sin logros registrados.
+                  </p>
+                ) : (
+                  achievements.map((achievement) => (
+                    <div key={achievement.id} className="text-sm">
+                      <p className="font-medium">{achievement.title}</p>
+                      <p className="text-muted-foreground text-xs sm:text-sm">
+                        {achievement.subtitle}
+                      </p>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -130,13 +318,27 @@ export function AboutSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {interests.map((interest) => (
-                    <Badge key={interest} variant="outline" className="text-xs">
-                      {interest}
-                    </Badge>
-                  ))}
-                </div>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Cargando intereses...
+                  </p>
+                ) : interests.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Sin intereses registrados.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {interests.map((interest) => (
+                      <Badge
+                        key={interest.id}
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        {interest.interest}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

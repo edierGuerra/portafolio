@@ -1,6 +1,12 @@
 import { http } from "../api/http";
 import { httpWithAuth } from "./session";
 import type {
+  AvailableService,
+  AvailableServiceCreate,
+  AvailableServiceUpdate,
+  Achievement,
+  AchievementCreate,
+  AchievementUpdate,
   AuthTokenResponse,
   BlogCategory,
   BlogCategoryCreate,
@@ -12,14 +18,32 @@ import type {
   BlogTagCreate,
   BlogTagUpdate,
   CmsUser,
+  ContactInfo,
+  ContactInfoCreate,
+  ContactInfoUpdate,
   FileUploadResponse,
+  Interest,
+  InterestCreate,
+  InterestUpdate,
   LoginPayload,
   MeResponse,
+  Philosophy,
+  PhilosophyCreate,
+  PhilosophyUpdate,
   PresignedDownloadResponse,
   Project,
   ProjectCreate,
   ProjectUpdate,
   RefreshTokenPayload,
+  Experience,
+  ExperienceCreate,
+  ExperienceUpdate,
+  FrequentlyAskedQuestion,
+  FrequentlyAskedQuestionCreate,
+  FrequentlyAskedQuestionUpdate,
+  SocialNetwork,
+  SocialNetworkCreate,
+  SocialNetworkUpdate,
   Technology,
   TechnologyCreate,
   TechnologyUpdate,
@@ -201,6 +225,246 @@ export async function uploadTechnologyLogoCms(
   return httpWithAuth<FileUploadResponse>("/api/files/upload", {
     method: "POST",
     body: formData,
+  });
+}
+
+// ─── About / Sobre mi ───────────────────────────────────────────────────────
+
+export async function getExperienceCms(): Promise<Experience[]> {
+  return http<Experience[]>("/api/experience");
+}
+
+export async function createExperienceCms(
+  payload: ExperienceCreate,
+): Promise<Experience> {
+  return httpWithAuth<Experience>("/api/experience", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateExperienceCms(
+  id: number,
+  payload: ExperienceUpdate,
+): Promise<Experience> {
+  return httpWithAuth<Experience>(`/api/experience/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteExperienceCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/experience/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAchievementsCms(): Promise<Achievement[]> {
+  return http<Achievement[]>("/api/achievements");
+}
+
+export async function createAchievementCms(
+  payload: AchievementCreate,
+): Promise<Achievement> {
+  return httpWithAuth<Achievement>("/api/achievements", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAchievementCms(
+  id: number,
+  payload: AchievementUpdate,
+): Promise<Achievement> {
+  return httpWithAuth<Achievement>(`/api/achievements/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAchievementCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/achievements/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getInterestsCms(): Promise<Interest[]> {
+  return http<Interest[]>("/api/interests");
+}
+
+export async function createInterestCms(
+  payload: InterestCreate,
+): Promise<Interest> {
+  return httpWithAuth<Interest>("/api/interests", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateInterestCms(
+  id: number,
+  payload: InterestUpdate,
+): Promise<Interest> {
+  return httpWithAuth<Interest>(`/api/interests/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteInterestCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/interests/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getPhilosophiesCms(): Promise<Philosophy[]> {
+  return http<Philosophy[]>("/api/philosophy");
+}
+
+export async function createPhilosophyCms(
+  payload: PhilosophyCreate,
+): Promise<Philosophy> {
+  return httpWithAuth<Philosophy>("/api/philosophy", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updatePhilosophyCms(
+  id: number,
+  payload: PhilosophyUpdate,
+): Promise<Philosophy> {
+  return httpWithAuth<Philosophy>(`/api/philosophy/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deletePhilosophyCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/philosophy/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// ─── Services ───────────────────────────────────────────────────────────────
+
+export async function getServicesCms(): Promise<AvailableService[]> {
+  return http<AvailableService[]>("/api/services");
+}
+
+export async function createServiceCms(
+  payload: AvailableServiceCreate,
+): Promise<AvailableService> {
+  return httpWithAuth<AvailableService>("/api/services", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateServiceCms(
+  id: number,
+  payload: AvailableServiceUpdate,
+): Promise<AvailableService> {
+  return httpWithAuth<AvailableService>(`/api/services/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteServiceCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/services/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// ─── FAQ ────────────────────────────────────────────────────────────────────
+
+export async function getFaqCms(): Promise<FrequentlyAskedQuestion[]> {
+  return http<FrequentlyAskedQuestion[]>("/api/faq");
+}
+
+export async function createFaqCms(
+  payload: FrequentlyAskedQuestionCreate,
+): Promise<FrequentlyAskedQuestion> {
+  return httpWithAuth<FrequentlyAskedQuestion>("/api/faq", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateFaqCms(
+  id: number,
+  payload: FrequentlyAskedQuestionUpdate,
+): Promise<FrequentlyAskedQuestion> {
+  return httpWithAuth<FrequentlyAskedQuestion>(`/api/faq/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteFaqCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/faq/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// ─── Contact ────────────────────────────────────────────────────────────────
+
+export async function getContactInfoCms(): Promise<ContactInfo[]> {
+  return http<ContactInfo[]>("/api/contact-info");
+}
+
+export async function createContactInfoCms(
+  payload: ContactInfoCreate,
+): Promise<ContactInfo> {
+  return httpWithAuth<ContactInfo>("/api/contact-info", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateContactInfoCms(
+  id: number,
+  payload: ContactInfoUpdate,
+): Promise<ContactInfo> {
+  return httpWithAuth<ContactInfo>(`/api/contact-info/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteContactInfoCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/contact-info/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getSocialNetworksCms(): Promise<SocialNetwork[]> {
+  return http<SocialNetwork[]>("/api/social-networks");
+}
+
+export async function createSocialNetworkCms(
+  payload: SocialNetworkCreate,
+): Promise<SocialNetwork> {
+  return httpWithAuth<SocialNetwork>("/api/social-networks", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateSocialNetworkCms(
+  id: number,
+  payload: SocialNetworkUpdate,
+): Promise<SocialNetwork> {
+  return httpWithAuth<SocialNetwork>(`/api/social-networks/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteSocialNetworkCms(id: number): Promise<void> {
+  return httpWithAuth<void>(`/api/social-networks/${id}`, {
+    method: "DELETE",
   });
 }
 

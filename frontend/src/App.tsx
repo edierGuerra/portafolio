@@ -7,8 +7,29 @@ import { ProjectsSection } from "./components/ProjectsSection";
 import { BlogSection } from "./components/BlogSection";
 import { ContactSection } from "./components/ContactSection";
 
+const VALID_SECTIONS = ["home", "about", "projects", "blog", "contact"];
+
+function isValidSection(section: string): boolean {
+  return VALID_SECTIONS.includes(section);
+}
+
+function readSectionFromHash(): string | null {
+  const hashValue = window.location.hash.replace(/^#/, "").trim();
+  return isValidSection(hashValue) ? hashValue : null;
+}
+
+function getInitialSection(): string {
+  const sectionFromHash = readSectionFromHash();
+  if (sectionFromHash) return sectionFromHash;
+
+  const sectionFromStorage = localStorage.getItem("activeSection") ?? "";
+  if (isValidSection(sectionFromStorage)) return sectionFromStorage;
+
+  return "home";
+}
+
 export default function App() {
-  const [activeSection, setActiveSection] = useState("home");
+  const [activeSection, setActiveSection] = useState(getInitialSection);
   const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,6 +42,31 @@ export default function App() {
       setDarkMode(true);
       document.documentElement.classList.add("dark");
     }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("activeSection", activeSection);
+
+    const nextHash = `#${activeSection}`;
+    if (window.location.hash !== nextHash) {
+      window.history.replaceState(null, "", nextHash);
+    }
+  }, [activeSection]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const sectionFromHash = readSectionFromHash();
+      if (sectionFromHash) {
+        setActiveSection((currentSection) =>
+          currentSection === sectionFromHash ? currentSection : sectionFromHash,
+        );
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
   }, []);
 
   const toggleDarkMode = () => {

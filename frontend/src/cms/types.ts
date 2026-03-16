@@ -106,6 +106,151 @@ export interface TechnologyUpdate {
   logo?: string;
 }
 
+// ─── About / Sobre mi ───────────────────────────────────────────────────────
+
+export interface Experience {
+  id: number;
+  position: string;
+  company: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface ExperienceCreate {
+  position: string;
+  company: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface ExperienceUpdate {
+  position?: string;
+  company?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface Achievement {
+  id: number;
+  title: string;
+  subtitle: string;
+}
+
+export interface AchievementCreate {
+  title: string;
+  subtitle: string;
+}
+
+export interface AchievementUpdate {
+  title?: string;
+  subtitle?: string;
+}
+
+export interface Interest {
+  id: number;
+  interest: string;
+}
+
+export interface InterestCreate {
+  interest: string;
+}
+
+export interface InterestUpdate {
+  interest?: string;
+}
+
+export interface Philosophy {
+  id: number;
+  philosophy: string;
+  image: string;
+}
+
+export interface PhilosophyCreate {
+  philosophy: string;
+  image: string;
+}
+
+export interface PhilosophyUpdate {
+  philosophy?: string;
+  image?: string;
+}
+
+// ─── Services ───────────────────────────────────────────────────────────────
+
+export interface AvailableService {
+  id: number;
+  service: string;
+}
+
+export interface AvailableServiceCreate {
+  service: string;
+}
+
+export interface AvailableServiceUpdate {
+  service?: string;
+}
+
+// ─── FAQ ────────────────────────────────────────────────────────────────────
+
+export interface FrequentlyAskedQuestion {
+  id: number;
+  question: string;
+  answer: string;
+}
+
+export interface FrequentlyAskedQuestionCreate {
+  question: string;
+  answer: string;
+}
+
+export interface FrequentlyAskedQuestionUpdate {
+  question?: string;
+  answer?: string;
+}
+
+// ─── Contact ────────────────────────────────────────────────────────────────
+
+export interface ContactInfo {
+  id: number;
+  email: string;
+  phone: string;
+  location: string;
+  availability: string;
+}
+
+export interface ContactInfoCreate {
+  email: string;
+  phone: string;
+  location: string;
+  availability: string;
+}
+
+export interface ContactInfoUpdate {
+  email?: string;
+  phone?: string;
+  location?: string;
+  availability?: string;
+}
+
+export interface SocialNetwork {
+  id: number;
+  name: string;
+  url: string;
+  icon: string;
+}
+
+export interface SocialNetworkCreate {
+  name: string;
+  url: string;
+  icon: string;
+}
+
+export interface SocialNetworkUpdate {
+  name?: string;
+  url?: string;
+  icon?: string;
+}
+
 // ─── Blog ───────────────────────────────────────────────────────────────────
 
 export interface BlogCategory {

@@ -95,8 +95,12 @@ import {
   saveSession,
 } from "./session";
 import {
+  getContactInfoCms,
+  getFaqCms,
   createTechnologyCms,
   createProjectCms,
+  getSocialNetworksCms,
+  getServicesCms,
   getBlogsCms,
   deleteTechnologyCms,
   getTechnologiesCms,
@@ -113,7 +117,11 @@ import {
   updateTechnologyCms,
   updateProjectCms,
 } from "./api";
+import { AboutContentView } from "./AboutContentView";
 import { BlogView } from "./BlogView";
+import { ContactView } from "./ContactView";
+import { FaqView } from "./FaqView";
+import { ServicesView } from "./ServicesView";
 import "./cms-theme.css";
 
 type ModuleItem = {
@@ -141,10 +149,11 @@ const MODULES: ModuleItem[] = [
   },
   {
     id: "experience",
-    label: "Experiencia",
-    icon: Briefcase,
+    label: "Sobre mi",
+    icon: FileText,
     records: 5,
-    description: "Historial profesional, cargos y logros.",
+    description:
+      "Contenido de Sobre mi: experiencia, logros, intereses y filosofia.",
   },
   {
     id: "blog",
@@ -226,6 +235,27 @@ const HEATMAP_HOURS = [
   { hour: "22h", activity: 32 },
 ];
 
+const TECHNOLOGY_LOGO_FALLBACKS: Record<string, string> = {
+  react:
+    "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg",
+  python:
+    "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
+};
+
+function getLogoFallbackByTechnologyName(technologyName: string): string {
+  const normalizedName = technologyName.trim().toLowerCase();
+
+  if (normalizedName.includes("react")) {
+    return TECHNOLOGY_LOGO_FALLBACKS.react;
+  }
+
+  if (normalizedName.includes("python")) {
+    return TECHNOLOGY_LOGO_FALLBACKS.python;
+  }
+
+  return "";
+}
+
 function normalizeTechnologyLogoUrl(rawLogo: string): string {
   const trimmed = rawLogo.trim();
   if (!trimmed) {
@@ -254,6 +284,48 @@ function normalizeTechnologyLogoUrl(rawLogo: string): string {
   } catch {
     return trimmed;
   }
+}
+
+function CmsTechnologyLogoImage({
+  name,
+  logo,
+  className,
+}: {
+  name: string;
+  logo: string;
+  className: string;
+}) {
+  const fallbackLogo = useMemo(
+    () => getLogoFallbackByTechnologyName(name),
+    [name],
+  );
+  const normalizedLogo = useMemo(
+    () => normalizeTechnologyLogoUrl(logo),
+    [logo],
+  );
+  const [logoSrc, setLogoSrc] = useState(normalizedLogo || fallbackLogo);
+
+  useEffect(() => {
+    setLogoSrc(normalizedLogo || fallbackLogo);
+  }, [normalizedLogo, fallbackLogo]);
+
+  if (!logoSrc) {
+    return <span className="text-[11px] text-zinc-500">N/A</span>;
+  }
+
+  return (
+    <img
+      src={logoSrc}
+      alt={name}
+      className={className}
+      loading="lazy"
+      onError={() => {
+        if (fallbackLogo && logoSrc !== fallbackLogo) {
+          setLogoSrc(fallbackLogo);
+        }
+      }}
+    />
+  );
 }
 
 // â”€â”€â”€ Navbar (fijo en la parte superior) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2037,11 +2109,10 @@ function TechnologiesView({
                       </td>
                       <td className="cms-tech-preview-col-cell">
                         <div className="cms-tech-preview-wrap">
-                          <img
-                            src={normalizeTechnologyLogoUrl(technology.logo)}
-                            alt={technology.name}
+                          <CmsTechnologyLogoImage
+                            name={technology.name}
+                            logo={technology.logo}
                             className="cms-tech-preview-image"
-                            loading="lazy"
                           />
                         </div>
                       </td>
@@ -2218,15 +2289,20 @@ function TechnologiesView({
               {(localLogoPreviewUrl || form.logo.trim()) && (
                 <div className="pt-2">
                   <div className="cms-tech-preview-form-wrap">
-                    <img
-                      src={
-                        localLogoPreviewUrl ||
-                        normalizeTechnologyLogoUrl(form.logo)
-                      }
-                      alt={form.name || "Preview logo"}
-                      className="cms-tech-preview-image"
-                      loading="lazy"
-                    />
+                    {localLogoPreviewUrl ? (
+                      <img
+                        src={localLogoPreviewUrl}
+                        alt={form.name || "Preview logo"}
+                        className="cms-tech-preview-image"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <CmsTechnologyLogoImage
+                        name={form.name || "Preview logo"}
+                        logo={form.logo}
+                        className="cms-tech-preview-image"
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -2887,6 +2963,15 @@ function DashboardView({
   const [technologiesCount, setTechnologiesCount] = useState(
     MODULES.find((module) => module.id === "technologies")?.records ?? 0,
   );
+  const [servicesCount, setServicesCount] = useState(
+    MODULES.find((module) => module.id === "services")?.records ?? 0,
+  );
+  const [faqCount, setFaqCount] = useState(
+    MODULES.find((module) => module.id === "faq")?.records ?? 0,
+  );
+  const [contactCount, setContactCount] = useState(
+    MODULES.find((module) => module.id === "contact")?.records ?? 0,
+  );
   const PAGE_SIZE = 5;
 
   const modules = useMemo(
@@ -2901,9 +2986,25 @@ function DashboardView({
         if (module.id === "technologies") {
           return { ...module, records: technologiesCount };
         }
+        if (module.id === "services") {
+          return { ...module, records: servicesCount };
+        }
+        if (module.id === "faq") {
+          return { ...module, records: faqCount };
+        }
+        if (module.id === "contact") {
+          return { ...module, records: contactCount };
+        }
         return module;
       }),
-    [projectsCount, blogsCount, technologiesCount],
+    [
+      projectsCount,
+      blogsCount,
+      technologiesCount,
+      servicesCount,
+      faqCount,
+      contactCount,
+    ],
   );
 
   const selectedModule = useMemo(
@@ -2920,15 +3021,30 @@ function DashboardView({
 
     const loadModulesCount = async () => {
       try {
-        const [projects, blogs, technologies] = await Promise.all([
+        const [
+          projects,
+          blogs,
+          technologies,
+          services,
+          faq,
+          contacts,
+          networks,
+        ] = await Promise.all([
           getProjects(),
           getBlogsCms(),
           getTechnologiesCms(),
+          getServicesCms(),
+          getFaqCms(),
+          getContactInfoCms(),
+          getSocialNetworksCms(),
         ]);
         if (!cancelled) {
           setProjectsCount(projects.length);
           setBlogsCount(blogs.length);
           setTechnologiesCount(technologies.length);
+          setServicesCount(services.length);
+          setFaqCount(faq.length);
+          setContactCount(contacts.length + networks.length);
         }
       } catch {
         // Evitar toasts intrusivos en el dashboard inicial.
@@ -3106,7 +3222,11 @@ function DashboardView({
 
           {/* Metricas */}
           {activeModule !== "projects" &&
+            activeModule !== "experience" &&
             activeModule !== "blog" &&
+            activeModule !== "services" &&
+            activeModule !== "faq" &&
+            activeModule !== "contact" &&
             activeModule !== "profile" && (
               <div className="cms-stats-grid">
                 {topMetrics.map(({ label, value, icon: Icon }) => (
@@ -3136,8 +3256,16 @@ function DashboardView({
               onProjectsCountChange={setProjectsCount}
               onTechnologiesCountChange={setTechnologiesCount}
             />
+          ) : activeModule === "experience" ? (
+            <AboutContentView />
           ) : activeModule === "blog" ? (
             <BlogView onBlogsCountChange={setBlogsCount} />
+          ) : activeModule === "services" ? (
+            <ServicesView onServicesCountChange={setServicesCount} />
+          ) : activeModule === "faq" ? (
+            <FaqView onFaqCountChange={setFaqCount} />
+          ) : activeModule === "contact" ? (
+            <ContactView onContactCountChange={setContactCount} />
           ) : activeModule === "technologies" ? (
             <TechnologiesView
               onTechnologiesCountChange={setTechnologiesCount}

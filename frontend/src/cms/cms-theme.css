@@ -553,6 +553,7 @@
     box-shadow: 0 2px 16px rgba(4, 8, 6, 0.3) !important;
     border-radius: 0.875rem !important;
     overflow: hidden;
+    padding: 2%;
 }
 
 /* ============================================================
