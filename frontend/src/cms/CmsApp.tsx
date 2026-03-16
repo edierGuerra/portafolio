@@ -81,6 +81,7 @@ import {
   ChartTooltipContent,
 } from "../components/ui/chart";
 import type {
+  AnalyticsSummary,
   AvailabilityStatus,
   ContactMessageCms,
   ContactMessageReplyPayload,
@@ -100,6 +101,7 @@ import {
 } from "./session";
 import {
   deleteContactMessageCms,
+  getAnalyticsSummaryCms,
   getContactMessagesCms,
   getContactInfoCms,
   getFaqCms,
@@ -174,29 +176,25 @@ const REPLY_TEMPLATES: ReplyTemplate[] = [
     id: "thanks",
     label: "Agradecimiento",
     subject: "Gracias por tu mensaje",
-    body:
-      "Hola {name},\n\nGracias por escribir y compartir el contexto de tu solicitud.\n\nQuedo atento a tus comentarios para ayudarte con el siguiente paso.\n\nSaludos,",
+    body: "Hola {name},\n\nGracias por escribir y compartir el contexto de tu solicitud.\n\nQuedo atento a tus comentarios para ayudarte con el siguiente paso.\n\nSaludos,",
   },
   {
     id: "quote",
     label: "Cotizacion inicial",
     subject: "Propuesta inicial para tu solicitud",
-    body:
-      "Hola {name},\n\nGracias por tu interes. Puedo prepararte una propuesta inicial con alcance, tiempos y estimacion.\n\nSi te parece, te comparto un primer borrador con base en la informacion enviada.\n\nSaludos,",
+    body: "Hola {name},\n\nGracias por tu interes. Puedo prepararte una propuesta inicial con alcance, tiempos y estimacion.\n\nSi te parece, te comparto un primer borrador con base en la informacion enviada.\n\nSaludos,",
   },
   {
     id: "followup",
     label: "Solicitud de detalles",
     subject: "Necesito algunos detalles para avanzar",
-    body:
-      "Hola {name},\n\nPara darte una respuesta mas precisa, me ayudaria contar con un poco mas de detalle sobre objetivos, tiempos y presupuesto estimado.\n\nCon eso te envio una respuesta mas puntual.\n\nSaludos,",
+    body: "Hola {name},\n\nPara darte una respuesta mas precisa, me ayudaria contar con un poco mas de detalle sobre objetivos, tiempos y presupuesto estimado.\n\nCon eso te envio una respuesta mas puntual.\n\nSaludos,",
   },
   {
     id: "meeting",
     label: "Agendar reunion",
     subject: "Coordinemos una llamada breve",
-    body:
-      "Hola {name},\n\nSi te parece, podemos coordinar una llamada breve para revisar tu requerimiento y definir los proximos pasos.\n\nComparte por favor tu disponibilidad y lo organizamos.\n\nSaludos,",
+    body: "Hola {name},\n\nSi te parece, podemos coordinar una llamada breve para revisar tu requerimiento y definir los proximos pasos.\n\nComparte por favor tu disponibilidad y lo organizamos.\n\nSaludos,",
   },
 ];
 
@@ -380,42 +378,6 @@ const MODULES: ModuleItem[] = [
     records: 1,
     description: "Configuracion personal e identidad visual.",
   },
-];
-
-const VISIT_TREND_DATA = [
-  { day: "Lun", visits: 420, unique: 280 },
-  { day: "Mar", visits: 510, unique: 330 },
-  { day: "Mie", visits: 590, unique: 360 },
-  { day: "Jue", visits: 670, unique: 405 },
-  { day: "Vie", visits: 740, unique: 452 },
-  { day: "Sab", visits: 620, unique: 398 },
-  { day: "Dom", visits: 580, unique: 374 },
-];
-
-const SECTION_CLICKS_DATA = [
-  { section: "Proyectos", clicks: 1890 },
-  { section: "Blog", clicks: 1310 },
-  { section: "Experiencia", clicks: 990 },
-  { section: "Servicios", clicks: 760 },
-  { section: "Contacto", clicks: 540 },
-];
-
-const TRAFFIC_SOURCE_DATA = [
-  { source: "Organico", value: 48, fill: "#2dcc85" },
-  { source: "LinkedIn", value: 23, fill: "#4ee9ad" },
-  { source: "GitHub", value: 17, fill: "#7ff3c8" },
-  { source: "Directo", value: 12, fill: "#a6f7db" },
-];
-
-const HEATMAP_HOURS = [
-  { hour: "08h", activity: 35 },
-  { hour: "10h", activity: 58 },
-  { hour: "12h", activity: 71 },
-  { hour: "14h", activity: 64 },
-  { hour: "16h", activity: 82 },
-  { hour: "18h", activity: 76 },
-  { hour: "20h", activity: 49 },
-  { hour: "22h", activity: 32 },
 ];
 
 const TECHNOLOGY_LOGO_FALLBACKS: Record<string, string> = {
@@ -665,40 +627,53 @@ function CmsNavbar({
                             <button
                               type="button"
                               className="cms-notif-action-btn"
-                              onClick={() => onMarkNotificationRead(notification.id)}
+                              onClick={() =>
+                                onMarkNotificationRead(notification.id)
+                              }
                               title="Marcar como leida"
                             >
                               Leer
                             </button>
                           )}
 
-                          {notification.replyEmail && notification.source === "contact" && (
-                            <>
-                              <button
-                                type="button"
-                                className="cms-notif-action-btn"
-                                onClick={() => onViewContactNotification(notification)}
-                                title="Ver mensaje completo"
-                              >
-                                Ver
-                              </button>
-                              <button
-                                type="button"
-                                className="cms-notif-action-btn cms-notif-action-btn-primary"
-                                onClick={() => onReplyContactNotification(notification)}
-                                disabled={replyingNotificationId === notification.id}
-                                title={`Responder a ${notification.replyEmail}`}
-                              >
-                                {replyingNotificationId === notification.id ? "Enviando..." : "Responder"}
-                              </button>
-                            </>
-                          )}
+                          {notification.replyEmail &&
+                            notification.source === "contact" && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="cms-notif-action-btn"
+                                  onClick={() =>
+                                    onViewContactNotification(notification)
+                                  }
+                                  title="Ver mensaje completo"
+                                >
+                                  Ver
+                                </button>
+                                <button
+                                  type="button"
+                                  className="cms-notif-action-btn cms-notif-action-btn-primary"
+                                  onClick={() =>
+                                    onReplyContactNotification(notification)
+                                  }
+                                  disabled={
+                                    replyingNotificationId === notification.id
+                                  }
+                                  title={`Responder a ${notification.replyEmail}`}
+                                >
+                                  {replyingNotificationId === notification.id
+                                    ? "Enviando..."
+                                    : "Responder"}
+                                </button>
+                              </>
+                            )}
 
                           {notification.source === "system" && (
                             <button
                               type="button"
                               className="cms-notif-action-btn cms-notif-action-btn-danger"
-                              onClick={() => onDismissNotification(notification)}
+                              onClick={() =>
+                                onDismissNotification(notification)
+                              }
                               title="Eliminar notificacion"
                             >
                               Eliminar
@@ -946,8 +921,105 @@ function LoginView({ onLogin }: { onLogin: (user: CmsUser) => void }) {
 }
 
 function SummaryAnalyticsView() {
+  const [data, setData] = useState<AnalyticsSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const metrics = {
+    totalVisitsWeek: data?.total_visits_week ?? 0,
+    totalUniqueWeek: data?.total_unique_week ?? 0,
+    totalSectionClicks: data?.total_section_clicks ?? 0,
+    avgCtr: data?.avg_ctr ?? 0,
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    getAnalyticsSummaryCms()
+      .then(setData)
+      .catch(() => setError("No se pudo cargar el resumen de analíticas."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="cms-analytics-shell">
+        <div className="cms-analytics-empty">
+          <Activity className="cms-analytics-empty-icon" />
+          <p>Cargando datos…</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <section className="cms-analytics-shell">
+        <div className="cms-analytics-empty">
+          <Activity className="cms-analytics-empty-icon" />
+          <p>{error ?? "Sin datos disponibles."}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="cms-analytics-shell">
+      {/* KPI strip */}
+      <div className="cms-analytics-kpi-row">
+        <Card className="cms-panel-card cms-analytics-kpi-card">
+          <CardContent className="cms-analytics-kpi-content">
+            <div className="cms-analytics-kpi-header">
+              <span className="cms-analytics-kpi-label">Visitas (7 dias)</span>
+              <span className="cms-analytics-kpi-icon-wrap">
+                <Eye className="cms-analytics-kpi-icon" />
+              </span>
+            </div>
+            <span className="cms-analytics-kpi-value">
+              {metrics.totalVisitsWeek.toLocaleString()}
+            </span>
+          </CardContent>
+        </Card>
+        <Card className="cms-panel-card cms-analytics-kpi-card">
+          <CardContent className="cms-analytics-kpi-content">
+            <div className="cms-analytics-kpi-header">
+              <span className="cms-analytics-kpi-label">Visitantes unicos</span>
+              <span className="cms-analytics-kpi-icon-wrap">
+                <TrendingUp className="cms-analytics-kpi-icon" />
+              </span>
+            </div>
+            <span className="cms-analytics-kpi-value">
+              {metrics.totalUniqueWeek.toLocaleString()}
+            </span>
+          </CardContent>
+        </Card>
+        <Card className="cms-panel-card cms-analytics-kpi-card">
+          <CardContent className="cms-analytics-kpi-content">
+            <div className="cms-analytics-kpi-header">
+              <span className="cms-analytics-kpi-label">
+                Clicks en secciones
+              </span>
+              <span className="cms-analytics-kpi-icon-wrap">
+                <MousePointerClick className="cms-analytics-kpi-icon" />
+              </span>
+            </div>
+            <span className="cms-analytics-kpi-value">
+              {metrics.totalSectionClicks.toLocaleString()}
+            </span>
+          </CardContent>
+        </Card>
+        <Card className="cms-panel-card cms-analytics-kpi-card">
+          <CardContent className="cms-analytics-kpi-content">
+            <div className="cms-analytics-kpi-header">
+              <span className="cms-analytics-kpi-label">CTR promedio</span>
+              <span className="cms-analytics-kpi-icon-wrap">
+                <Activity className="cms-analytics-kpi-icon" />
+              </span>
+            </div>
+            <span className="cms-analytics-kpi-value">{metrics.avgCtr}%</span>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="cms-analytics-grid cms-analytics-grid-top">
         <Card className="cms-panel-card cms-analytics-card-wide">
           <CardHeader className="cms-analytics-card-header">
@@ -959,52 +1031,64 @@ function SummaryAnalyticsView() {
             </CardDescription>
           </CardHeader>
           <CardContent className="cms-analytics-card-content">
-            <ChartContainer
-              className="cms-chart-large"
-              config={{
-                visits: { label: "Visitas", color: "#2dcc85" },
-                unique: { label: "Unicos", color: "#94f6cf" },
-              }}
-            >
-              <AreaChart
-                data={VISIT_TREND_DATA}
-                margin={{ left: 8, right: 8, top: 12, bottom: 0 }}
+            {data.visit_trend.every((d) => d.visits === 0) ? (
+              <p className="cms-analytics-no-data">Sin datos de visitas aún.</p>
+            ) : (
+              <ChartContainer
+                className="cms-chart-large"
+                config={{
+                  visits: { label: "Visitas", color: "#2dcc85" },
+                  unique: { label: "Unicos", color: "#94f6cf" },
+                }}
               >
-                <defs>
-                  <linearGradient
-                    id="visitsGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#2dcc85" stopOpacity={0.38} />
-                    <stop offset="95%" stopColor="#2dcc85" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="rgba(86,109,98,0.22)"
-                />
-                <XAxis dataKey="day" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} width={30} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Area
-                  type="monotone"
-                  dataKey="visits"
-                  stroke="#2dcc85"
-                  strokeWidth={2}
-                  fill="url(#visitsGradient)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="unique"
-                  stroke="#94f6cf"
-                  strokeWidth={2}
-                  fill="transparent"
-                />
-              </AreaChart>
-            </ChartContainer>
+                <AreaChart
+                  data={data.visit_trend}
+                  margin={{ left: 8, right: 8, top: 12, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="visitsGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="#2dcc85"
+                        stopOpacity={0.38}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="#2dcc85"
+                        stopOpacity={0.05}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(86,109,98,0.22)"
+                  />
+                  <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                  <YAxis tickLine={false} axisLine={false} width={30} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area
+                    type="monotone"
+                    dataKey="visits"
+                    stroke="#2dcc85"
+                    strokeWidth={2}
+                    fill="url(#visitsGradient)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="unique"
+                    stroke="#94f6cf"
+                    strokeWidth={2}
+                    fill="transparent"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -1020,23 +1104,23 @@ function SummaryAnalyticsView() {
           <CardContent className="cms-analytics-card-content">
             <ChartContainer
               className="cms-chart-medium"
-              config={{
-                Organico: { label: "Organico", color: "#2dcc85" },
-                LinkedIn: { label: "LinkedIn", color: "#4ee9ad" },
-                GitHub: { label: "GitHub", color: "#7ff3c8" },
-                Directo: { label: "Directo", color: "#a6f7db" },
-              }}
+              config={Object.fromEntries(
+                data.traffic_sources.map((s) => [
+                  s.source,
+                  { label: s.source, color: s.fill },
+                ]),
+              )}
             >
               <PieChart>
                 <Pie
-                  data={TRAFFIC_SOURCE_DATA}
+                  data={data.traffic_sources}
                   dataKey="value"
                   nameKey="source"
                   innerRadius={54}
                   outerRadius={84}
                   stroke="transparent"
                 >
-                  {TRAFFIC_SOURCE_DATA.map((entry) => (
+                  {data.traffic_sources.map((entry) => (
                     <Cell key={entry.source} fill={entry.fill} />
                   ))}
                 </Pie>
@@ -1046,7 +1130,7 @@ function SummaryAnalyticsView() {
               </PieChart>
             </ChartContainer>
             <div className="cms-traffic-legend">
-              {TRAFFIC_SOURCE_DATA.map((item) => (
+              {data.traffic_sources.map((item) => (
                 <div key={item.source} className="cms-traffic-legend-row">
                   <span className="cms-traffic-legend-key">
                     <span
@@ -1069,38 +1153,44 @@ function SummaryAnalyticsView() {
         <Card className="cms-panel-card cms-analytics-card-wide">
           <CardHeader className="cms-analytics-card-header">
             <CardTitle className="cms-analytics-title">
-              Clicks por seccion
+              Secciones mas visitadas
             </CardTitle>
             <CardDescription className="cms-analytics-subtitle">
               Interacciones acumuladas por apartado del portafolio.
             </CardDescription>
           </CardHeader>
           <CardContent className="cms-analytics-card-content">
-            <ChartContainer
-              className="cms-chart-large"
-              config={{ clicks: { label: "Clicks", color: "#2dcc85" } }}
-            >
-              <BarChart
-                data={SECTION_CLICKS_DATA}
-                layout="vertical"
-                margin={{ top: 8, right: 10, left: 10, bottom: 0 }}
+            {data.section_clicks.length === 0 ? (
+              <p className="cms-analytics-no-data">
+                Sin datos de secciones aún.
+              </p>
+            ) : (
+              <ChartContainer
+                className="cms-chart-large"
+                config={{ clicks: { label: "Visitas", color: "#2dcc85" } }}
               >
-                <CartesianGrid
-                  horizontal={false}
-                  stroke="rgba(86,109,98,0.16)"
-                />
-                <XAxis type="number" tickLine={false} axisLine={false} />
-                <YAxis
-                  dataKey="section"
-                  type="category"
-                  tickLine={false}
-                  axisLine={false}
-                  width={88}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="clicks" fill="#2dcc85" radius={[0, 8, 8, 0]} />
-              </BarChart>
-            </ChartContainer>
+                <BarChart
+                  data={data.section_clicks}
+                  layout="vertical"
+                  margin={{ top: 8, right: 10, left: 10, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    horizontal={false}
+                    stroke="rgba(86,109,98,0.16)"
+                  />
+                  <XAxis type="number" tickLine={false} axisLine={false} />
+                  <YAxis
+                    dataKey="section"
+                    type="category"
+                    tickLine={false}
+                    axisLine={false}
+                    width={88}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="clicks" fill="#2dcc85" radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -1115,7 +1205,7 @@ function SummaryAnalyticsView() {
           </CardHeader>
           <CardContent className="cms-analytics-card-content">
             <div className="cms-hours-list">
-              {HEATMAP_HOURS.map((item) => (
+              {data.hourly_activity.map((item) => (
                 <div key={item.hour} className="cms-hours-row">
                   <span className="cms-hours-time">{item.hour}</span>
                   <div className="cms-hours-track">
@@ -3312,14 +3402,21 @@ function DashboardView({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<CmsNotification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
-  const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([]);
-  const [replyingNotificationId, setReplyingNotificationId] = useState<string | null>(null);
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
+    string[]
+  >([]);
+  const [replyingNotificationId, setReplyingNotificationId] = useState<
+    string | null
+  >(null);
   const [replyModalOpen, setReplyModalOpen] = useState(false);
   const [replyTarget, setReplyTarget] = useState<CmsNotification | null>(null);
   const [viewMessageModalOpen, setViewMessageModalOpen] = useState(false);
-  const [viewMessageTarget, setViewMessageTarget] = useState<CmsNotification | null>(null);
+  const [viewMessageTarget, setViewMessageTarget] =
+    useState<CmsNotification | null>(null);
   const [replyTemplateId, setReplyTemplateId] = useState("custom");
-  const [customReplyTemplates, setCustomReplyTemplates] = useState<ReplyTemplate[]>([]);
+  const [customReplyTemplates, setCustomReplyTemplates] = useState<
+    ReplyTemplate[]
+  >([]);
   const [newTemplateLabel, setNewTemplateLabel] = useState("");
   const [replySubject, setReplySubject] = useState("");
   const [replyBody, setReplyBody] = useState("");
@@ -3379,7 +3476,9 @@ function DashboardView({
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(CUSTOM_REPLY_TEMPLATES_STORAGE_KEY);
+      const raw = window.localStorage.getItem(
+        CUSTOM_REPLY_TEMPLATES_STORAGE_KEY,
+      );
       if (!raw) {
         return;
       }
@@ -3392,12 +3491,12 @@ function DashboardView({
       const safeTemplates = parsed
         .filter(
           (item): item is ReplyTemplate =>
-            typeof item === "object"
-            && item !== null
-            && typeof (item as { id?: unknown }).id === "string"
-            && typeof (item as { label?: unknown }).label === "string"
-            && typeof (item as { subject?: unknown }).subject === "string"
-            && typeof (item as { body?: unknown }).body === "string",
+            typeof item === "object" &&
+            item !== null &&
+            typeof (item as { id?: unknown }).id === "string" &&
+            typeof (item as { label?: unknown }).label === "string" &&
+            typeof (item as { subject?: unknown }).subject === "string" &&
+            typeof (item as { body?: unknown }).body === "string",
         )
         .map((item) => ({
           id: item.id,
@@ -3435,7 +3534,9 @@ function DashboardView({
         return;
       }
 
-      const safeIds = parsed.filter((item): item is string => typeof item === "string");
+      const safeIds = parsed.filter(
+        (item): item is string => typeof item === "string",
+      );
       setReadNotificationIds(safeIds);
     } catch {
       setReadNotificationIds([]);
@@ -3455,7 +3556,9 @@ function DashboardView({
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(DISMISSED_NOTIFICATIONS_STORAGE_KEY);
+      const raw = window.localStorage.getItem(
+        DISMISSED_NOTIFICATIONS_STORAGE_KEY,
+      );
       if (!raw) {
         return;
       }
@@ -3465,7 +3568,9 @@ function DashboardView({
         return;
       }
 
-      const safeIds = parsed.filter((item): item is string => typeof item === "string");
+      const safeIds = parsed.filter(
+        (item): item is string => typeof item === "string",
+      );
       setDismissedNotificationIds(safeIds);
     } catch {
       setDismissedNotificationIds([]);
@@ -3542,11 +3647,15 @@ function DashboardView({
           let persistedReadIds = new Set<string>();
           let persistedDismissedIds = new Set<string>();
           try {
-            const raw = window.localStorage.getItem(READ_NOTIFICATIONS_STORAGE_KEY);
+            const raw = window.localStorage.getItem(
+              READ_NOTIFICATIONS_STORAGE_KEY,
+            );
             const parsed = raw ? JSON.parse(raw) : [];
             if (Array.isArray(parsed)) {
               persistedReadIds = new Set(
-                parsed.filter((item): item is string => typeof item === "string"),
+                parsed.filter(
+                  (item): item is string => typeof item === "string",
+                ),
               );
             }
           } catch {
@@ -3554,11 +3663,15 @@ function DashboardView({
           }
 
           try {
-            const raw = window.localStorage.getItem(DISMISSED_NOTIFICATIONS_STORAGE_KEY);
+            const raw = window.localStorage.getItem(
+              DISMISSED_NOTIFICATIONS_STORAGE_KEY,
+            );
             const parsed = raw ? JSON.parse(raw) : [];
             if (Array.isArray(parsed)) {
               persistedDismissedIds = new Set(
-                parsed.filter((item): item is string => typeof item === "string"),
+                parsed.filter(
+                  (item): item is string => typeof item === "string",
+                ),
               );
             }
           } catch {
@@ -3570,13 +3683,15 @@ function DashboardView({
           );
 
           return nextNotifications
-            .filter((notification) => !persistedDismissedIds.has(notification.id))
+            .filter(
+              (notification) => !persistedDismissedIds.has(notification.id),
+            )
             .map((notification) => ({
               ...notification,
               read:
-                previousReadMap.get(notification.id)
-                ?? persistedReadIds.has(notification.id)
-                ?? false,
+                previousReadMap.get(notification.id) ??
+                persistedReadIds.has(notification.id) ??
+                false,
             }));
         });
       } catch {
@@ -3724,7 +3839,9 @@ function DashboardView({
 
   const handleDismissNotification = (notification: CmsNotification) => {
     if (notification.source !== "system") {
-      toast.info("Los mensajes de contacto solo se eliminan despues de responder");
+      toast.info(
+        "Los mensajes de contacto solo se eliminan despues de responder",
+      );
       return;
     }
 
@@ -3750,7 +3867,9 @@ function DashboardView({
       return;
     }
 
-    setNotifications((current) => current.filter((item) => item.source === "contact"));
+    setNotifications((current) =>
+      current.filter((item) => item.source === "contact"),
+    );
     toast.success("Se limpiaron solo alertas del sistema");
   };
 
@@ -3788,7 +3907,10 @@ function DashboardView({
     }
   };
 
-  const applyReplyTemplate = (templateId: string, target: CmsNotification | null) => {
+  const applyReplyTemplate = (
+    templateId: string,
+    target: CmsNotification | null,
+  ) => {
     const template = allReplyTemplates.find((item) => item.id === templateId);
     if (!template) {
       return;
@@ -3888,7 +4010,9 @@ function DashboardView({
     toast.success(`Plantilla \"${templateToDelete.label}\" eliminada`);
   };
 
-  const handleSubmitReplyFromModal = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmitReplyFromModal = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
     if (!replyTarget?.messageId || !replyTarget.replyEmail) {
@@ -4037,7 +4161,8 @@ function DashboardView({
           </div>
 
           {/* Metricas */}
-          {activeModule !== "projects" &&
+          {!isDashboard &&
+            activeModule !== "projects" &&
             activeModule !== "experience" &&
             activeModule !== "blog" &&
             activeModule !== "services" &&
@@ -4418,10 +4543,15 @@ function DashboardView({
             aria-label="Responder mensaje"
             onClick={() => handleReplyModalOpenChange(false)}
           >
-            <div className="cms-modal-panel" onClick={(event) => event.stopPropagation()}>
+            <div
+              className="cms-modal-panel"
+              onClick={(event) => event.stopPropagation()}
+            >
               <div className="cms-modal-header">
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-100">Responder mensaje</h2>
+                  <h2 className="text-base font-semibold text-zinc-100">
+                    Responder mensaje
+                  </h2>
                   <p className="text-sm text-zinc-400">
                     {replyTarget?.replyEmail
                       ? `Enviando respuesta a ${replyTarget.replyEmail}`
@@ -4474,7 +4604,9 @@ function DashboardView({
                     <Input
                       className="cms-input h-9 text-sm"
                       value={newTemplateLabel}
-                      onChange={(event) => setNewTemplateLabel(event.target.value)}
+                      onChange={(event) =>
+                        setNewTemplateLabel(event.target.value)
+                      }
                       placeholder="Nombre de plantilla"
                       disabled={Boolean(replyingNotificationId)}
                     />
@@ -4492,7 +4624,10 @@ function DashboardView({
                       variant="outline"
                       className="cms-outline-btn cms-outline-btn-danger shrink-0"
                       onClick={handleDeleteSelectedTemplate}
-                      disabled={Boolean(replyingNotificationId) || !replyTemplateId.startsWith("custom-")}
+                      disabled={
+                        Boolean(replyingNotificationId) ||
+                        !replyTemplateId.startsWith("custom-")
+                      }
                     >
                       Eliminar
                     </Button>
@@ -4540,7 +4675,9 @@ function DashboardView({
                     className="cms-primary-btn"
                     disabled={Boolean(replyingNotificationId)}
                   >
-                    {replyingNotificationId ? "Enviando..." : "Enviar respuesta"}
+                    {replyingNotificationId
+                      ? "Enviando..."
+                      : "Enviar respuesta"}
                   </Button>
                 </div>
               </form>
@@ -4556,10 +4693,15 @@ function DashboardView({
             aria-label="Ver mensaje completo"
             onClick={() => handleViewMessageModalOpenChange(false)}
           >
-            <div className="cms-modal-panel" onClick={(event) => event.stopPropagation()}>
+            <div
+              className="cms-modal-panel"
+              onClick={(event) => event.stopPropagation()}
+            >
               <div className="cms-modal-header">
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-100">Mensaje recibido</h2>
+                  <h2 className="text-base font-semibold text-zinc-100">
+                    Mensaje recibido
+                  </h2>
                   <p className="text-sm text-zinc-400">
                     {viewMessageTarget?.replyEmail
                       ? `Enviado por ${viewMessageTarget.replyEmail}`
@@ -4578,7 +4720,9 @@ function DashboardView({
 
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Nombre</Label>
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Nombre
+                  </Label>
                   <Input
                     className="cms-input h-9 text-sm"
                     value={viewMessageTarget?.replyName ?? ""}
@@ -4587,7 +4731,9 @@ function DashboardView({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Correo</Label>
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Correo
+                  </Label>
                   <Input
                     className="cms-input h-9 text-sm"
                     value={viewMessageTarget?.replyEmail ?? ""}
@@ -4597,7 +4743,9 @@ function DashboardView({
 
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label className="text-xs uppercase tracking-wider text-zinc-500">Empresa</Label>
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                      Empresa
+                    </Label>
                     <Input
                       className="cms-input h-9 text-sm"
                       value={viewMessageTarget?.company || "-"}
@@ -4605,7 +4753,9 @@ function DashboardView({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs uppercase tracking-wider text-zinc-500">Presupuesto</Label>
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                      Presupuesto
+                    </Label>
                     <Input
                       className="cms-input h-9 text-sm"
                       value={viewMessageTarget?.budget || "-"}
@@ -4615,7 +4765,9 @@ function DashboardView({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Asunto</Label>
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Asunto
+                  </Label>
                   <Input
                     className="cms-input h-9 text-sm"
                     value={viewMessageTarget?.originalSubject ?? ""}
@@ -4624,7 +4776,9 @@ function DashboardView({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Mensaje</Label>
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Mensaje
+                  </Label>
                   <Textarea
                     className="cms-input min-h-36 text-sm"
                     value={viewMessageTarget?.originalMessage ?? ""}

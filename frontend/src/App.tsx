@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { trackPageView, trackSectionView } from "./analytics/tracker";
 import { Header } from "./components/Header";
 import { Navigation } from "./components/Navigation";
 import { HeroSection } from "./components/HeroSection";
@@ -32,12 +33,28 @@ export default function App() {
   const [activeSection, setActiveSection] = useState(getInitialSection);
   const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pageViewFired = useRef(false);
+
+  // Registrar visita inicial (una sola vez por session)
+  useEffect(() => {
+    if (!pageViewFired.current) {
+      pageViewFired.current = true;
+      trackPageView();
+    }
+  }, []);
+
+  // Registrar qué sección está viendo el visitante
+  useEffect(() => {
+    trackSectionView(activeSection);
+  }, [activeSection]);
 
   useEffect(() => {
     // Check for saved theme preference or default to light mode
     const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+
     if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
       setDarkMode(true);
       document.documentElement.classList.add("dark");

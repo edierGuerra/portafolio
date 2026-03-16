@@ -1,4 +1,5 @@
 from .achievements_endpoint import router as achievements_router
+from .analytics_endpoint import router as analytics_router
 from .auth_endpoint import router as auth_router
 from .available_services_endpoint import router as available_services_router
 from .blog_categories_endpoint import router as blog_categories_router
@@ -30,6 +31,7 @@ __all__ = [
     "interests_router",
     "my_philosophy_router",
     "projects_router",
+    "analytics_router",
     "social_networks_router",
     "technologies_router",
 ]

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import models
 from endpoints import (
     achievements_router,
+    analytics_router,
     auth_router,
     available_services_router,
     blog_categories_router,
@@ -24,6 +25,10 @@ from endpoints import (
 
 
 TAGS_METADATA = [
+    {
+        "name": "analytics",
+        "description": "Registro y consulta de eventos de visita al portafolio (solo visitantes no-admin).",
+    },
     {
         "name": "auth",
         "description": "Autenticacion y gestion de sesion con JWT (access y refresh token).",
@@ -121,6 +126,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(analytics_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(technologies_router, prefix="/api")
 app.include_router(projects_router, prefix="/api")

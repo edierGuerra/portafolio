@@ -4,6 +4,44 @@ export type AvailabilityStatus =
   | "busy"
   | "open_to_talk";
 
+// ─── Analytics ───────────────────────────────────────────────────────────────
+
+export interface DayTrend {
+  day: string;
+  visits: number;
+  unique: number;
+}
+
+export interface SectionClicks {
+  section: string;
+  clicks: number;
+}
+
+export interface TrafficSource {
+  source: string;
+  value: number;
+  fill: string;
+}
+
+export interface HourActivity {
+  hour: string;
+  activity: number;
+}
+
+export interface AnalyticsSummary {
+  visit_trend: DayTrend[];
+  section_clicks: SectionClicks[];
+  traffic_sources: TrafficSource[];
+  hourly_activity: HourActivity[];
+  total_visits_today: number;
+  total_visits_week: number;
+  total_unique_week: number;
+  total_section_clicks: number;
+  avg_ctr: number;
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
 export interface CmsUser {
   id: number;
   email: string;

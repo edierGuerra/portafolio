@@ -2,6 +2,7 @@
 
 from .achievements import Achievement
 from .admin import User
+from .analytics_event import AnalyticsEvent
 from .available_services import AvailableService
 from .blog import Blog
 from .blog_category import BlogCategory
@@ -39,4 +40,5 @@ __all__ = [
     "ProjectsTechnologies",
     "SocialNetworks",
     "Technologies",
+    "AnalyticsEvent",
 ]

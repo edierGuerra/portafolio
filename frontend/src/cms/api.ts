@@ -1,6 +1,7 @@
 import { http } from "../api/http";
 import { httpWithAuth } from "./session";
 import type {
+  AnalyticsSummary,
   AvailableService,
   AvailableServiceCreate,
   AvailableServiceUpdate,
@@ -58,6 +59,10 @@ export async function loginCms(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function getAnalyticsSummaryCms(): Promise<AnalyticsSummary> {
+  return httpWithAuth<AnalyticsSummary>("/api/analytics/summary");
 }
 
 export async function getMe(token: string): Promise<MeResponse> {
