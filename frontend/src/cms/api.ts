@@ -21,6 +21,8 @@ import type {
   ContactInfo,
   ContactInfoCreate,
   ContactInfoUpdate,
+  ContactMessageCms,
+  ContactMessageReplyPayload,
   FileUploadResponse,
   Interest,
   InterestCreate,
@@ -412,6 +414,41 @@ export async function deleteFaqCms(id: number): Promise<void> {
 
 export async function getContactInfoCms(): Promise<ContactInfo[]> {
   return http<ContactInfo[]>("/api/contact-info");
+}
+
+export async function getContactMessagesCms(
+  limit = 20,
+  pendingOnly = false,
+): Promise<ContactMessageCms[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (pendingOnly) {
+    params.set("pending_only", "true");
+  }
+
+  return httpWithAuth<ContactMessageCms[]>(
+    `/api/contact-messages?${params.toString()}`,
+  );
+}
+
+export async function replyContactMessageCms(
+  messageId: number,
+  payload: ContactMessageReplyPayload,
+): Promise<ContactMessageCms> {
+  return httpWithAuth<ContactMessageCms>(
+    `/api/contact-messages/${messageId}/reply`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function deleteContactMessageCms(
+  messageId: number,
+): Promise<void> {
+  return httpWithAuth<void>(`/api/contact-messages/${messageId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function createContactInfoCms(

@@ -31,6 +31,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  CheckCheck,
   TrendingUp,
   Trash2,
   UserCircle2,
@@ -60,6 +61,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+import { Textarea } from "../components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -80,6 +82,8 @@ import {
 } from "../components/ui/chart";
 import type {
   AvailabilityStatus,
+  ContactMessageCms,
+  ContactMessageReplyPayload,
   CmsUser,
   Project,
   ProjectCreate,
@@ -95,6 +99,8 @@ import {
   saveSession,
 } from "./session";
 import {
+  deleteContactMessageCms,
+  getContactMessagesCms,
   getContactInfoCms,
   getFaqCms,
   createTechnologyCms,
@@ -110,6 +116,7 @@ import {
   loginCms,
   logoutCms,
   setProjectPublishedCms,
+  replyContactMessageCms,
   updateMeCms,
   uploadAdminProfileImageCms,
   uploadProjectImageCms,
@@ -131,6 +138,182 @@ type ModuleItem = {
   records: number;
   description: string;
 };
+
+type CmsNotification = {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  read: boolean;
+  tone: "info" | "success" | "warning";
+  source: "contact" | "system";
+  messageId?: number;
+  replyName?: string;
+  replyEmail?: string;
+  originalSubject?: string;
+  originalMessage?: string;
+  company?: string;
+  budget?: string;
+  replySubject?: string;
+  replyBody?: string;
+};
+
+type ReplyTemplate = {
+  id: string;
+  label: string;
+  subject: string;
+  body: string;
+};
+
+const CUSTOM_REPLY_TEMPLATES_STORAGE_KEY = "cms.custom-reply-templates.v1";
+const READ_NOTIFICATIONS_STORAGE_KEY = "cms.read-notifications.v1";
+const DISMISSED_NOTIFICATIONS_STORAGE_KEY = "cms.dismissed-notifications.v1";
+
+const REPLY_TEMPLATES: ReplyTemplate[] = [
+  {
+    id: "thanks",
+    label: "Agradecimiento",
+    subject: "Gracias por tu mensaje",
+    body:
+      "Hola {name},\n\nGracias por escribir y compartir el contexto de tu solicitud.\n\nQuedo atento a tus comentarios para ayudarte con el siguiente paso.\n\nSaludos,",
+  },
+  {
+    id: "quote",
+    label: "Cotizacion inicial",
+    subject: "Propuesta inicial para tu solicitud",
+    body:
+      "Hola {name},\n\nGracias por tu interes. Puedo prepararte una propuesta inicial con alcance, tiempos y estimacion.\n\nSi te parece, te comparto un primer borrador con base en la informacion enviada.\n\nSaludos,",
+  },
+  {
+    id: "followup",
+    label: "Solicitud de detalles",
+    subject: "Necesito algunos detalles para avanzar",
+    body:
+      "Hola {name},\n\nPara darte una respuesta mas precisa, me ayudaria contar con un poco mas de detalle sobre objetivos, tiempos y presupuesto estimado.\n\nCon eso te envio una respuesta mas puntual.\n\nSaludos,",
+  },
+  {
+    id: "meeting",
+    label: "Agendar reunion",
+    subject: "Coordinemos una llamada breve",
+    body:
+      "Hola {name},\n\nSi te parece, podemos coordinar una llamada breve para revisar tu requerimiento y definir los proximos pasos.\n\nComparte por favor tu disponibilidad y lo organizamos.\n\nSaludos,",
+  },
+];
+
+function buildNotificationsFromContactMessages(
+  messages: ContactMessageCms[],
+): CmsNotification[] {
+  const messageNotifications: CmsNotification[] = messages.map((message) => ({
+    id: `contact-${message.id}`,
+    title: `Nuevo mensaje de ${message.name}`,
+    description: `${message.subject} · ${message.email}`,
+    createdAt: message.created_at,
+    read: false,
+    tone: "info",
+    source: "contact",
+    messageId: message.id,
+    replyName: message.name,
+    replyEmail: message.email,
+    originalSubject: message.subject,
+    originalMessage: message.message,
+    company: message.company,
+    budget: message.budget,
+    replySubject: `Re: ${message.subject}`,
+    replyBody: `Hola ${message.name},\n\nGracias por tu mensaje.\n\nSaludos,`,
+  }));
+
+  const now = Date.now();
+  const thirtyMinutesAgo = now - 30 * 60 * 1000;
+  const fifteenMinutesAgo = now - 15 * 60 * 1000;
+
+  const recent30Min = messages.filter((message) => {
+    const createdAt = new Date(message.created_at).getTime();
+    return Number.isFinite(createdAt) && createdAt >= thirtyMinutesAgo;
+  });
+
+  const recent15Min = messages.filter((message) => {
+    const createdAt = new Date(message.created_at).getTime();
+    return Number.isFinite(createdAt) && createdAt >= fifteenMinutesAgo;
+  });
+
+  const alerts: CmsNotification[] = [];
+
+  if (recent15Min.length >= 5) {
+    alerts.push({
+      id: "alert-burst-15m",
+      title: "Actividad inusual detectada",
+      description: `Se recibieron ${recent15Min.length} mensajes en los ultimos 15 minutos.`,
+      createdAt: new Date().toISOString(),
+      read: false,
+      tone: "warning",
+      source: "system",
+    });
+  }
+
+  const messagesByEmail = recent30Min.reduce<
+    Record<string, ContactMessageCms[]>
+  >((acc, message) => {
+    const email = message.email.trim().toLowerCase();
+    if (!acc[email]) {
+      acc[email] = [];
+    }
+    acc[email].push(message);
+    return acc;
+  }, {});
+
+  Object.entries(messagesByEmail).forEach(([email, groupedMessages]) => {
+    if (groupedMessages.length < 3) {
+      return;
+    }
+
+    const latestCreatedAt = groupedMessages
+      .map((item) => item.created_at)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+
+    alerts.push({
+      id: `alert-repeated-${email}`,
+      title: "Posible comportamiento extrano",
+      description: `${groupedMessages.length} mensajes desde ${email} en menos de 30 minutos.`,
+      createdAt: latestCreatedAt ?? new Date().toISOString(),
+      read: false,
+      tone: "warning",
+      source: "system",
+    });
+  });
+
+  return [...alerts, ...messageNotifications];
+}
+
+function formatNotificationTime(rawDate: string): string {
+  const date = new Date(rawDate);
+  if (Number.isNaN(date.getTime())) {
+    return "ahora";
+  }
+
+  const deltaMs = Date.now() - date.getTime();
+  const deltaMinutes = Math.floor(deltaMs / 60000);
+
+  if (deltaMinutes < 1) return "ahora";
+  if (deltaMinutes < 60) return `hace ${deltaMinutes} min`;
+
+  const deltaHours = Math.floor(deltaMinutes / 60);
+  if (deltaHours < 24) return `hace ${deltaHours} h`;
+
+  const deltaDays = Math.floor(deltaHours / 24);
+  return `hace ${deltaDays} d`;
+}
+
+function formatNotificationDate(rawDate: string): string {
+  const date = new Date(rawDate);
+  if (Number.isNaN(date.getTime())) {
+    return "Fecha no disponible";
+  }
+
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
 
 const MODULES: ModuleItem[] = [
   {
@@ -333,10 +516,32 @@ function CmsNavbar({
   user,
   onLogout,
   onToggleSidebar,
+  notifications,
+  notificationsOpen,
+  unreadNotifications,
+  onToggleNotifications,
+  onMarkAllNotificationsRead,
+  onMarkNotificationRead,
+  onDismissNotification,
+  onViewContactNotification,
+  onReplyContactNotification,
+  onClearNotifications,
+  replyingNotificationId,
 }: {
   user: CmsUser;
   onLogout: () => void;
   onToggleSidebar: () => void;
+  notifications: CmsNotification[];
+  notificationsOpen: boolean;
+  unreadNotifications: number;
+  onToggleNotifications: () => void;
+  onMarkAllNotificationsRead: () => void;
+  onMarkNotificationRead: (notificationId: string) => void;
+  onDismissNotification: (notification: CmsNotification) => void;
+  onViewContactNotification: (notification: CmsNotification) => void;
+  onReplyContactNotification: (notification: CmsNotification) => void;
+  onClearNotifications: () => void;
+  replyingNotificationId: string | null;
 }) {
   return (
     <header className="cms-navbar">
@@ -367,14 +572,146 @@ function CmsNavbar({
 
         {/* Right: actions */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="cms-icon-btn"
-            disabled
-            aria-label="Notificaciones"
-          >
-            <Bell className="h-4 w-4" />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              className="cms-icon-btn relative"
+              aria-label="Notificaciones"
+              onClick={onToggleNotifications}
+            >
+              <Bell className="h-4 w-4" />
+              {unreadNotifications > 0 && (
+                <>
+                  <span className="cms-notif-badge" aria-hidden="true" />
+                  <span className="sr-only">
+                    {`Tienes ${unreadNotifications} notificaciones sin leer`}
+                  </span>
+                </>
+              )}
+            </button>
+
+            {notificationsOpen && (
+              <div className="cms-notif-panel absolute right-0 z-30 mt-2 w-[340px] rounded-xl border p-3 shadow-2xl">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-zinc-100">
+                    Centro de alertas
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="cms-outline-btn h-7 px-2 text-[11px]"
+                      onClick={onMarkAllNotificationsRead}
+                    >
+                      <CheckCheck className="mr-1 h-3.5 w-3.5" />
+                      Leidas
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="cms-outline-btn cms-outline-btn-danger h-7 px-2 text-[11px]"
+                      onClick={onClearNotifications}
+                    >
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                      Limpiar
+                    </Button>
+                  </div>
+                </div>
+
+                {notifications.length === 0 ? (
+                  <p className="cms-notif-empty rounded-lg border p-3 text-xs text-zinc-500">
+                    No hay notificaciones pendientes.
+                  </p>
+                ) : (
+                  <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`rounded-lg border p-2.5 ${
+                          notification.read
+                            ? "cms-notif-item"
+                            : notification.tone === "warning"
+                              ? "cms-notif-item--warning"
+                              : notification.tone === "success"
+                                ? "cms-notif-item--success"
+                                : "cms-notif-item--info"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[10px] font-medium leading-snug text-zinc-100">
+                            {notification.title}
+                          </p>
+                          {!notification.read && (
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+                          )}
+                        </div>
+                        <p className="notifi-text-body mt-1 text-[9px] leading-relaxed text-zinc-400">
+                          {notification.description}
+                        </p>
+                        <div className="mt-1 flex items-end justify-between gap-2">
+                          <div>
+                            <p className="notifi-text-time text-[9px] uppercase tracking-wide text-zinc-500">
+                              {formatNotificationTime(notification.createdAt)}
+                            </p>
+                            <p className="notifi-text-date mt-0.5 text-[9px] leading-snug text-zinc-600">
+                              {formatNotificationDate(notification.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="cms-notif-actions mt-2">
+                          {notification.read ? (
+                            <span className="cms-notif-state">Leida</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="cms-notif-action-btn"
+                              onClick={() => onMarkNotificationRead(notification.id)}
+                              title="Marcar como leida"
+                            >
+                              Leer
+                            </button>
+                          )}
+
+                          {notification.replyEmail && notification.source === "contact" && (
+                            <>
+                              <button
+                                type="button"
+                                className="cms-notif-action-btn"
+                                onClick={() => onViewContactNotification(notification)}
+                                title="Ver mensaje completo"
+                              >
+                                Ver
+                              </button>
+                              <button
+                                type="button"
+                                className="cms-notif-action-btn cms-notif-action-btn-primary"
+                                onClick={() => onReplyContactNotification(notification)}
+                                disabled={replyingNotificationId === notification.id}
+                                title={`Responder a ${notification.replyEmail}`}
+                              >
+                                {replyingNotificationId === notification.id ? "Enviando..." : "Responder"}
+                              </button>
+                            </>
+                          )}
+
+                          {notification.source === "system" && (
+                            <button
+                              type="button"
+                              className="cms-notif-action-btn cms-notif-action-btn-danger"
+                              onClick={() => onDismissNotification(notification)}
+                              title="Eliminar notificacion"
+                            >
+                              Eliminar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="hidden sm:block text-right mr-1">
             <p className="text-xs font-medium leading-none text-zinc-200">
               {user.name}
@@ -2972,7 +3309,31 @@ function DashboardView({
   const [contactCount, setContactCount] = useState(
     MODULES.find((module) => module.id === "contact")?.records ?? 0,
   );
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<CmsNotification[]>([]);
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([]);
+  const [replyingNotificationId, setReplyingNotificationId] = useState<string | null>(null);
+  const [replyModalOpen, setReplyModalOpen] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<CmsNotification | null>(null);
+  const [viewMessageModalOpen, setViewMessageModalOpen] = useState(false);
+  const [viewMessageTarget, setViewMessageTarget] = useState<CmsNotification | null>(null);
+  const [replyTemplateId, setReplyTemplateId] = useState("custom");
+  const [customReplyTemplates, setCustomReplyTemplates] = useState<ReplyTemplate[]>([]);
+  const [newTemplateLabel, setNewTemplateLabel] = useState("");
+  const [replySubject, setReplySubject] = useState("");
+  const [replyBody, setReplyBody] = useState("");
   const PAGE_SIZE = 5;
+
+  const unreadNotifications = useMemo(
+    () => notifications.filter((item) => !item.read).length,
+    [notifications],
+  );
+
+  const allReplyTemplates = useMemo(
+    () => [...REPLY_TEMPLATES, ...customReplyTemplates],
+    [customReplyTemplates],
+  );
 
   const modules = useMemo(
     () =>
@@ -3017,6 +3378,112 @@ function DashboardView({
   }, [user]);
 
   useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(CUSTOM_REPLY_TEMPLATES_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const safeTemplates = parsed
+        .filter(
+          (item): item is ReplyTemplate =>
+            typeof item === "object"
+            && item !== null
+            && typeof (item as { id?: unknown }).id === "string"
+            && typeof (item as { label?: unknown }).label === "string"
+            && typeof (item as { subject?: unknown }).subject === "string"
+            && typeof (item as { body?: unknown }).body === "string",
+        )
+        .map((item) => ({
+          id: item.id,
+          label: item.label,
+          subject: item.subject,
+          body: item.body,
+        }));
+
+      setCustomReplyTemplates(safeTemplates);
+    } catch {
+      setCustomReplyTemplates([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        CUSTOM_REPLY_TEMPLATES_STORAGE_KEY,
+        JSON.stringify(customReplyTemplates),
+      );
+    } catch {
+      // Si localStorage falla, seguimos permitiendo el flujo sin persistencia.
+    }
+  }, [customReplyTemplates]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(READ_NOTIFICATIONS_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const safeIds = parsed.filter((item): item is string => typeof item === "string");
+      setReadNotificationIds(safeIds);
+    } catch {
+      setReadNotificationIds([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        READ_NOTIFICATIONS_STORAGE_KEY,
+        JSON.stringify(readNotificationIds),
+      );
+    } catch {
+      // Si localStorage falla, la app sigue funcionando sin persistencia de lectura.
+    }
+  }, [readNotificationIds]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DISMISSED_NOTIFICATIONS_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const safeIds = parsed.filter((item): item is string => typeof item === "string");
+      setDismissedNotificationIds(safeIds);
+    } catch {
+      setDismissedNotificationIds([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        DISMISSED_NOTIFICATIONS_STORAGE_KEY,
+        JSON.stringify(dismissedNotificationIds),
+      );
+    } catch {
+      // Si localStorage falla, la app sigue funcionando sin persistencia de descartadas.
+    }
+  }, [dismissedNotificationIds]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadModulesCount = async () => {
@@ -3055,6 +3522,99 @@ function DashboardView({
 
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadContactNotifications = async () => {
+      try {
+        const messages = await getContactMessagesCms(30, true);
+        if (cancelled) {
+          return;
+        }
+
+        const nextNotifications =
+          buildNotificationsFromContactMessages(messages);
+
+        setNotifications((current) => {
+          let persistedReadIds = new Set<string>();
+          let persistedDismissedIds = new Set<string>();
+          try {
+            const raw = window.localStorage.getItem(READ_NOTIFICATIONS_STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            if (Array.isArray(parsed)) {
+              persistedReadIds = new Set(
+                parsed.filter((item): item is string => typeof item === "string"),
+              );
+            }
+          } catch {
+            persistedReadIds = new Set<string>();
+          }
+
+          try {
+            const raw = window.localStorage.getItem(DISMISSED_NOTIFICATIONS_STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            if (Array.isArray(parsed)) {
+              persistedDismissedIds = new Set(
+                parsed.filter((item): item is string => typeof item === "string"),
+              );
+            }
+          } catch {
+            persistedDismissedIds = new Set<string>();
+          }
+
+          const previousReadMap = new Map(
+            current.map((notification) => [notification.id, notification.read]),
+          );
+
+          return nextNotifications
+            .filter((notification) => !persistedDismissedIds.has(notification.id))
+            .map((notification) => ({
+              ...notification,
+              read:
+                previousReadMap.get(notification.id)
+                ?? persistedReadIds.has(notification.id)
+                ?? false,
+            }));
+        });
+      } catch {
+        if (!cancelled) {
+          setNotifications((current) => {
+            const hasExistingAlert = current.some(
+              (notification) =>
+                notification.id === "alert-contact-fetch-failed",
+            );
+
+            if (hasExistingAlert) {
+              return current;
+            }
+
+            return [
+              {
+                id: "alert-contact-fetch-failed",
+                title: "Alerta del sistema",
+                description:
+                  "No fue posible obtener los mensajes de contacto en este momento.",
+                createdAt: new Date().toISOString(),
+                read: false,
+                tone: "warning",
+                source: "system",
+              },
+              ...current,
+            ];
+          });
+        }
+      }
+    };
+
+    void loadContactNotifications();
+    const intervalId = window.setInterval(loadContactNotifications, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -3131,6 +3691,251 @@ function DashboardView({
     onUserUpdate(updatedUser);
   };
 
+  const handleToggleNotifications = () => {
+    setNotificationsOpen((open) => !open);
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    const idsToMark = notifications.map((item) => item.id);
+    setNotifications((current) =>
+      current.map((item) => ({ ...item, read: true })),
+    );
+    setReadNotificationIds((current) => {
+      const next = new Set(current);
+      idsToMark.forEach((id) => next.add(id));
+      return Array.from(next);
+    });
+    toast.success("Notificaciones marcadas como leidas");
+  };
+
+  const markNotificationAsRead = (notificationId: string) => {
+    setNotifications((current) =>
+      current.map((item) =>
+        item.id === notificationId ? { ...item, read: true } : item,
+      ),
+    );
+    setReadNotificationIds((current) => {
+      if (current.includes(notificationId)) {
+        return current;
+      }
+      return [...current, notificationId];
+    });
+  };
+
+  const handleDismissNotification = (notification: CmsNotification) => {
+    if (notification.source !== "system") {
+      toast.info("Los mensajes de contacto solo se eliminan despues de responder");
+      return;
+    }
+
+    setNotifications((current) =>
+      current.filter((item) => item.id !== notification.id),
+    );
+    setDismissedNotificationIds((current) => {
+      if (current.includes(notification.id)) {
+        return current;
+      }
+      return [...current, notification.id];
+    });
+    toast.success("Notificacion eliminada");
+  };
+
+  const handleClearNotifications = () => {
+    const hasSystemNotifications = notifications.some(
+      (item) => item.source === "system",
+    );
+
+    if (!hasSystemNotifications) {
+      toast.info("No hay alertas del sistema para limpiar");
+      return;
+    }
+
+    setNotifications((current) => current.filter((item) => item.source === "contact"));
+    toast.success("Se limpiaron solo alertas del sistema");
+  };
+
+  const handleReplyContactNotification = (notification: CmsNotification) => {
+    if (!notification.messageId || !notification.replyEmail) {
+      toast.error("No se pudo identificar el mensaje de contacto");
+      return;
+    }
+
+    markNotificationAsRead(notification.id);
+
+    setReplyTarget(notification);
+    setReplyTemplateId("custom");
+    setNewTemplateLabel("");
+    setReplySubject(notification.replySubject ?? "Respuesta a tu mensaje");
+    setReplyBody(notification.replyBody ?? "");
+    setReplyModalOpen(true);
+  };
+
+  const handleViewContactNotification = (notification: CmsNotification) => {
+    if (notification.source !== "contact") {
+      return;
+    }
+
+    markNotificationAsRead(notification.id);
+
+    setViewMessageTarget(notification);
+    setViewMessageModalOpen(true);
+  };
+
+  const handleViewMessageModalOpenChange = (nextOpen: boolean) => {
+    setViewMessageModalOpen(nextOpen);
+    if (!nextOpen) {
+      setViewMessageTarget(null);
+    }
+  };
+
+  const applyReplyTemplate = (templateId: string, target: CmsNotification | null) => {
+    const template = allReplyTemplates.find((item) => item.id === templateId);
+    if (!template) {
+      return;
+    }
+
+    const recipientName = target?.replyName?.trim() || "";
+    const subjectBase = target?.replySubject?.trim() || "Re: Consulta";
+
+    setReplySubject(`${subjectBase} - ${template.subject}`);
+    setReplyBody(template.body.replace("{name}", recipientName || ""));
+  };
+
+  const handleReplyModalOpenChange = (nextOpen: boolean) => {
+    if (replyingNotificationId) {
+      return;
+    }
+
+    setReplyModalOpen(nextOpen);
+
+    if (!nextOpen) {
+      setReplyTarget(null);
+      setReplyTemplateId("custom");
+      setNewTemplateLabel("");
+      setReplySubject("");
+      setReplyBody("");
+    }
+  };
+
+  const handleSaveCurrentAsTemplate = () => {
+    const label = newTemplateLabel.trim();
+    const subject = replySubject.trim();
+    const body = replyBody.trim();
+
+    if (label.length < 3) {
+      toast.error("El nombre de la plantilla debe tener al menos 3 caracteres");
+      return;
+    }
+
+    if (subject.length < 3 || body.length < 5) {
+      toast.error("Completa asunto y mensaje antes de guardar la plantilla");
+      return;
+    }
+
+    const existing = customReplyTemplates.find(
+      (template) => template.label.toLowerCase() === label.toLowerCase(),
+    );
+
+    if (existing) {
+      setCustomReplyTemplates((current) =>
+        current.map((template) =>
+          template.id === existing.id
+            ? {
+                ...template,
+                label,
+                subject,
+                body,
+              }
+            : template,
+        ),
+      );
+      setReplyTemplateId(existing.id);
+      toast.success("Plantilla actualizada correctamente");
+      return;
+    }
+
+    const newTemplate: ReplyTemplate = {
+      id: `custom-${Date.now()}`,
+      label,
+      subject,
+      body,
+    };
+
+    setCustomReplyTemplates((current) => [newTemplate, ...current]);
+    setReplyTemplateId(newTemplate.id);
+    toast.success("Plantilla guardada correctamente");
+  };
+
+  const handleDeleteSelectedTemplate = () => {
+    if (!replyTemplateId.startsWith("custom-")) {
+      toast.info("Selecciona una plantilla personalizada para eliminarla");
+      return;
+    }
+
+    const templateToDelete = customReplyTemplates.find(
+      (template) => template.id === replyTemplateId,
+    );
+
+    if (!templateToDelete) {
+      return;
+    }
+
+    setCustomReplyTemplates((current) =>
+      current.filter((template) => template.id !== replyTemplateId),
+    );
+    setReplyTemplateId("custom");
+    setNewTemplateLabel("");
+    toast.success(`Plantilla \"${templateToDelete.label}\" eliminada`);
+  };
+
+  const handleSubmitReplyFromModal = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!replyTarget?.messageId || !replyTarget.replyEmail) {
+      toast.error("No se pudo identificar el mensaje de contacto");
+      return;
+    }
+
+    const trimmedSubject = replySubject.trim();
+    const trimmedBody = replyBody.trim();
+
+    if (trimmedSubject.length < 3 || trimmedBody.length < 5) {
+      toast.error("Asunto o mensaje demasiado corto");
+      return;
+    }
+
+    const payload: ContactMessageReplyPayload = {
+      subject: trimmedSubject,
+      message: trimmedBody,
+    };
+
+    setReplyingNotificationId(replyTarget.id);
+    try {
+      await replyContactMessageCms(replyTarget.messageId, payload);
+      await deleteContactMessageCms(replyTarget.messageId);
+
+      setNotifications((current) =>
+        current.filter((item) => item.id !== replyTarget.id),
+      );
+
+      toast.success(`Respuesta enviada a ${replyTarget.replyEmail}`);
+      setReplyModalOpen(false);
+      setReplyTarget(null);
+      setReplyTemplateId("custom");
+      setNewTemplateLabel("");
+      setReplySubject("");
+      setReplyBody("");
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "No se pudo enviar la respuesta desde el CMS",
+      );
+    } finally {
+      setReplyingNotificationId(null);
+    }
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
       <div className="cms-root">
@@ -3139,6 +3944,17 @@ function DashboardView({
           user={currentUser}
           onLogout={handleLogout}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          notifications={notifications}
+          notificationsOpen={notificationsOpen}
+          unreadNotifications={unreadNotifications}
+          onToggleNotifications={handleToggleNotifications}
+          onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+          onMarkNotificationRead={markNotificationAsRead}
+          onDismissNotification={handleDismissNotification}
+          onViewContactNotification={handleViewContactNotification}
+          onReplyContactNotification={handleReplyContactNotification}
+          onClearNotifications={handleClearNotifications}
+          replyingNotificationId={replyingNotificationId}
         />
 
         {/* Sidebar fija */}
@@ -3183,12 +3999,12 @@ function DashboardView({
                   <Button
                     variant="outline"
                     className="cms-outline-btn h-8 text-sm"
-                    onClick={() =>
+                    onClick={() => {
                       toast.success("Borrador guardado", {
                         description:
                           "Los cambios se almacenan como borrador. No seran visibles en el portafolio publico hasta que se publiquen.",
-                      })
-                    }
+                      });
+                    }}
                   >
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                     Guardar
@@ -3202,12 +4018,12 @@ function DashboardView({
                 <TooltipTrigger asChild>
                   <Button
                     className="cms-primary-btn h-8 text-sm"
-                    onClick={() =>
+                    onClick={() => {
                       toast.success("Publicado en portafolio", {
                         description:
                           "Los cambios quedarian visibles en el portafolio publico de inmediato.",
-                      })
-                    }
+                      });
+                    }}
                   >
                     <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                     Publicar
@@ -3539,12 +4355,7 @@ function DashboardView({
                       <Button
                         variant="outline"
                         className="cms-outline-btn h-9 w-full justify-start text-sm"
-                        onClick={() =>
-                          toast.info("Centro de alertas", {
-                            description:
-                              "No hay alertas pendientes. Las notificaciones de cambios y errores apareceran aqui.",
-                          })
-                        }
+                        onClick={() => handleToggleNotifications()}
                       >
                         <Bell className="mr-2 h-3.5 w-3.5" />
                         Centro de alertas
@@ -3598,6 +4409,247 @@ function DashboardView({
           theme="dark"
           toastOptions={{ className: "cms-toast" }}
         />
+
+        {replyModalOpen && (
+          <div
+            className="cms-modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Responder mensaje"
+            onClick={() => handleReplyModalOpenChange(false)}
+          >
+            <div className="cms-modal-panel" onClick={(event) => event.stopPropagation()}>
+              <div className="cms-modal-header">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-100">Responder mensaje</h2>
+                  <p className="text-sm text-zinc-400">
+                    {replyTarget?.replyEmail
+                      ? `Enviando respuesta a ${replyTarget.replyEmail}`
+                      : "Completa la respuesta para el contacto."}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cms-outline-btn"
+                  onClick={() => handleReplyModalOpenChange(false)}
+                  disabled={Boolean(replyingNotificationId)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+
+              <form className="space-y-3" onSubmit={handleSubmitReplyFromModal}>
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Plantilla rapida
+                  </Label>
+                  <select
+                    className="cms-input h-9 w-full text-sm"
+                    value={replyTemplateId}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setReplyTemplateId(value);
+                      if (value === "custom") {
+                        return;
+                      }
+                      applyReplyTemplate(value, replyTarget);
+                    }}
+                    disabled={Boolean(replyingNotificationId)}
+                  >
+                    <option value="custom">Personalizada</option>
+                    {allReplyTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Guardar como plantilla
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      className="cms-input h-9 text-sm"
+                      value={newTemplateLabel}
+                      onChange={(event) => setNewTemplateLabel(event.target.value)}
+                      placeholder="Nombre de plantilla"
+                      disabled={Boolean(replyingNotificationId)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="cms-outline-btn shrink-0"
+                      onClick={handleSaveCurrentAsTemplate}
+                      disabled={Boolean(replyingNotificationId)}
+                    >
+                      Guardar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="cms-outline-btn cms-outline-btn-danger shrink-0"
+                      onClick={handleDeleteSelectedTemplate}
+                      disabled={Boolean(replyingNotificationId) || !replyTemplateId.startsWith("custom-")}
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Asunto
+                  </Label>
+                  <Input
+                    className="cms-input h-9 text-sm"
+                    value={replySubject}
+                    onChange={(event) => setReplySubject(event.target.value)}
+                    placeholder="Asunto de la respuesta"
+                    disabled={Boolean(replyingNotificationId)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Mensaje
+                  </Label>
+                  <Textarea
+                    className="cms-input min-h-32 text-sm"
+                    value={replyBody}
+                    onChange={(event) => setReplyBody(event.target.value)}
+                    placeholder="Escribe tu respuesta"
+                    disabled={Boolean(replyingNotificationId)}
+                  />
+                </div>
+
+                <div className="cms-modal-footer">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="cms-outline-btn"
+                    onClick={() => handleReplyModalOpenChange(false)}
+                    disabled={Boolean(replyingNotificationId)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="cms-primary-btn"
+                    disabled={Boolean(replyingNotificationId)}
+                  >
+                    {replyingNotificationId ? "Enviando..." : "Enviar respuesta"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {viewMessageModalOpen && (
+          <div
+            className="cms-modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Ver mensaje completo"
+            onClick={() => handleViewMessageModalOpenChange(false)}
+          >
+            <div className="cms-modal-panel" onClick={(event) => event.stopPropagation()}>
+              <div className="cms-modal-header">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-100">Mensaje recibido</h2>
+                  <p className="text-sm text-zinc-400">
+                    {viewMessageTarget?.replyEmail
+                      ? `Enviado por ${viewMessageTarget.replyEmail}`
+                      : "Detalle del mensaje de contacto"}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cms-outline-btn"
+                  onClick={() => handleViewMessageModalOpenChange(false)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Nombre</Label>
+                  <Input
+                    className="cms-input h-9 text-sm"
+                    value={viewMessageTarget?.replyName ?? ""}
+                    readOnly
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Correo</Label>
+                  <Input
+                    className="cms-input h-9 text-sm"
+                    value={viewMessageTarget?.replyEmail ?? ""}
+                    readOnly
+                  />
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">Empresa</Label>
+                    <Input
+                      className="cms-input h-9 text-sm"
+                      value={viewMessageTarget?.company || "-"}
+                      readOnly
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">Presupuesto</Label>
+                    <Input
+                      className="cms-input h-9 text-sm"
+                      value={viewMessageTarget?.budget || "-"}
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Asunto</Label>
+                  <Input
+                    className="cms-input h-9 text-sm"
+                    value={viewMessageTarget?.originalSubject ?? ""}
+                    readOnly
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">Mensaje</Label>
+                  <Textarea
+                    className="cms-input min-h-36 text-sm"
+                    value={viewMessageTarget?.originalMessage ?? ""}
+                    readOnly
+                  />
+                </div>
+
+                <div className="cms-modal-footer">
+                  <Button
+                    type="button"
+                    className="cms-primary-btn"
+                    onClick={() => {
+                      if (viewMessageTarget) {
+                        handleViewMessageModalOpenChange(false);
+                        handleReplyContactNotification(viewMessageTarget);
+                      }
+                    }}
+                  >
+                    Responder
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );

@@ -232,6 +232,26 @@ export interface ContactInfoUpdate {
   availability?: string;
 }
 
+export interface ContactMessageCms {
+  id: number;
+  name: string;
+  email: string;
+  company: string;
+  budget: string;
+  subject: string;
+  message: string;
+  responded: boolean;
+  responded_at?: string | null;
+  response_subject: string;
+  response_message: string;
+  created_at: string;
+}
+
+export interface ContactMessageReplyPayload {
+  subject: string;
+  message: string;
+}
+
 export interface SocialNetwork {
   id: number;
   name: string;
