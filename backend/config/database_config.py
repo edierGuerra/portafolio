@@ -1,6 +1,7 @@
 """
 Configuración de la base de datos.
 """
+import ssl
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -32,6 +33,7 @@ class DatabaseSettings(BaseSettings):
     pool_size: int
     max_overflow: int
     pool_recycle: int
+    use_ssl: bool
 
     def is_fully_configured(self) -> bool:
         """Verifica que la URL de base de datos esté configurada."""
@@ -62,6 +64,7 @@ def get_database_settings() -> DatabaseSettings:
         pool_size=DatabaseSettings._load_env_int("DATABASE_POOL_SIZE", default=20),
         max_overflow=DatabaseSettings._load_env_int("DATABASE_MAX_OVERFLOW", default=10),
         pool_recycle=DatabaseSettings._load_env_int("DATABASE_POOL_RECYCLE", default=3600),
+        use_ssl=DatabaseSettings._load_env_bool("DATABASE_SSL", default=False),
     )
     settings.validate()
     return settings
@@ -85,12 +88,17 @@ def get_engine():
     global _engine_instance
     if _engine_instance is None:
         settings = get_database_settings()
+        connect_args = {}
+        if settings.use_ssl:
+            ssl_ctx = ssl.create_default_context()
+            connect_args["ssl"] = ssl_ctx
         _engine_instance = create_async_engine(
             settings.database_url,
             echo=settings.echo,
             pool_size=settings.pool_size,
             max_overflow=settings.max_overflow,
             pool_recycle=settings.pool_recycle,
+            connect_args=connect_args,
         )
     return _engine_instance
 
