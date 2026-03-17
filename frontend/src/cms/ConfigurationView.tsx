@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import type { CmsUser } from "./types";
-import { updateMeCms, uploadAdminCvFileCms, uploadAdminProfileImageCms } from "./api";
+import { updateMeCms, uploadAdminCvFileCms } from "./api";
 
 interface ConfigurationViewProps {
   user: CmsUser;
@@ -39,8 +39,6 @@ export function ConfigurationView({
   const [currentCvUrl, setCurrentCvUrl] = useState(user.cv_file || "");
   const [pendingCvFile, setPendingCvFile] = useState<File | null>(null);
   const [cvUploading, setCvUploading] = useState(false);
-  const [pendingProfileImageFile, setPendingProfileImageFile] = useState<File | null>(null);
-  const [profileImageUploading, setProfileImageUploading] = useState(false);
 
   // Profile edit form state
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -76,33 +74,16 @@ export function ConfigurationView({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Formato invalido", {
-        description: "Selecciona un archivo de imagen valido.",
-      });
-      event.target.value = "";
-      return;
-    }
-
-    const maxSizeBytes = 10 * 1024 * 1024;
-    if (file.size > maxSizeBytes) {
-      toast.error("Imagen demasiado grande", {
-        description: "La imagen no debe superar 10 MB.",
-      });
-      event.target.value = "";
-      return;
-    }
-
-    setPendingProfileImageFile(file);
-
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
       setProfileImagePreview(result);
+      setProfileFormData((prev) => ({
+        ...prev,
+        profile_image: result,
+      }));
     };
     reader.readAsDataURL(file);
-
-    event.target.value = "";
   };
 
   const handleProfileFormChange = (
@@ -183,15 +164,6 @@ export function ConfigurationView({
         nextCvUrl = uploadedCv.file_url;
       }
 
-      let nextProfileImageUrl = user.profile_image;
-      if (pendingProfileImageFile) {
-        setProfileImageUploading(true);
-        const uploadedProfileImage = await uploadAdminProfileImageCms(
-          pendingProfileImageFile,
-        );
-        nextProfileImageUrl = uploadedProfileImage.file_url;
-      }
-
       const result = await updateMeCms({
         name: profileFormData.name.trim(),
         email: profileFormData.email.trim(),
@@ -199,14 +171,15 @@ export function ConfigurationView({
         location: profileFormData.location.trim(),
         about_me: profileFormData.about_me.trim(),
         cv_file: nextCvUrl || null,
-        profile_image: nextProfileImageUrl,
+        ...(profileImagePreview &&
+          profileImagePreview !== user.profile_image && {
+            profile_image: profileImagePreview,
+          }),
       });
 
       onUserUpdate(result.user);
       setCurrentCvUrl(result.user.cv_file || "");
-      setProfileImagePreview(result.user.profile_image || null);
       setPendingCvFile(null);
-      setPendingProfileImageFile(null);
       setEditProfileOpen(false);
       toast.success("Perfil actualizado correctamente", {
         description: "Los cambios se aplicaron exitosamente.",
@@ -218,7 +191,6 @@ export function ConfigurationView({
       });
     } finally {
       setCvUploading(false);
-      setProfileImageUploading(false);
       setProfileLoading(false);
     }
   };
@@ -552,7 +524,6 @@ export function ConfigurationView({
                     setProfileImagePreview(user.profile_image || null);
                     setCurrentCvUrl(user.cv_file || "");
                     setPendingCvFile(null);
-                    setPendingProfileImageFile(null);
                     setProfileFormData({
                       name: user.name || "",
                       email: user.email || "",
@@ -571,7 +542,7 @@ export function ConfigurationView({
                   className="cms-primary-btn flex-1"
                   disabled={profileLoading}
                 >
-                  {profileLoading || cvUploading || profileImageUploading ? "Guardando..." : "Guardar cambios"}
+                  {profileLoading || cvUploading ? "Guardando..." : "Guardar cambios"}
                 </Button>
               </div>
             </form>
