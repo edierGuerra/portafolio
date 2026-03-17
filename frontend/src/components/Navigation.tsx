@@ -159,7 +159,7 @@ export function Navigation({
   const SidebarFooter = () => (
     <div className="border-t px-4 py-4 text-center">
       <p className="text-xs text-muted-foreground">
-        © {currentYear} Portafolio. Todos los derechos reservados.
+        © {currentYear} Edier Guerra. Todos los derechos reservados.
       </p>
     </div>
   );

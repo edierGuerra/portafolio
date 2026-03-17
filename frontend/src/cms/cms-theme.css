@@ -414,6 +414,31 @@
     }
 }
 
+.cms-settings-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: start;
+}
+
+.cms-settings-main,
+.cms-settings-side {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+
+@media (min-width: 1280px) {
+    .cms-settings-layout {
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.8fr);
+    }
+
+    .cms-settings-side {
+        position: sticky;
+        top: 5.75rem;
+    }
+}
 /* ============================================================
    ANALYTICS DASHBOARD (Resumen)
    ============================================================ */
@@ -2073,4 +2098,56 @@
     .cms-modal-footer>* {
         width: 100%;
     }
+}
+
+/* ── CV upload button ── */
+.cms-cv-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #e4e4e7;
+    background: #27272a;
+    border: 1px solid #3f3f46;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.cms-cv-upload-btn:hover {
+    background: #3f3f46;
+    border-color: rgba(52, 211, 153, 0.5);
+    color: #34d399;
+}
+
+.cms-cv-upload-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cms-cv-upload-hint {
+    font-size: 0.7rem;
+    color: #52525b;
+    margin-top: 0.25rem;
+}
+
+.cms-cv-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: #34d399;
+    text-decoration: none;
+    transition: color 150ms ease;
+}
+
+.cms-cv-link:hover {
+    color: #6ee7b7;
+}
+
+.cms-cv-no-file {
+    font-size: 0.75rem;
+    color: #71717a;
 }

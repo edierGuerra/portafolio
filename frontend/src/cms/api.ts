@@ -83,8 +83,11 @@ export async function updateMeCms(
       | "location"
       | "about_me"
       | "profile_image"
+      | "cv_file"
     >
-  >,
+  > & {
+    password?: string;
+  },
 ): Promise<MeResponse> {
   return httpWithAuth<MeResponse>("/api/auth/me", {
     method: "PATCH",
@@ -174,6 +177,19 @@ export async function uploadAdminProfileImageCms(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("folder", "admin-profile");
+
+  return httpWithAuth<FileUploadResponse>("/api/files/upload", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function uploadAdminCvFileCms(
+  file: File,
+): Promise<FileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", "cv");
 
   return httpWithAuth<FileUploadResponse>("/api/files/upload", {
     method: "POST",

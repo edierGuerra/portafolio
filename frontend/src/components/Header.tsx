@@ -1,5 +1,6 @@
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { getPublicProfile } from "../api/profile";
 import { Moon, Sun, Download, Globe, Menu } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -12,6 +13,27 @@ interface HeaderProps {
 
 export function Header({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenuOpen }: HeaderProps) {
   const [language, setLanguage] = useState("es");
+  const [cvUrl, setCvUrl] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getPublicProfile()
+      .then((profile) => {
+        if (!cancelled) {
+          setCvUrl(profile.cv_file?.trim() ?? "");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCvUrl("");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -58,10 +80,19 @@ export function Header({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenu
             {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <Download className="mr-2 h-4 w-4" />
-            <span className="hidden lg:inline">CV</span>
-          </Button>
+          {cvUrl ? (
+            <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
+              <a href={cvUrl} target="_blank" rel="noopener noreferrer">
+                <Download className="mr-2 h-4 w-4" />
+                <span className="hidden lg:inline">CV</span>
+              </a>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="hidden sm:flex" disabled>
+              <Download className="mr-2 h-4 w-4" />
+              <span className="hidden lg:inline">CV</span>
+            </Button>
+          )}
         </div>
       </div>
     </header>

@@ -26,7 +26,6 @@ import {
   Menu,
   MousePointerClick,
   Pencil,
-  Save,
   Search,
   Settings,
   ShieldCheck,
@@ -128,6 +127,7 @@ import {
 } from "./api";
 import { AboutContentView } from "./AboutContentView";
 import { BlogView } from "./BlogView";
+import { ConfigurationView } from "./ConfigurationView";
 import { ContactView } from "./ContactView";
 import { FaqView } from "./FaqView";
 import { ServicesView } from "./ServicesView";
@@ -379,6 +379,14 @@ const MODULES: ModuleItem[] = [
     description: "Configuracion personal e identidad visual.",
   },
 ];
+
+const SYSTEM_CONFIGURATION_MODULE: ModuleItem = {
+  id: "configuration",
+  label: "Configuracion",
+  icon: Settings,
+  records: 0,
+  description: "Ajustes del sistema, seguridad y preferencias del CMS.",
+};
 
 const TECHNOLOGY_LOGO_FALLBACKS: Record<string, string> = {
   react:
@@ -774,16 +782,14 @@ function CmsSidebar({
       <nav className="space-y-0.5">
         <button
           type="button"
-          className="cms-nav-item"
-          onClick={() =>
-            toast.info("Configuracion del sistema", {
-              description:
-                "Ajustes globales del CMS: roles, permisos y preferencias. Disponible en proxima iteracion.",
-            })
-          }
+          className={`cms-nav-item ${activeModule === "configuration" ? "cms-nav-item-active" : ""}`}
+          onClick={() => onSelect("configuration")}
         >
           <Settings className="h-4 w-4 shrink-0" />
           <span className="flex-1 text-left">Configuracion</span>
+          {activeModule === "configuration" && (
+            <ChevronRight className="h-3 w-3 shrink-0 text-emerald-400" />
+          )}
         </button>
         <button
           type="button"
@@ -3466,7 +3472,10 @@ function DashboardView({
   );
 
   const selectedModule = useMemo(
-    () => modules.find((m) => m.id === activeModule) ?? modules[0],
+    () =>
+      activeModule === SYSTEM_CONFIGURATION_MODULE.id
+        ? SYSTEM_CONFIGURATION_MODULE
+        : (modules.find((m) => m.id === activeModule) ?? modules[0]),
     [activeModule, modules],
   );
 
@@ -4117,47 +4126,6 @@ function DashboardView({
                 {selectedModule.description}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="cms-outline-btn h-8 text-sm"
-                    onClick={() => {
-                      toast.success("Borrador guardado", {
-                        description:
-                          "Los cambios se almacenan como borrador. No seran visibles en el portafolio publico hasta que se publiquen.",
-                      });
-                    }}
-                  >
-                    <Save className="mr-1.5 h-3.5 w-3.5" />
-                    Guardar
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="cms-tooltip">
-                  Guarda los cambios como borrador sin publicarlos
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="cms-primary-btn h-8 text-sm"
-                    onClick={() => {
-                      toast.success("Publicado en portafolio", {
-                        description:
-                          "Los cambios quedarian visibles en el portafolio publico de inmediato.",
-                      });
-                    }}
-                  >
-                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                    Publicar
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="cms-tooltip">
-                  Hace visibles los cambios en el portafolio publico
-                </TooltipContent>
-              </Tooltip>
-            </div>
           </div>
 
           {/* Metricas */}
@@ -4168,6 +4136,7 @@ function DashboardView({
             activeModule !== "services" &&
             activeModule !== "faq" &&
             activeModule !== "contact" &&
+            activeModule !== "configuration" &&
             activeModule !== "profile" && (
               <div className="cms-stats-grid">
                 {topMetrics.map(({ label, value, icon: Icon }) => (
@@ -4213,6 +4182,11 @@ function DashboardView({
             />
           ) : activeModule === "profile" ? (
             <AdminProfileView
+              user={currentUser}
+              onUserUpdate={handleUserUpdate}
+            />
+          ) : activeModule === "configuration" ? (
+            <ConfigurationView
               user={currentUser}
               onUserUpdate={handleUserUpdate}
             />

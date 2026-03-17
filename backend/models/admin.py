@@ -13,4 +13,5 @@ class User(Base):
     about_me: Mapped[str] = mapped_column(Text, nullable=False)
     profile_image: Mapped[str] = mapped_column(String(250), nullable=False)
     location: Mapped[str] = mapped_column(String(50), nullable=False)
+    cv_file: Mapped[str | None] = mapped_column(String(500), nullable=True)
     availability_status: Mapped[str] = mapped_column(String(30), nullable=False, default="available")

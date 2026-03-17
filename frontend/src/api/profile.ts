@@ -8,6 +8,7 @@ export interface PublicProfile {
   about_me: string;
   profile_image: string;
   location: string;
+  cv_file?: string | null;
   availability_status: AvailabilityStatus;
 }
 

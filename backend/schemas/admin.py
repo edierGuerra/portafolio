@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     about_me: str
     profile_image: str
     location: str
+    cv_file: Optional[str] = None
     availability_status: str = "available"
 
 
@@ -25,6 +26,7 @@ class UserUpdate(BaseModel):
     about_me: Optional[str] = None
     profile_image: Optional[str] = None
     location: Optional[str] = None
+    cv_file: Optional[str] = None
     availability_status: Optional[str] = None
 
 
@@ -43,5 +45,6 @@ class PublicProfileRead(BaseModel):
     about_me: str
     profile_image: str
     location: str
+    cv_file: Optional[str] = None
     availability_status: str = "available"
     model_config = ConfigDict(from_attributes=True)
