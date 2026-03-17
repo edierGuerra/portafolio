@@ -87,6 +87,17 @@ class ObjectStorageService:
             return f"{code}: {message}"
         return str(exc)
 
+    def _raise_storage_exception(self, exc: Exception, action: str) -> None:
+        detail = self._client_error_message(exc)
+        if isinstance(exc, ClientError):
+            code = exc.response.get("Error", {}).get("Code", "")
+            if code in {"NoSuchBucket", "InvalidBucketName", "InvalidAccessKeyId", "SignatureDoesNotMatch", "AccessDenied"}:
+                raise StorageConfigurationError(
+                    f"Configuracion invalida de Spaces al {action}. Bucket='{self.settings.bucket_name}', endpoint='{self.settings.endpoint_url}'. Detalle: {detail}"
+                ) from exc
+
+        raise StorageOperationError(f"No se pudo {action} en Spaces: {detail}") from exc
+
     def get_public_url(self, object_key: str) -> str:
         encoded_key = quote(object_key, safe="/")
         if self.settings.public_url_base:
@@ -129,15 +140,15 @@ class ObjectStorageService:
                 except (BotoCoreError, ClientError) as retry_exc:
                     detail = self._client_error_message(retry_exc)
                     logger.exception("Fallo upload a Spaces tras reintento sin ACL. key=%s detalle=%s", object_key, detail)
-                    raise StorageOperationError(f"No se pudo subir el archivo a Spaces: {detail}") from retry_exc
+                    self._raise_storage_exception(retry_exc, "subir el archivo")
             else:
                 detail = self._client_error_message(exc)
                 logger.exception("Fallo upload a Spaces. key=%s detalle=%s", object_key, detail)
-                raise StorageOperationError(f"No se pudo subir el archivo a Spaces: {detail}") from exc
+                self._raise_storage_exception(exc, "subir el archivo")
         except BotoCoreError as exc:
             detail = self._client_error_message(exc)
             logger.exception("Fallo upload a Spaces por error de red/SDK. key=%s detalle=%s", object_key, detail)
-            raise StorageOperationError(f"No se pudo subir el archivo a Spaces: {detail}") from exc
+            self._raise_storage_exception(exc, "subir el archivo")
 
         return object_key, self.get_public_url(object_key)
 
@@ -167,7 +178,7 @@ class ObjectStorageService:
         except (BotoCoreError, ClientError) as exc:
             detail = self._client_error_message(exc)
             logger.exception("Fallo al generar presigned PUT URL. detalle=%s", detail)
-            raise StorageOperationError(f"No se pudo generar URL firmada para upload: {detail}") from exc
+            self._raise_storage_exception(exc, "generar URL firmada para upload")
 
         return object_key, upload_url, self.get_public_url(object_key)
 
@@ -188,7 +199,7 @@ class ObjectStorageService:
         except (BotoCoreError, ClientError) as exc:
             detail = self._client_error_message(exc)
             logger.exception("Fallo al generar presigned GET URL. detalle=%s", detail)
-            raise StorageOperationError(f"No se pudo generar URL firmada para descarga: {detail}") from exc
+            self._raise_storage_exception(exc, "generar URL firmada para descarga")
 
     async def delete_file(self, object_key: str) -> None:
         client = self._get_client()
@@ -201,4 +212,4 @@ class ObjectStorageService:
         except (BotoCoreError, ClientError) as exc:
             detail = self._client_error_message(exc)
             logger.exception("Fallo al eliminar objeto en Spaces. key=%s detalle=%s", object_key, detail)
-            raise StorageOperationError(f"No se pudo eliminar el archivo en Spaces: {detail}") from exc
+            self._raise_storage_exception(exc, "eliminar el archivo")
