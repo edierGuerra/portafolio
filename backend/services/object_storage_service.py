@@ -28,7 +28,6 @@ class ObjectStorageService:
     def __init__(self, settings: StorageSettings | None = None):
         self.settings = settings or get_storage_settings()
         self._client: BaseClient | None = None
-        self._bucket_access_validated = False
 
     @property
     def is_available(self) -> bool:
@@ -79,25 +78,6 @@ class ObjectStorageService:
         )
         return self._client
 
-    async def ensure_bucket_access(self) -> None:
-        """Valida una vez por proceso que el bucket exista y sea accesible."""
-        if self._bucket_access_validated:
-            return
-
-        client = self._get_client()
-        try:
-            await asyncio.to_thread(client.head_bucket, Bucket=self.settings.bucket_name)
-            self._bucket_access_validated = True
-        except (BotoCoreError, ClientError) as exc:
-            detail = self._client_error_message(exc)
-            logger.exception(
-                "Fallo validando acceso al bucket de Spaces. bucket=%s endpoint=%s detalle=%s",
-                self.settings.bucket_name,
-                self.settings.endpoint_url,
-                detail,
-            )
-            self._raise_storage_exception(exc, "validar acceso al bucket")
-
     @staticmethod
     def _client_error_message(exc: Exception) -> str:
         if isinstance(exc, ClientError):
@@ -129,7 +109,6 @@ class ObjectStorageService:
         return f"https://{self.settings.bucket_name}.{endpoint_without_protocol}/{encoded_key}"
 
     async def upload_file(self, file_name: str, content: bytes, content_type: str, folder: str | None = None) -> tuple[str, str]:
-        await self.ensure_bucket_access()
         object_key = self._build_key(filename=file_name, folder=folder)
         client = self._get_client()
 
@@ -181,7 +160,6 @@ class ObjectStorageService:
         folder: str | None = None,
         expires_in: int | None = None,
     ) -> tuple[str, str, str]:
-        await self.ensure_bucket_access()
         object_key = self._build_key(filename=file_name, folder=folder)
         client = self._get_client()
         expiration = expires_in or self.settings.default_signed_url_ttl
@@ -205,7 +183,6 @@ class ObjectStorageService:
         return object_key, upload_url, self.get_public_url(object_key)
 
     async def create_presigned_get_url(self, *, object_key: str, expires_in: int | None = None) -> str:
-        await self.ensure_bucket_access()
         client = self._get_client()
         expiration = expires_in or self.settings.default_signed_url_ttl
 
@@ -225,7 +202,6 @@ class ObjectStorageService:
             self._raise_storage_exception(exc, "generar URL firmada para descarga")
 
     async def delete_file(self, object_key: str) -> None:
-        await self.ensure_bucket_access()
         client = self._get_client()
         try:
             await asyncio.to_thread(

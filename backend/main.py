@@ -31,12 +31,10 @@ from endpoints import (
 )
 from repositories.admin_repository import AdminRepository
 from services.security import hash_password
-from services.object_storage_service import ObjectStorageService, StorageConfigurationError, StorageOperationError
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-storage_service = ObjectStorageService()
 
 
 async def ensure_default_admin_user() -> None:
@@ -310,17 +308,6 @@ async def health_check():
         health_status["database"]["status"] = f"❌ Error: {str(e)}"
         health_status["status"] = "unhealthy"
     
-    # Verificar acceso real al bucket de Spaces
-    if config.storage.is_configured:
-        try:
-            await storage_service.ensure_bucket_access()
-            health_status["storage"]["status"] = "✅ Bucket accessible"
-        except (StorageConfigurationError, StorageOperationError) as e:
-            health_status["storage"]["status"] = f"❌ Error: {str(e)}"
-            health_status["status"] = "unhealthy"
-    else:
-        health_status["storage"]["status"] = "⚠️ Not configured"
-
     return health_status
 
 
