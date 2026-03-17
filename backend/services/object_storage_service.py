@@ -1,4 +1,3 @@
-import asyncio
 import re
 from pathlib import PurePath
 from urllib.parse import quote
@@ -99,14 +98,15 @@ class ObjectStorageService:
             if self.settings.object_acl:
                 put_object_kwargs["ACL"] = self.settings.object_acl
 
-            # Ejecutar put_object en thread pool para no bloquear el event loop
-            await asyncio.to_thread(client.put_object, **put_object_kwargs)
+            client.put_object(
+                **put_object_kwargs,
+            )
         except (BotoCoreError, ClientError) as exc:
             raise StorageOperationError("No se pudo subir el archivo a Spaces") from exc
 
         return object_key, self.get_public_url(object_key)
 
-    async def create_presigned_put_url(
+    def create_presigned_put_url(
         self,
         *,
         file_name: str,
@@ -119,9 +119,8 @@ class ObjectStorageService:
         expiration = expires_in or self.settings.default_signed_url_ttl
 
         try:
-            upload_url = await asyncio.to_thread(
-                client.generate_presigned_url,
-                "put_object",
+            upload_url = client.generate_presigned_url(
+                ClientMethod="put_object",
                 Params={
                     "Bucket": self.settings.bucket_name,
                     "Key": object_key,
@@ -134,14 +133,13 @@ class ObjectStorageService:
 
         return object_key, upload_url, self.get_public_url(object_key)
 
-    async def create_presigned_get_url(self, *, object_key: str, expires_in: int | None = None) -> str:
+    def create_presigned_get_url(self, *, object_key: str, expires_in: int | None = None) -> str:
         client = self._get_client()
         expiration = expires_in or self.settings.default_signed_url_ttl
 
         try:
-            return await asyncio.to_thread(
-                client.generate_presigned_url,
-                "get_object",
+            return client.generate_presigned_url(
+                ClientMethod="get_object",
                 Params={
                     "Bucket": self.settings.bucket_name,
                     "Key": object_key,
@@ -151,13 +149,9 @@ class ObjectStorageService:
         except (BotoCoreError, ClientError) as exc:
             raise StorageOperationError("No se pudo generar URL firmada para descarga") from exc
 
-    async def delete_file(self, object_key: str) -> None:
+    def delete_file(self, object_key: str) -> None:
         client = self._get_client()
         try:
-            await asyncio.to_thread(
-                client.delete_object,
-                Bucket=self.settings.bucket_name,
-                Key=object_key,
-            )
+            client.delete_object(Bucket=self.settings.bucket_name, Key=object_key)
         except (BotoCoreError, ClientError) as exc:
             raise StorageOperationError("No se pudo eliminar el archivo en Spaces") from exc

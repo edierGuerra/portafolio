@@ -3164,6 +3164,7 @@ function AdminProfileView({
                         handleChange("profile_image")(event);
                       }}
                       placeholder="La URL se completa al guardar o puedes pegarla manualmente"
+                      required={pendingProfileImageFile === null && !form.profile_image}
                     />
                   </div>
 
