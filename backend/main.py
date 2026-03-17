@@ -215,23 +215,29 @@ app.add_middleware(
     allow_headers=config.app.cors_allow_headers,
 )
 
-app.include_router(analytics_router, prefix="/api")
-app.include_router(auth_router, prefix="/api")
-app.include_router(technologies_router, prefix="/api")
-app.include_router(projects_router, prefix="/api")
-app.include_router(experience_router, prefix="/api")
-app.include_router(achievements_router, prefix="/api")
-app.include_router(available_services_router, prefix="/api")
-app.include_router(blog_categories_router, prefix="/api")
-app.include_router(blog_tags_router, prefix="/api")
-app.include_router(blog_router, prefix="/api")
-app.include_router(contact_info_router, prefix="/api")
-app.include_router(contact_messages_router, prefix="/api")
-app.include_router(faq_router, prefix="/api")
-app.include_router(interests_router, prefix="/api")
-app.include_router(my_philosophy_router, prefix="/api")
-app.include_router(social_networks_router, prefix="/api")
-app.include_router(file_storage_router, prefix="/api")
+api_routers = [
+    analytics_router,
+    auth_router,
+    technologies_router,
+    projects_router,
+    experience_router,
+    achievements_router,
+    available_services_router,
+    blog_categories_router,
+    blog_tags_router,
+    blog_router,
+    contact_info_router,
+    contact_messages_router,
+    faq_router,
+    interests_router,
+    my_philosophy_router,
+    social_networks_router,
+    file_storage_router,
+]
+
+for router in api_routers:
+    app.include_router(router, prefix="/api")
+    app.include_router(router)
 
 
 # ============================================================================
