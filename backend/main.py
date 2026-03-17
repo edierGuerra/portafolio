@@ -2,12 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
+import os
 
 # Importar la configuración centralizada
 from config import get_config
-from config.database_config import Base, engine
+from config.database_config import AsyncSessionLocal, Base, engine
 
 import models
+from models.admin import User
 from endpoints import (
     achievements_router,
     analytics_router,
@@ -27,10 +29,52 @@ from endpoints import (
     social_networks_router,
     technologies_router,
 )
+from repositories.admin_repository import AdminRepository
+from services.security import hash_password
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+async def ensure_default_admin_user() -> None:
+    """Crea un usuario admin por defecto si la tabla de usuarios está vacía."""
+    async with AsyncSessionLocal() as db:
+        repository = AdminRepository(db)
+        existing_user = await repository.get_first()
+        if existing_user is not None:
+            return
+
+        default_password = "ChangeMe123!"
+        admin_email = os.getenv("CMS_ADMIN_EMAIL", "admin@edierguerra.com").strip()
+        admin_password = os.getenv("CMS_ADMIN_PASSWORD", default_password).strip()
+
+        if not admin_email or not admin_password:
+            logger.warning(
+                "⚠️ No se creó usuario inicial del CMS: CMS_ADMIN_EMAIL o CMS_ADMIN_PASSWORD vacío"
+            )
+            return
+
+        user = User(
+            email=admin_email,
+            password=hash_password(admin_password),
+            name=os.getenv("CMS_ADMIN_NAME", "Administrador"),
+            professional_profile=os.getenv("CMS_ADMIN_PROFESSIONAL_PROFILE", "Administrador del CMS"),
+            about_me=os.getenv("CMS_ADMIN_ABOUT_ME", "Perfil administrativo inicial del portafolio."),
+            profile_image=os.getenv("CMS_ADMIN_PROFILE_IMAGE", ""),
+            location=os.getenv("CMS_ADMIN_LOCATION", "N/A"),
+            cv_file=os.getenv("CMS_ADMIN_CV_FILE") or None,
+            availability_status=os.getenv("CMS_ADMIN_AVAILABILITY_STATUS", "available"),
+        )
+
+        db.add(user)
+        await db.commit()
+
+        logger.info("✅ Usuario inicial del CMS creado: %s", admin_email)
+        if admin_password == default_password:
+            logger.warning(
+                "⚠️ CMS_ADMIN_PASSWORD está usando el valor por defecto. Cámbialo en producción."
+            )
 
 
 TAGS_METADATA = [
@@ -126,6 +170,7 @@ async def lifespan(app: FastAPI):
         # Crear todas las tablas en la base de datos
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        await ensure_default_admin_user()
         logger.info("✅ Base de datos inicializada")
     except Exception as e:
         logger.error(f"❌ Error inicializando base de datos: {str(e)}")
