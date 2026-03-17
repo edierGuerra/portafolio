@@ -5,7 +5,7 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
-import { Mail, Phone, MapPin, Clock, Send, Coffee, MessageCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Send, MessageCircle } from "lucide-react";
 import {
   getContactInfo,
   sendContactMessage,
@@ -223,18 +223,6 @@ export function ContactSection() {
               </CardContent>
             </Card>
 
-            <Card className="hidden lg:block">
-              <CardContent className="p-6 text-center">
-                <Coffee className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <h3 className="font-semibold mb-2">¿Prefieres una llamada?</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Podemos programar una videollamada de 30 minutos para conocernos mejor
-                </p>
-                <Button variant="outline" className="w-full">
-                  Programar llamada
-                </Button>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Formulario de contacto */}
@@ -345,20 +333,6 @@ export function ContactSection() {
                   </p>
                 </div>
                 </form>
-              </CardContent>
-            </Card>
-
-            {/* Call-to-action móvil */}
-            <Card className="lg:hidden mt-6">
-              <CardContent className="p-6 text-center">
-                <Coffee className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <h3 className="font-semibold mb-2">¿Prefieres una llamada?</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Podemos programar una videollamada de 30 minutos para conocernos mejor
-                </p>
-                <Button variant="outline" className="w-full">
-                  Programar llamada
-                </Button>
               </CardContent>
             </Card>
           </div>
