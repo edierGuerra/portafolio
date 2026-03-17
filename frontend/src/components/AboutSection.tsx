@@ -281,34 +281,32 @@ export function AboutSection() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Award className="h-5 w-5" />
-                  Logros destacados
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {loading ? (
-                  <p className="text-sm text-muted-foreground">
-                    Cargando logros...
-                  </p>
-                ) : achievements.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Sin logros registrados.
-                  </p>
-                ) : (
-                  achievements.map((achievement) => (
-                    <div key={achievement.id} className="text-sm">
-                      <p className="font-medium">{achievement.title}</p>
-                      <p className="text-muted-foreground text-xs sm:text-sm">
-                        {achievement.subtitle}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+            {(loading || achievements.length > 0) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Award className="h-5 w-5" />
+                    Logros destacados
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {loading ? (
+                    <p className="text-sm text-muted-foreground">
+                      Cargando logros...
+                    </p>
+                  ) : (
+                    achievements.map((achievement) => (
+                      <div key={achievement.id} className="text-sm">
+                        <p className="font-medium">{achievement.title}</p>
+                        <p className="text-muted-foreground text-xs sm:text-sm">
+                          {achievement.subtitle}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>
