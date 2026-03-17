@@ -2,9 +2,6 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from config.database_config import get_db
 from services.auth_service import AuthService
 
 
@@ -20,7 +17,8 @@ def extract_bearer_token(credentials: Optional[HTTPAuthorizationCredentials]) ->
 
 async def require_authenticated_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    db: AsyncSession = Depends(get_db),
 ) -> None:
+    """Valida que el request tenga token JWT válido. No requiere sesión de BD."""
     token = extract_bearer_token(credentials)
-    await auth_service.get_current_user(db=db, token=token)
+    # Solo valida el token, no hace query a BD
+    auth_service._decode_and_verify_token(token, expected_type="access")
