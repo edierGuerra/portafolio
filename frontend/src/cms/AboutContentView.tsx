@@ -152,7 +152,11 @@ function CmsTechnologyLogo({
   );
 }
 
-export function AboutContentView() {
+export function AboutContentView({
+  onTotalRecordsChange,
+}: {
+  onTotalRecordsChange?: (count: number) => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [technologies, setTechnologies] = useState<Technology[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -215,6 +219,10 @@ export function AboutContentView() {
     () => experiences.length + achievements.length + interests.length + philosophies.length,
     [experiences.length, achievements.length, interests.length, philosophies.length],
   );
+
+  useEffect(() => {
+    onTotalRecordsChange?.(totalAboutRecords);
+  }, [onTotalRecordsChange, totalAboutRecords]);
 
   const handleExperienceSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

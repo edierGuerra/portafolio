@@ -100,10 +100,14 @@ import {
 } from "./session";
 import {
   deleteContactMessageCms,
+  getAchievementsCms,
   getAnalyticsSummaryCms,
   getContactMessagesCms,
   getContactInfoCms,
+  getExperienceCms,
   getFaqCms,
+  getInterestsCms,
+  getPhilosophiesCms,
   createTechnologyCms,
   createProjectCms,
   getSocialNetworksCms,
@@ -332,7 +336,7 @@ const MODULES: ModuleItem[] = [
     id: "experience",
     label: "Sobre mi",
     icon: FileText,
-    records: 5,
+    records: 0,
     description:
       "Contenido de Sobre mi: experiencia, logros, intereses y filosofia.",
   },
@@ -3393,6 +3397,9 @@ function DashboardView({
   const [blogsCount, setBlogsCount] = useState(
     MODULES.find((module) => module.id === "blog")?.records ?? 0,
   );
+  const [aboutCount, setAboutCount] = useState(
+    MODULES.find((module) => module.id === "experience")?.records ?? 0,
+  );
   const [technologiesCount, setTechnologiesCount] = useState(
     MODULES.find((module) => module.id === "technologies")?.records ?? 0,
   );
@@ -3447,6 +3454,9 @@ function DashboardView({
         if (module.id === "blog") {
           return { ...module, records: blogsCount };
         }
+        if (module.id === "experience") {
+          return { ...module, records: aboutCount };
+        }
         if (module.id === "technologies") {
           return { ...module, records: technologiesCount };
         }
@@ -3464,6 +3474,7 @@ function DashboardView({
     [
       projectsCount,
       blogsCount,
+      aboutCount,
       technologiesCount,
       servicesCount,
       faqCount,
@@ -3482,6 +3493,41 @@ function DashboardView({
   useEffect(() => {
     setCurrentUser(user);
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAboutCount = async () => {
+      try {
+        const [experiences, achievements, interests, philosophies] =
+          await Promise.all([
+            getExperienceCms(),
+            getAchievementsCms(),
+            getInterestsCms(),
+            getPhilosophiesCms(),
+          ]);
+
+        if (!cancelled) {
+          setAboutCount(
+            experiences.length +
+              achievements.length +
+              interests.length +
+              philosophies.length,
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setAboutCount(0);
+        }
+      }
+    };
+
+    void loadAboutCount();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -3794,12 +3840,35 @@ function DashboardView({
         },
         { label: "CTR promedio", value: "6.8%", icon: Activity },
       ]
-    : [
-        { label: "Secciones", value: "9", icon: LayoutGrid },
-        { label: "Campos estimados", value: "64", icon: FileText },
-        { label: "Flujos pendientes", value: "18", icon: Activity },
-        { label: "Estado sistema", value: "Prototipo", icon: ShieldCheck },
-      ];
+    : activeModule === "technologies"
+      ? [
+          {
+            label: "Tecnologias registradas",
+            value: String(technologiesCount),
+            icon: Cpu,
+          },
+          {
+            label: "Proyectos en portafolio",
+            value: String(projectsCount),
+            icon: FolderKanban,
+          },
+          {
+            label: "Registros sobre mi",
+            value: String(aboutCount),
+            icon: Briefcase,
+          },
+          {
+            label: "Estado del modulo",
+            value: "Sincronizado",
+            icon: ShieldCheck,
+          },
+        ]
+      : [
+          { label: "Secciones", value: "9", icon: LayoutGrid },
+          { label: "Campos estimados", value: "64", icon: FileText },
+          { label: "Flujos pendientes", value: "18", icon: Activity },
+          { label: "Estado sistema", value: "Prototipo", icon: ShieldCheck },
+        ];
 
   const handleLogout = () => {
     logoutCms(getAccessToken() ?? "", getRefreshToken() ?? undefined)
@@ -4167,7 +4236,7 @@ function DashboardView({
               onTechnologiesCountChange={setTechnologiesCount}
             />
           ) : activeModule === "experience" ? (
-            <AboutContentView />
+            <AboutContentView onTotalRecordsChange={setAboutCount} />
           ) : activeModule === "blog" ? (
             <BlogView onBlogsCountChange={setBlogsCount} />
           ) : activeModule === "services" ? (
