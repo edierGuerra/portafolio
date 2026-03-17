@@ -169,7 +169,7 @@ async def generate_presigned_upload(
     expires_in = payload.expires_in or storage_service.settings.default_signed_url_ttl
 
     try:
-        object_key, upload_url, file_url = storage_service.create_presigned_put_url(
+        object_key, upload_url, file_url = await storage_service.create_presigned_put_url(
             file_name=payload.file_name,
             content_type=payload.content_type,
             folder=payload.folder,
@@ -208,7 +208,7 @@ async def generate_presigned_download(
     ttl = expires_in or storage_service.settings.default_signed_url_ttl
 
     try:
-        download_url = storage_service.create_presigned_get_url(
+        download_url = await storage_service.create_presigned_get_url(
             object_key=object_key,
             expires_in=ttl,
         )
@@ -235,7 +235,7 @@ async def generate_presigned_download(
 )
 async def delete_file(object_key: str, _: None = Depends(require_authenticated_user)):
     try:
-        storage_service.delete_file(object_key=object_key)
+        await storage_service.delete_file(object_key=object_key)
     except (StorageConfigurationError, StorageOperationError) as exc:
         _raise_storage_error(exc)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
