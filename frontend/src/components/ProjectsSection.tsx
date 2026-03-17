@@ -253,7 +253,7 @@ export function ProjectsSection() {
                               rel="noreferrer"
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
-                              Ver demo
+                              Ver sitio
                             </a>
                           </Button>
                         ) : (
@@ -355,7 +355,7 @@ export function ProjectsSection() {
                               rel="noreferrer"
                             >
                               <ExternalLink className="mr-1 h-3 w-3" />
-                              Ver demo
+                              Ver sitio
                             </a>
                           </Button>
                         ) : (
