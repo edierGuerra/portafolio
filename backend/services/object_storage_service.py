@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import re
 from pathlib import PurePath
 from urllib.parse import quote
@@ -11,9 +10,6 @@ from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 from config.storage_config import StorageSettings, get_storage_settings
-
-
-logger = logging.getLogger(__name__)
 
 
 class StorageConfigurationError(Exception):
@@ -78,15 +74,6 @@ class ObjectStorageService:
         )
         return self._client
 
-    @staticmethod
-    def _client_error_message(exc: Exception) -> str:
-        if isinstance(exc, ClientError):
-            error = exc.response.get("Error", {})
-            code = error.get("Code", "Unknown")
-            message = error.get("Message", str(exc))
-            return f"{code}: {message}"
-        return str(exc)
-
     def get_public_url(self, object_key: str) -> str:
         encoded_key = quote(object_key, safe="/")
         if self.settings.public_url_base:
@@ -101,43 +88,21 @@ class ObjectStorageService:
         object_key = self._build_key(filename=file_name, folder=folder)
         client = self._get_client()
 
-        put_object_kwargs = {
-            "Bucket": self.settings.bucket_name,
-            "Key": object_key,
-            "Body": content,
-            "ContentType": content_type or "application/octet-stream",
-        }
-
-        if self.settings.object_acl:
-            put_object_kwargs["ACL"] = self.settings.object_acl
-
         try:
+            put_object_kwargs = {
+                "Bucket": self.settings.bucket_name,
+                "Key": object_key,
+                "Body": content,
+                "ContentType": content_type or "application/octet-stream",
+            }
+
+            if self.settings.object_acl:
+                put_object_kwargs["ACL"] = self.settings.object_acl
+
             # Ejecutar put_object en thread pool para no bloquear el event loop
             await asyncio.to_thread(client.put_object, **put_object_kwargs)
-        except ClientError as exc:
-            error_code = exc.response.get("Error", {}).get("Code", "")
-            # Algunos proveedores S3-compatibles rechazan ACLs explicitas.
-            if put_object_kwargs.get("ACL") and error_code in {
-                "AccessControlListNotSupported",
-                "InvalidArgument",
-                "NotImplemented",
-            }:
-                logger.warning("Spaces rechazo ACL (%s). Reintentando upload sin ACL para key=%s", error_code, object_key)
-                put_object_kwargs.pop("ACL", None)
-                try:
-                    await asyncio.to_thread(client.put_object, **put_object_kwargs)
-                except (BotoCoreError, ClientError) as retry_exc:
-                    detail = self._client_error_message(retry_exc)
-                    logger.exception("Fallo upload a Spaces tras reintento sin ACL. key=%s detalle=%s", object_key, detail)
-                    raise StorageOperationError(f"No se pudo subir el archivo a Spaces: {detail}") from retry_exc
-            else:
-                detail = self._client_error_message(exc)
-                logger.exception("Fallo upload a Spaces. key=%s detalle=%s", object_key, detail)
-                raise StorageOperationError(f"No se pudo subir el archivo a Spaces: {detail}") from exc
-        except BotoCoreError as exc:
-            detail = self._client_error_message(exc)
-            logger.exception("Fallo upload a Spaces por error de red/SDK. key=%s detalle=%s", object_key, detail)
-            raise StorageOperationError(f"No se pudo subir el archivo a Spaces: {detail}") from exc
+        except (BotoCoreError, ClientError) as exc:
+            raise StorageOperationError("No se pudo subir el archivo a Spaces") from exc
 
         return object_key, self.get_public_url(object_key)
 
@@ -165,9 +130,7 @@ class ObjectStorageService:
                 ExpiresIn=expiration,
             )
         except (BotoCoreError, ClientError) as exc:
-            detail = self._client_error_message(exc)
-            logger.exception("Fallo al generar presigned PUT URL. detalle=%s", detail)
-            raise StorageOperationError(f"No se pudo generar URL firmada para upload: {detail}") from exc
+            raise StorageOperationError("No se pudo generar URL firmada para upload") from exc
 
         return object_key, upload_url, self.get_public_url(object_key)
 
@@ -186,9 +149,7 @@ class ObjectStorageService:
                 ExpiresIn=expiration,
             )
         except (BotoCoreError, ClientError) as exc:
-            detail = self._client_error_message(exc)
-            logger.exception("Fallo al generar presigned GET URL. detalle=%s", detail)
-            raise StorageOperationError(f"No se pudo generar URL firmada para descarga: {detail}") from exc
+            raise StorageOperationError("No se pudo generar URL firmada para descarga") from exc
 
     async def delete_file(self, object_key: str) -> None:
         client = self._get_client()
@@ -199,6 +160,4 @@ class ObjectStorageService:
                 Key=object_key,
             )
         except (BotoCoreError, ClientError) as exc:
-            detail = self._client_error_message(exc)
-            logger.exception("Fallo al eliminar objeto en Spaces. key=%s detalle=%s", object_key, detail)
-            raise StorageOperationError(f"No se pudo eliminar el archivo en Spaces: {detail}") from exc
+            raise StorageOperationError("No se pudo eliminar el archivo en Spaces") from exc
