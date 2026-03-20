@@ -16,8 +16,22 @@ Este proyecto queda dockerizado con tres servicios:
 
 Desde la raíz del repositorio:
 
+**Desarrollo:**
+
 ```bash
-docker compose up --build -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+```
+
+**Staging:**
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.staging.yml up --build -d
+```
+
+**Producción:**
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 ```
 
 Ver logs:
@@ -40,28 +54,77 @@ docker compose down -v
 
 ## URLs
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000
-- Docs API (dev): http://localhost:8000/api/docs
+- **Desarrollo**
+	- Frontend: http://localhost:3000
+	- Backend: http://localhost:8000
+	- Docs API: http://localhost:8000/api/docs
+- **Staging** (modo local)
+	- Frontend: http://localhost:3000
+	- Backend: http://localhost:8000
+	- Docs API: http://localhost:8000/api/docs
+- **Producción** (modo local)
+	- Frontend: http://localhost
+	- Backend: http://localhost:8000
 
 MySQL corre dentro de la red interna de Docker y no se publica al host.
 
-## Variables importantes
-
-`docker-compose.yml` ya define valores por defecto para entorno local.
-
-- `DATABASE_URL` del backend apunta al servicio `db`.
-- `VITE_API_URL` del frontend se puede sobreescribir al construir:
+## **Desarrollo**
 
 ```bash
-VITE_API_URL=http://localhost:8000 docker compose up --build -d
+cp .env.development.example .env
+```
+
+2. **Staging**
+
+```bash
+cp .env.staging.example .env
+```
+
+3. **Producción**
+cp .env.development.example .env
+```
+
+2. Producción
+
+```bash
+cp .env.production.example .env
+```
+
+Luego ejecutar el compose del entorno correspondiente.
+
+**Bash/Zsh:**
+
+```bash
+VITE_API_URL=http://localhost:8000 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+```
+
+**PowerShell:**
+
+```powershell
+$env:VITE_API_URL = "http://localhost:8000"
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+```
+
+## Entornos y sus características
+
+| Aspecto | Desarrollo | Staging | Producción |
+|--------|-----------|---------|-----------|
+| DEBUG | `true` | `false` | `false` |
+| LOG_LEVEL | `DEBUG` | `INFO` | `WARNING` |
+| DATABASE_ECHO | `true` | `false` | `false` |
+| CORS_ORIGINS | localhost | dominio staging | dominio real |
+| VITE_API_URL | http://localhost:8000 | https://staging-api.tu-dominio.com | https://api.tu-dominio.com |
+| Puerto Frontend | 3000 | 3000 | 80 |
+| Puerto Backend | 8000 | 8000 | 8000 |
+```bash
+VITE_API_URL=http://localhost:8000 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 ```
 
 En PowerShell:
 
 ```powershell
 $env:VITE_API_URL = "http://localhost:8000"
-docker compose up --build -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 ```
 
 ## Notas de producción

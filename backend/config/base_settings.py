@@ -3,39 +3,56 @@ Clase base para todas las configuraciones del sistema.
 Proporciona utilidades comunes para cargar, validar y cachear configuraciones.
 """
 import os
-from dataclasses import Field, dataclass, fields
+from dataclasses import dataclass, fields
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Type, TypeVar
+from typing import Any
 
 
-T = TypeVar('T', bound='BaseSettings')
-
-
+@lru_cache(maxsize=1)
 def _load_env_file() -> None:
     """
     Carga variables de un archivo .env local sin sobrescribir las ya definidas
     en el ambiente. Solo se ejecuta una vez.
     """
-    env_path = Path(__file__).resolve().parents[1] / ".env"
-    if not env_path.exists():
-        return
+    root = Path(__file__).resolve().parents[1]
 
-    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        # Ignorar líneas vacías y comentarios
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
+    selected_env = (
+        os.getenv("APP_ENV")
+        or os.getenv("ENVIRONMENT")
+        or "development"
+    ).strip().lower()
+
+    candidate_files = [
+        root / f".env.{selected_env}",
+        root / ".env",
+    ]
+
+    for env_path in candidate_files:
+        if not env_path.exists():
             continue
 
-        key, _, value = line.partition("=")
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        
-        # Solo cargar si la variable no existe en el ambiente
-        if key and key not in os.environ:
-            os.environ[key] = value
+        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            # Ignorar líneas vacías y comentarios
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+
+            key, _, value = line.partition("=")
+            key = key.strip().removeprefix("export ").strip()
+            value = value.strip().strip('"').strip("'")
+
+            # Solo cargar si la variable no existe en el ambiente
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+    # Mantener compatibilidad entre APP_ENV y ENVIRONMENT
+    if "APP_ENV" in os.environ and "ENVIRONMENT" not in os.environ:
+        os.environ["ENVIRONMENT"] = os.environ["APP_ENV"]
+    if "ENVIRONMENT" in os.environ and "APP_ENV" not in os.environ:
+        os.environ["APP_ENV"] = os.environ["ENVIRONMENT"]
 
 
 def _parse_bool(value: str | None, default: bool = False) -> bool:

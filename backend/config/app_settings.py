@@ -24,7 +24,8 @@ class AppSettings(BaseSettings):
     Variables de ambiente:
     - APP_NAME: Nombre de la aplicación (default: "Portfolio API")
     - APP_VERSION: Versión de la aplicación (default: "1.0.0")
-    - ENVIRONMENT: Ambiente (development|staging|production, default: development)
+    - APP_ENV: Ambiente principal (development|staging|production, default: development)
+    - ENVIRONMENT: Alias compatible de APP_ENV
     - DEBUG: Modo debug (default: False en production, True en otros)
     - WORKERS: Número de workers (default: 4)
     - PORT: Puerto del servidor (default: 8000)
@@ -81,12 +82,15 @@ def get_app_settings() -> AppSettings:
     Se ejecuta solo una vez y cachea el resultado.
     """
     # Determinar el ambiente
-    env_str = AppSettings._load_from_env("ENVIRONMENT", "development").lower()
+    env_str = (
+        AppSettings._load_from_env("APP_ENV")
+        or AppSettings._load_from_env("ENVIRONMENT", "development")
+    ).lower()
     try:
         environment = EnvironmentType(env_str)
     except ValueError:
         raise ValueError(
-            f"ENVIRONMENT inválido: {env_str}. "
+            f"APP_ENV/ENVIRONMENT inválido: {env_str}. "
             f"Valores permitidos: {', '.join([e.value for e in EnvironmentType])}"
         )
 

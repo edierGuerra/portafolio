@@ -1,0 +1,27 @@
+services:
+  db:
+    restart: always
+
+  backend:
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: production
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL}
+      HOST: 0.0.0.0
+      PORT: 8000
+      LOG_LEVEL: WARNING
+      DEBUG: "false"
+      DATABASE_ECHO: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY}
+
+  frontend:
+    restart: always
+    build:
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    ports:
+      - "80:80"

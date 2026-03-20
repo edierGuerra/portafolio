@@ -1,0 +1,22 @@
+services:
+  backend:
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: staging
+      ENVIRONMENT: staging
+      DATABASE_URL: ${DATABASE_URL:-mysql+aiomysql://portafolio:portafolio@db:3306/portafolio_db_staging}
+      HOST: 0.0.0.0
+      PORT: 8000
+      LOG_LEVEL: INFO
+      DATABASE_ECHO: "false"
+      DEBUG: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://staging.tu-dominio.com}
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-change-me-staging}
+
+  frontend:
+    build:
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://staging-api.tu-dominio.com}
+    ports:
+      - "3000:80"

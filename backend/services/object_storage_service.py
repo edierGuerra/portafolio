@@ -53,6 +53,24 @@ class ObjectStorageService:
         parts.append(unique_name)
         return "/".join(parts)
 
+    def _assert_key_within_base_path(self, object_key: str) -> None:
+        """Bloquea operaciones fuera del prefijo configurado del entorno."""
+        if not object_key:
+            raise StorageOperationError("La clave del objeto no puede estar vacia")
+
+        if not self.settings.base_path:
+            return
+
+        normalized_key = object_key.strip("/")
+        allowed_prefix = self.settings.base_path.strip("/")
+
+        if normalized_key == allowed_prefix or normalized_key.startswith(f"{allowed_prefix}/"):
+            return
+
+        raise StorageOperationError(
+            "Operacion bloqueada: la clave del objeto no pertenece al prefijo del entorno"
+        )
+
     def _get_client(self) -> BaseClient:
         if self._client is not None:
             return self._client
@@ -134,6 +152,7 @@ class ObjectStorageService:
         return object_key, upload_url, self.get_public_url(object_key)
 
     def create_presigned_get_url(self, *, object_key: str, expires_in: int | None = None) -> str:
+        self._assert_key_within_base_path(object_key)
         client = self._get_client()
         expiration = expires_in or self.settings.default_signed_url_ttl
 
@@ -150,6 +169,7 @@ class ObjectStorageService:
             raise StorageOperationError("No se pudo generar URL firmada para descarga") from exc
 
     def delete_file(self, object_key: str) -> None:
+        self._assert_key_within_base_path(object_key)
         client = self._get_client()
         try:
             client.delete_object(Bucket=self.settings.bucket_name, Key=object_key)

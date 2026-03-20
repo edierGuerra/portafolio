@@ -1,204 +1,336 @@
-# Requerimientos Funcionales del Proyecto Portafolio
+# 🎨 Portafolio Profesional
 
-Este documento lista los requerimientos funcionales del sistema, derivados del análisis del frontend y alineados con los modelos definidos en backend.
+Un portafolio moderno, full-stack y completamente desacoplado con **React + TypeScript** en el frontend, **FastAPI + SQLAlchemy** en el backend, y **Docker Compose** con soporte para múltiples entornos (desarrollo, staging, producción).
 
-## 1. Alcance funcional
+**Características principales:**
+- ✨ Interfaz moderna y responsiva (mobile-first)
+- 🚀 API RESTful con autenticación JWT
+- 🗄️ Base de datos MySQL relacional
+- 🐳 Completamente containerizado con Docker
+- 🔄 CI/CD automático con GitHub Actions
+- 🌿 Soporte para múltiples entornos (dev/staging/prod)
+- 📱 CMS integrado para gestionar contenido del portafolio
+- 🎯 Deployable en cualquier servidor Linux con Docker
 
-El sistema debe cubrir dos frentes:
+---
 
-1. Sitio público de portafolio (frontend).
-2. Gestión de contenido (CMS/API) para administrar la información que se muestra en el sitio.
+## 📋 Tabla de Contenidos
 
-## 2. Requerimientos funcionales del sitio público (frontend)
+- [Requisitos](#requisitos)
+- [Instalación Rápida](#instalación-rápida)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Desarrollo Local](#desarrollo-local)
+- [Despliegue](#despliegue)
+- [Documentación](#documentación)
+- [Flujo Git y CI/CD](#flujo-git-y-cicd)
+- [Contribuir](#contribuir)
+- [Licencia](#licencia)
 
-### 2.1 Navegación y estructura general
+---
 
-1. RF-001: El sistema debe mostrar una aplicación de una sola página con secciones: Inicio, Sobre mí, Proyectos, Blog y Contacto.
-2. RF-002: El usuario debe poder cambiar de sección desde navegación de escritorio.
-3. RF-003: El usuario debe poder abrir y cerrar menú de navegación móvil.
-4. RF-004: Al seleccionar una opción del menú móvil, el sistema debe cerrar el panel lateral automáticamente.
-5. RF-005: El sistema debe resaltar visualmente la sección activa en la navegación.
+## 🛠️ Requisitos
 
-### 2.2 Tema y preferencias de usuario
+- **Docker Desktop** (Windows, Mac, Linux)
+  - [Descargar Docker](https://www.docker.com/products/docker-desktop)
+- **Git** para clonar el repositorio
+- **GitHub CLI** (opcional, para configurar secretos)
+  - [Descargar gh](https://cli.github.com/)
 
-1. RF-006: El sistema debe permitir alternar entre modo claro y modo oscuro.
-2. RF-007: El sistema debe persistir la preferencia de tema en almacenamiento local del navegador.
-3. RF-008: En primera carga, si no hay preferencia guardada, el sistema debe respetar la preferencia del sistema operativo.
+Para desarrollo sin Docker:
+- **Python 3.11+**
+- **Node.js 20+** y npm
+- **MySQL 8.4+**
 
-### 2.3 Cabecera y acciones globales
+---
 
-1. RF-009: El sistema debe mostrar cabecera fija en la parte superior.
-2. RF-010: El sistema debe incluir selector de idioma (Español/Inglés) en la cabecera.
-3. RF-011: El sistema debe incluir acción para descarga de CV.
+## 🚀 Instalación Rápida
+
+### Opción 1: Con Docker (Recomendado)
+
+```bash
+# Clonar repositorio
+git clone https://github.com/tu-usuario/portafolio.git
+cd portafolio
+
+# Configurar archivo de entorno
+cp .env.development.example .env
+
+# Levantar stack de desarrollo
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+
+# Ver logs
+docker compose logs -f
+
+# Detener
+docker compose down
+```
+
+**URLs (desarrollo):**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- Docs API: http://localhost:8000/api/docs
+- Swagger: http://localhost:8000/api/redoc
+
+### Opción 2: Sin Docker (Local)
+
+#### Backend
+
+```bash
+cd backend
+
+# Crear entorno virtual
+python -m venv .venv
+
+# Activar
+source .venv/bin/activate  # Linux/Mac
+# o
+.\.venv\Scripts\activate  # Windows PowerShell
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Configurar variables
+cp .env.example .env
+# Editar .env con tu configuración de BD
+
+# Ejecutar migraciones
+alembic upgrade head
+
+# Iniciar servidor
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Frontend
+
+```bash
+cd frontend
+
+# Instalar dependencias
+npm install
+
+# Desarrollo (con hot reload)
+npm run dev
+
+# Build producción
+npm run build
+
+# Preview de build
+npm run preview
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+portafolio/
+├── .github/
+│   ├── workflows/
+│   │   └── ci-cd.yml          # Pipeline de GitHub Actions
+│   ├── CICD_SETUP.md          # Configuración detallada CI/CD
+│   ├── CICD_QUICK_START.md    # Guía rápida
+│   └── setup-ci-cd-secrets.sh # Script de configuración
+│
+├── backend/
+│   ├── config/                # Configuración (settings, BD, auth)
+│   ├── endpoints/             # Rutas API REST
+│   ├── models/                # Modelos SQLAlchemy
+│   ├── repositories/          # Capa de datos
+│   ├── schemas/               # Validación de datos
+│   ├── services/              # Lógica de negocio
+│   ├── alembic/               # Migraciones de BD
+│   ├── main.py                # Entrada app FastAPI
+│   ├── requirements.txt        # Dependencias Python
+│   └── Dockerfile
+│
+├── frontend/
+│   ├── src/
+│   │   ├── api/               # Clientes HTTP
+│   │   ├── components/        # Componentes React
+│   │   ├── styles/            # CSS global
+│   │   ├── App.tsx            # Componente raíz
+│   │   └── main.tsx           # Entrada React
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── Dockerfile
+│
+├── docker-compose.yml         # Servicios base (MySQL, DB)
+├── docker-compose.dev.yml     # Override desarrollo
+├── docker-compose.staging.yml # Override staging
+├── docker-compose.prod.yml    # Override producción
+│
+├── DOCKER.md                  # Guía Docker y entornos
+├── README.md                  # Este archivo
+└── REQUIREMENTS.md            # Requerimientos funcionales
+```
+
+---
+
+## 💻 Desarrollo Local
+
+### Cambios en el código
+
+Mientras con `docker compose up`, los cambios se recargan automáticamente:
+
+**Backend:**
+- FastAPI con `--reload` detecta cambios automáticamente
+- Logs visibles en `docker compose logs backend`
+
+**Frontend:**
+- Vite hot-reload por defecto
+- Accesso en http://localhost:3000
+
+### Base de datos
+
+```bash
+# Crear nueva migración
+docker compose exec backend alembic revision --autogenerate -m "Descripción"
+
+# Aplicar migraciones
+docker compose exec backend alembic upgrade head
+
+# Ver estado
+docker compose exec backend alembic current
+```
+
+### Testing (opcional)
+
+```bash
+# Backend tests
+docker compose exec backend pytest
+
+# Frontend tests
+docker compose exec frontend npm test
+```
+
+---
+
+## 🚀 Despliegue
+
+### Entornos disponibles
+
+| Entorno | Rama | Portes | Logs | Debug |
+|---------|------|--------|------|-------|
+| **Desarrollo** | `feature/*` | 3000, 8000 | DEBUG | ✅ |
+| **Staging** | `develop` | 3000, 8000 | INFO | ❌ |
+| **Producción** | `main` | 80, 8000 | WARNING | ❌ |
+
+### Levantar por entorno
+
+```bash
+# Desarrollo
+cp .env.development.example .env
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
-### 2.4 Sección Inicio
+# Staging
+cp .env.staging.example .env
+docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
 
-1. RF-012: El sistema debe mostrar datos de perfil profesional: nombre, rol, ubicación, resumen profesional y foto.
-2. RF-013: El sistema debe mostrar un listado de habilidades principales como etiquetas.
-3. RF-014: El sistema debe incluir llamados a la acción para ver proyectos y contactar.
-4. RF-015: El sistema debe mostrar estado de disponibilidad para proyectos.
+# Producción
+cp .env.production.example .env
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
 
-### 2.5 Sección Sobre mí
+### Configurar CI/CD automático
 
-1. RF-016: El sistema debe mostrar línea de tiempo de experiencia profesional.
-2. RF-017: El sistema debe mostrar habilidades técnicas con nivel porcentual.
-3. RF-018: El sistema debe mostrar filosofía profesional.
-4. RF-019: El sistema debe mostrar logros destacados.
-5. RF-020: El sistema debe mostrar intereses personales/profesionales.
+Para despliegue automático en Staging y Producción:
 
-### 2.6 Sección Proyectos
+1. **Lee la guía:** [.github/CICD_QUICK_START.md](.github/CICD_QUICK_START.md)
+2. **Configura secretos:** `bash .github/setup-ci-cd-secrets.sh`
+3. **Verifica configuración:** `bash .github/verify-ci-cd-setup.sh`
 
-1. RF-021: El sistema debe listar proyectos destacados y no destacados.
-2. RF-022: El sistema debe mostrar por proyecto: título, descripción, imagen, tecnologías, estado, año y tamaño de equipo.
-3. RF-023: El sistema debe mostrar estado del proyecto (por ejemplo En desarrollo o Completado) con estilo visual diferenciado.
-4. RF-024: El sistema debe permitir acceder a demo y repositorio de cada proyecto.
-5. RF-025: El sistema debe presentar proyectos destacados en formato de mayor jerarquía visual.
+---
 
-### 2.7 Sección Blog
+## 📚 Documentación
 
-1. RF-026: El sistema debe listar artículos destacados y artículos generales.
-2. RF-027: El sistema debe mostrar por artículo: título, resumen, imagen, categoría y fecha.
-3. RF-028: El sistema debe mostrar tiempo estimado de lectura por artículo.
-4. RF-029: El sistema debe permitir filtrar visualmente por categorías de blog.
-5. RF-030: El sistema debe incluir acción para leer más y acción de guardado/marcador.
+### Documentación por tema
 
-### 2.8 Sección Contacto
+| Tema | Archivo |
+|------|---------|
+| **Configuración de entornos** | [DOCKER.md](DOCKER.md) |
+| **CI/CD rápido** | [.github/CICD_QUICK_START.md](.github/CICD_QUICK_START.md) |
+| **CI/CD completo** | [.github/CICD_SETUP.md](.github/CICD_SETUP.md) |
+| **Backend** | [backend/config/README.md](backend/config/README.md) |
+| **Frontend** | [frontend/README.md](frontend/README.md) |
+| **Requerimientos** | [REQUIREMENTS.md](REQUIREMENTS.md) |
 
-1. RF-031: El sistema debe mostrar información de contacto: correo, teléfono, ubicación y disponibilidad.
-2. RF-032: El sistema debe mostrar servicios profesionales disponibles.
-3. RF-033: El sistema debe proporcionar formulario de contacto con campos de nombre, correo, empresa (opcional), presupuesto, asunto y mensaje.
-4. RF-034: El sistema debe permitir envío del formulario de contacto.
-5. RF-035: El sistema debe mostrar sección de preguntas frecuentes.
-6. RF-036: El sistema debe ofrecer acción para programar llamada.
+---
 
-### 2.9 Enlaces externos
+## 🔄 Flujo Git y CI/CD
 
-1. RF-037: El sistema debe mostrar enlaces a redes sociales profesionales.
-2. RF-038: Los enlaces externos deben abrir en nueva pestaña de forma segura.
+```
+1. Crear rama de feature
+   │
+   └─→ git checkout -b feature/nueva-funcionalidad
+       (GitHub Actions: Valida + Build + Test)
 
-### 2.10 Responsividad y experiencia
+2. Abrir Pull Request a develop
+   │
+   └─→ Code review
+       (GitHub Actions: Valida + Build + Test)
 
-1. RF-039: El sistema debe adaptarse a móvil, tablet y escritorio.
-2. RF-040: El sistema debe mantener legibilidad y jerarquía visual en todos los tamaños de pantalla.
-3. RF-041: El sistema debe incluir transiciones visuales suaves en interacciones principales.
+3. Merge a develop
+   │
+   └─→ git merge feature/...
+       (GitHub Actions: Valida + Build + Test + 🚀 Deploy Staging)
 
-## 3. Requerimientos funcionales de gestión de datos (alineados a modelos backend)
+4. Merge a main
+   │
+   └─→ git merge develop
+       (GitHub Actions: Valida + Build + Test + 🚀 Deploy Producción)
+```
 
-Los siguientes requerimientos están trazados a los modelos SQLAlchemy existentes y deben exponerse por API/CMS para que el frontend pueda consumir contenido dinámico.
+**En cada etapa:**
+- ✅ Linting (flake8, black, ESLint)
+- ✅ Build Docker
+- ✅ Tests (pytest, jest)
+- ✅ Deploy automático (solo main/develop)
 
-### 3.1 Administración de usuario y perfil
+---
 
-1. RF-042: El sistema debe permitir crear, consultar, actualizar y eliminar usuario administrador.
-2. RF-043: El sistema debe almacenar credenciales de acceso del administrador.
-3. RF-044: El sistema debe administrar datos de perfil público: nombre, perfil profesional, descripción, imagen y ubicación.
+## 🤝 Contribuir
 
-Modelos asociados: User.
+1. Fork el repositorio
+2. Crea rama: `git checkout -b feature/mi-feature`
+3. Commit cambios: `git commit -m "Agrega mi feature"`
+4. Push a rama: `git push origin feature/mi-feature`
+5. Abre Pull Request
 
-### 3.2 Logros
+**Requisitos para PR:**
+- ✅ Tests pasan
+- ✅ Código formateado (black, isort)
+- ✅ Sin warnings de linting
+- ✅ Documentación actualizada
 
-1. RF-045: El sistema debe permitir CRUD de logros profesionales.
-2. RF-046: Cada logro debe contener título y subtítulo.
+---
 
-Modelos asociados: Achievement.
+## 📞 Soporte
 
-### 3.3 Servicios disponibles
+¿Problemas con el setup?
 
-1. RF-047: El sistema debe permitir CRUD de servicios profesionales ofrecidos.
+- **Docker/Entornos:** Ver [DOCKER.md](DOCKER.md)
+- **CI/CD:** Ver [.github/CICD_SETUP.md](.github/CICD_SETUP.md)
+- **Backend:** Ver [backend/config/README.md](backend/config/README.md)
+- **Frontend:** Ver [frontend/README.md](frontend/README.md)
 
-Modelos asociados: AvailableService.
+---
 
-### 3.4 Categorías y publicaciones de blog
+## 📄 Licencia
 
-1. RF-048: El sistema debe permitir CRUD de categorías de blog.
-2. RF-049: El sistema debe permitir CRUD de publicaciones de blog.
-3. RF-050: Cada publicación debe estar asociada obligatoriamente a una categoría válida.
-4. RF-051: Cada publicación debe almacenar título, descripción, imagen y fecha de publicación.
+Este proyecto está bajo licencia MIT. Ver [LICENSE](LICENSE) para detalles.
 
-Modelos asociados: BlogCategory, Blog.
+---
 
-### 3.5 Información de contacto
+## 🎯 Roadmap
 
-1. RF-052: El sistema debe permitir CRUD de información de contacto.
-2. RF-053: La información de contacto debe incluir correo, teléfono, ubicación y disponibilidad.
+- [ ] Implementar tests unitarios reales
+- [ ] Agregar autenticación Google/GitHub
+- [ ] Internacionalización (i18n)
+- [ ] Analytics avanzados
+- [ ] CDN para imágenes
+- [ ] API caching con Redis
+- [ ] Webhooks de Discord
 
-Modelos asociados: ContactInfo.
+---
 
-### 3.6 Experiencia profesional
-
-1. RF-054: El sistema debe permitir CRUD de experiencias laborales.
-2. RF-055: Cada experiencia debe incluir cargo, empresa, fecha de inicio y fecha de fin.
-
-Modelos asociados: Experience.
-
-### 3.7 Preguntas frecuentes
-
-1. RF-056: El sistema debe permitir CRUD de preguntas frecuentes.
-2. RF-057: Cada registro debe incluir pregunta y respuesta.
-
-Modelos asociados: FrequentlyAskedQuestion.
-
-### 3.8 Intereses
-
-1. RF-058: El sistema debe permitir CRUD de intereses.
-
-Modelos asociados: Interests.
-
-### 3.9 Filosofía profesional
-
-1. RF-059: El sistema debe permitir CRUD del bloque de filosofía profesional.
-2. RF-060: Este bloque debe incluir texto de filosofía e imagen de apoyo.
-
-Modelos asociados: MyPhilosophy.
-
-### 3.10 Proyectos y tecnologías
-
-1. RF-061: El sistema debe permitir CRUD de proyectos.
-2. RF-062: Cada proyecto debe incluir título, descripción, imagen, año, tamaño de equipo, estado y bandera de destacado.
-3. RF-063: El estado de proyecto debe aceptar únicamente valores definidos por catálogo (En desarrollo, Completado).
-4. RF-064: El sistema debe permitir CRUD de tecnologías.
-5. RF-065: El sistema debe permitir asociar múltiples tecnologías a múltiples proyectos.
-6. RF-066: El sistema debe permitir consultar proyectos con sus tecnologías relacionadas.
-
-Modelos asociados: Projects, Technologies, ProjectsTechnologies.
-
-### 3.11 Redes sociales
-
-1. RF-067: El sistema debe permitir CRUD de redes sociales.
-2. RF-068: Cada red social debe incluir nombre, URL e ícono.
-
-Modelos asociados: SocialNetworks.
-
-## 4. Requerimientos funcionales no dependientes de base de datos
-
-1. RF-069: El frontend debe usar una URL base de API configurable por variable de entorno para desacoplar ambientes.
-2. RF-070: El sistema debe permitir renderizado de contenido estático de respaldo cuando la API no esté disponible.
-3. RF-071: El sistema debe mostrar imágenes con fallback cuando falle la carga del recurso remoto.
-4. RF-072: El sistema debe mantener una experiencia navegable sin autenticación para visitantes públicos.
-5. RF-073: El sistema debe separar funcionalmente navegación de escritorio y navegación móvil.
-
-## 5. Reglas funcionales de integridad de datos (derivadas de modelos)
-
-1. RF-074: Todos los campos marcados como obligatorios en modelos backend deben ser obligatorios en operaciones de creación.
-2. RF-075: Las longitudes máximas definidas en modelos backend deben respetarse en validación de entrada.
-3. RF-076: No se debe permitir crear un blog con categoría inexistente.
-4. RF-077: No se debe permitir registrar relación proyecto-tecnología con IDs inexistentes.
-5. RF-078: Las respuestas de lectura deben exponer relaciones necesarias para renderizado del frontend (blog con categoría, proyecto con tecnologías).
-
-## 6. Matriz de trazabilidad frontend-backend
-
-1. Inicio y perfil público: User.
-2. Sobre mí: Experience, MyPhilosophy, Achievement, Interests.
-3. Proyectos: Projects, Technologies, ProjectsTechnologies.
-4. Blog: Blog, BlogCategory.
-5. Contacto: ContactInfo, AvailableService, FrequentlyAskedQuestion.
-6. Navegación social: SocialNetworks.
-
-## 7. Estado actual observado y requerimientos pendientes de implementación
-
-1. RF-079: Integrar consumo real de API para reemplazar arreglos estáticos actuales del frontend.
-2. RF-080: Implementar persistencia funcional para envío de formulario de contacto.
-3. RF-081: Implementar lógica real de filtrado por categoría en blog.
-4. RF-082: Implementar internacionalización real asociada al selector de idioma.
-5. RF-083: Implementar descarga real de CV desde recurso configurable.
-
-Estos requerimientos pendientes no contradicen los modelos backend; complementan la funcionalidad visible del frontend para llevar el sistema a operación completa.
+**Hecho con ❤️ por el equipo de desarrollo**

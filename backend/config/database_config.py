@@ -56,12 +56,20 @@ def get_database_settings() -> DatabaseSettings:
     """
     Obtiene la configuración de la base de datos con caché.
     """
+    env_name = (
+        DatabaseSettings._load_from_env("APP_ENV")
+        or DatabaseSettings._load_from_env("ENVIRONMENT", "development")
+    ).lower()
+
     settings = DatabaseSettings(
         database_url=DatabaseSettings._load_from_env(
             "DATABASE_URL",
             "mysql+aiomysql://Edier:admin@localhost/portafolio_db"
         ),
-        echo=DatabaseSettings._load_env_bool("DATABASE_ECHO", default=True),
+        echo=DatabaseSettings._load_env_bool(
+            "DATABASE_ECHO",
+            default=env_name != "production"
+        ),
         pool_size=DatabaseSettings._load_env_int("DATABASE_POOL_SIZE", default=20),
         max_overflow=DatabaseSettings._load_env_int("DATABASE_MAX_OVERFLOW", default=10),
         pool_recycle=DatabaseSettings._load_env_int("DATABASE_POOL_RECYCLE", default=3600),

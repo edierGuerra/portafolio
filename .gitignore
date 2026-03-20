@@ -5,7 +5,12 @@
 *.docx
 *.pdf
 *.md
-!*.README.md
+!README.md
+!REQUIREMENTS.md
+!DOCKER.md
+!.github/*.md
+!backend/config/*.md
+!frontend/README.md
 ### ArchLinuxPackages ###
 *.tar
 *.tar.*
@@ -517,6 +522,14 @@ $RECYCLE.BIN/
 
 # Copilot files
 .copilot/
-.github/
+.github/*
+!.github/workflows/
+!.github/CICD_*.md
+!.github/setup-ci-cd-secrets.sh
+!.github/verify-ci-cd-setup.sh
 
-# End of https://www.toptal.com/developers/gitignore/api/pythonvanilla,python,react,reactnative,windows,archlinuxpackages,linux
+# End of https://www.toptal.com/developers/gitignore/api/pythonvanilla,python,react,reactnative,windows,archlinuxpackages,linuxb a c k e n d / . e n v  
+ b a c k e n d / . e n v . *  
+ . e n v  
+ . e n v . *  
+ 
