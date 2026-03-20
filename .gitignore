@@ -164,6 +164,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.development
 .venv
 env/
 venv/
@@ -528,8 +529,23 @@ $RECYCLE.BIN/
 !.github/setup-ci-cd-secrets.sh
 !.github/verify-ci-cd-setup.sh
 
-# End of https://www.toptal.com/developers/gitignore/api/pythonvanilla,python,react,reactnative,windows,archlinuxpackages,linuxb a c k e n d / . e n v  
- b a c k e n d / . e n v . *  
- . e n v  
- . e n v . *  
+<<<<<<< HEAD
+# End of https://www.toptal.com/developers/gitignore/api/pythonvanilla,python,react,reactnative,windows,archlinuxpackages,linuxb a c k e n d / . e n v 
+ 
+ b a c k e n d / . e n v . * 
+ 
+ . e n v 
+ 
+ . e n v . * 
+ 
+=======
+# End of https://www.toptal.com/developers/gitignore/api/pythonvanilla,python,react,reactnative,windows,archlinuxpackages,linuxb a c k e n d / . e n v 
+ 
+ b a c k e n d / . e n v . * 
+ 
+ . e n v 
+ 
+ . e n v . * 
+ 
+>>>>>>> 6a24f76 (feat: ambiente de desarrollo aislado, CI/CD y protección de almacenamiento)
  
