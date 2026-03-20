@@ -12,6 +12,7 @@ import {
   type AvailabilityStatus,
 } from "../api/profile";
 import { useI18n } from "../i18n/I18nContext";
+import { localizeArrayFields, localizeObjectFields } from "../i18n/dynamicI18n";
 
 const AVAILABILITY_STYLE_CONFIG: Record<
   AvailabilityStatus,
@@ -54,20 +55,37 @@ interface HeroSectionProps {
 export function HeroSection({ onNavigate }: HeroSectionProps) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [technologies, setTechnologies] = useState<Technology[]>([]);
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   useEffect(() => {
     getPublicProfile()
-      .then(setProfile)
+      .then((value) =>
+        setProfile(
+          localizeObjectFields(value as Record<string, unknown>, language, [
+            "name",
+            "professional_profile",
+            "about_me",
+            "location",
+          ]) as PublicProfile,
+        ),
+      )
       .catch(() => {
         /* sin fallback estático */
       });
     getTechnologies()
-      .then(setTechnologies)
+      .then((value) =>
+        setTechnologies(
+          localizeArrayFields(
+            value as Array<Record<string, unknown>>,
+            language,
+            ["name"],
+          ) as Technology[],
+        ),
+      )
       .catch(() => {
         /* sin fallback estático */
       });
-  }, []);
+  }, [language]);
 
   const name = profile?.name ?? "";
   const location = profile?.location ?? "";

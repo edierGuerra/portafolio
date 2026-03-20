@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.experience_repository import ExperienceRepository
 from schemas.experience import ExperienceCreate, ExperienceRead, ExperienceUpdate
 
@@ -32,9 +33,11 @@ async def _get_experience_or_404(db: AsyncSession, experience_id: int):
     description="Obtiene el listado de experiencias profesionales ordenadas por fecha.",
     response_description="Listado de experiencias.",
 )
-async def list_experience(db: AsyncSession = Depends(get_db)):
+async def list_experience(request: Request, db: AsyncSession = Depends(get_db)):
     repository = ExperienceRepository(db)
-    return await repository.list_all()
+    experience = await repository.list_all()
+    language = get_requested_language(request)
+    return localize_many(experience, language, ["position", "company"])
 
 
 @router.get(
@@ -47,8 +50,10 @@ async def list_experience(db: AsyncSession = Depends(get_db)):
         404: {"description": "Experiencia no encontrada."},
     },
 )
-async def get_experience(experience_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_experience_or_404(db, experience_id)
+async def get_experience(experience_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    experience = await _get_experience_or_404(db, experience_id)
+    language = get_requested_language(request)
+    return localize_object_fields(experience, language, ["position", "company"])
 
 
 @router.post(

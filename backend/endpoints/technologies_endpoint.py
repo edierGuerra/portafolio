@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.technology_repository import TechnologyRepository
 from schemas.technologies import TechnologyCreate, TechnologyRead, TechnologyUpdate
 
@@ -32,9 +33,11 @@ async def _get_technology_or_404(db: AsyncSession, technology_id: int):
     description="Obtiene todas las tecnologias registradas ordenadas por id ascendente.",
     response_description="Listado de tecnologias.",
 )
-async def list_technologies(db: AsyncSession = Depends(get_db)):
+async def list_technologies(request: Request, db: AsyncSession = Depends(get_db)):
     repository = TechnologyRepository(db)
-    return await repository.list_all()
+    technologies = await repository.list_all()
+    language = get_requested_language(request)
+    return localize_many(technologies, language, ["name"])
 
 
 @router.get(
@@ -47,8 +50,10 @@ async def list_technologies(db: AsyncSession = Depends(get_db)):
         404: {"description": "Tecnologia no encontrada."},
     },
 )
-async def get_technology(technology_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_technology_or_404(db, technology_id)
+async def get_technology(technology_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    technology = await _get_technology_or_404(db, technology_id)
+    language = get_requested_language(request)
+    return localize_object_fields(technology, language, ["name"])
 
 
 @router.post(

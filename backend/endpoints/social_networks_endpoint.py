@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.social_network_repository import SocialNetworkRepository
 from schemas.social_networks import SocialNetworkCreate, SocialNetworkRead, SocialNetworkUpdate
 
@@ -31,8 +32,10 @@ async def _get_or_404(db: AsyncSession, network_id: int):
     description="Devuelve todas las redes sociales registradas ordenadas por id.",
     response_description="Listado de redes sociales.",
 )
-async def list_social_networks(db: AsyncSession = Depends(get_db)):
-    return await SocialNetworkRepository(db).list_all()
+async def list_social_networks(request: Request, db: AsyncSession = Depends(get_db)):
+    networks = await SocialNetworkRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(networks, language, ["name", "url", "icon"])
 
 
 @router.get(
@@ -43,8 +46,10 @@ async def list_social_networks(db: AsyncSession = Depends(get_db)):
     response_description="Red social encontrada.",
     responses={404: {"description": "Red social no encontrada."}},
 )
-async def get_social_network(network_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, network_id)
+async def get_social_network(network_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    network = await _get_or_404(db, network_id)
+    language = get_requested_language(request)
+    return localize_object_fields(network, language, ["name", "url", "icon"])
 
 
 @router.post(

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.faq_repository import FaqRepository
 from schemas.frequently_asked_questions import (
     FrequentlyAskedQuestionCreate,
@@ -35,8 +36,10 @@ async def _get_or_404(db: AsyncSession, faq_id: int):
     description="Devuelve todas las preguntas frecuentes ordenadas por id.",
     response_description="Listado de preguntas frecuentes.",
 )
-async def list_faq(db: AsyncSession = Depends(get_db)):
-    return await FaqRepository(db).list_all()
+async def list_faq(request: Request, db: AsyncSession = Depends(get_db)):
+    faqs = await FaqRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(faqs, language, ["question", "answer"])
 
 
 @router.get(
@@ -47,8 +50,10 @@ async def list_faq(db: AsyncSession = Depends(get_db)):
     response_description="Pregunta frecuente encontrada.",
     responses={404: {"description": "Pregunta frecuente no encontrada."}},
 )
-async def get_faq(faq_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, faq_id)
+async def get_faq(faq_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    faq = await _get_or_404(db, faq_id)
+    language = get_requested_language(request)
+    return localize_object_fields(faq, language, ["question", "answer"])
 
 
 @router.post(

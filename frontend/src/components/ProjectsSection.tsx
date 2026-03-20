@@ -7,6 +7,7 @@ import { ExternalLink, Calendar, Users, Github, Lock } from "lucide-react";
 import { http } from "../api/http";
 import "./ProjectsSection.css";
 import { useI18n } from "../i18n/I18nContext";
+import { localizeArrayFields } from "../i18n/dynamicI18n";
 
 type ApiTechnology = {
   id: number;
@@ -123,7 +124,20 @@ export function ProjectsSection() {
         setLoading(true);
         const data = await http<ApiProject[]>("/api/projects?published=true");
         if (!ignore) {
-          setProjects(data.map(mapProjectToUi));
+          const localized = localizeArrayFields(data, language, [
+            "title",
+            "description",
+            "state",
+          ]).map((project) => ({
+            ...project,
+            technologies: localizeArrayFields(
+              (project.technologies ?? []) as Array<Record<string, unknown>>,
+              language,
+              ["name"],
+            ) as ApiTechnology[],
+          })) as ApiProject[];
+
+          setProjects(localized.map(mapProjectToUi));
         }
       } catch {
         if (!ignore) {
@@ -140,7 +154,7 @@ export function ProjectsSection() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [language]);
 
   const featuredProjects = useMemo(
     () => projects.filter((project) => project.featured),

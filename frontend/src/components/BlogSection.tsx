@@ -11,6 +11,7 @@ import {
 } from "../api/blog";
 import "./BlogSection.css";
 import { useI18n } from "../i18n/I18nContext";
+import { localizeArrayFields } from "../i18n/dynamicI18n";
 
 const ALL_CATEGORY_ID = "__all__";
 
@@ -39,8 +40,45 @@ export function BlogSection() {
 
         if (cancelled) return;
 
-        setPosts(postsData);
-        setCategories(categoriesData.map((category) => category.name));
+        const localizedPosts = localizeArrayFields(
+          postsData as Array<Record<string, unknown>>,
+          language,
+          [
+            "title",
+            "slug",
+            "excerpt",
+            "content",
+            "seo_title",
+            "seo_description",
+          ],
+        ).map((post) => ({
+          ...post,
+          category: post.category
+            ? localizeArrayFields(
+                [post.category as Record<string, unknown>],
+                language,
+                ["name"],
+              )[0]
+            : post.category,
+          tags: (post.tags ?? []).map(
+            (tag) =>
+              localizeArrayFields([tag as Record<string, unknown>], language, [
+                "name",
+                "slug",
+              ])[0],
+          ),
+        })) as PublicBlogPost[];
+
+        const localizedCategories = localizeArrayFields(
+          categoriesData as Array<Record<string, unknown>>,
+          language,
+          ["name"],
+        );
+
+        setPosts(localizedPosts);
+        setCategories(
+          localizedCategories.map((category) => String(category.name || "")),
+        );
       } catch {
         if (!cancelled) {
           setError(t("blog.error"));
@@ -56,7 +94,7 @@ export function BlogSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [language, t]);
 
   const normalizedPosts = useMemo(() => {
     return posts.map((post) => {

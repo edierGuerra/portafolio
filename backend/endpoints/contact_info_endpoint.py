@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.contact_info_repository import ContactInfoRepository
 from schemas.contact_info import ContactInfoCreate, ContactInfoRead, ContactInfoUpdate
 
@@ -31,8 +32,10 @@ async def _get_or_404(db: AsyncSession, contact_id: int):
     description="Devuelve todos los registros de informacion de contacto.",
     response_description="Listado de informacion de contacto.",
 )
-async def list_contact_info(db: AsyncSession = Depends(get_db)):
-    return await ContactInfoRepository(db).list_all()
+async def list_contact_info(request: Request, db: AsyncSession = Depends(get_db)):
+    contact_info = await ContactInfoRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(contact_info, language, ["email", "phone", "location", "availability"])
 
 
 @router.get(
@@ -43,8 +46,10 @@ async def list_contact_info(db: AsyncSession = Depends(get_db)):
     response_description="Informacion de contacto encontrada.",
     responses={404: {"description": "Informacion de contacto no encontrada."}},
 )
-async def get_contact_info(contact_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, contact_id)
+async def get_contact_info(contact_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    contact_info = await _get_or_404(db, contact_id)
+    language = get_requested_language(request)
+    return localize_object_fields(contact_info, language, ["email", "phone", "location", "availability"])
 
 
 @router.post(

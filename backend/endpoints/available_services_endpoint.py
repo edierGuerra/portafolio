@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.available_service_repository import AvailableServiceRepository
 from schemas.available_services import AvailableServiceCreate, AvailableServiceRead, AvailableServiceUpdate
 
@@ -31,8 +32,10 @@ async def _get_or_404(db: AsyncSession, service_id: int):
     description="Devuelve todos los servicios disponibles ordenados por id.",
     response_description="Listado de servicios.",
 )
-async def list_services(db: AsyncSession = Depends(get_db)):
-    return await AvailableServiceRepository(db).list_all()
+async def list_services(request: Request, db: AsyncSession = Depends(get_db)):
+    services = await AvailableServiceRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(services, language, ["service"])
 
 
 @router.get(
@@ -43,8 +46,10 @@ async def list_services(db: AsyncSession = Depends(get_db)):
     response_description="Servicio encontrado.",
     responses={404: {"description": "Servicio no encontrado."}},
 )
-async def get_service(service_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, service_id)
+async def get_service(service_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    service = await _get_or_404(db, service_id)
+    language = get_requested_language(request)
+    return localize_object_fields(service, language, ["service"])
 
 
 @router.post(

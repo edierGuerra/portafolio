@@ -19,6 +19,7 @@ import {
   type Technology,
 } from "../api/profile";
 import { useI18n } from "../i18n/I18nContext";
+import { localizeArrayFields, localizeObjectFields } from "../i18n/dynamicI18n";
 
 const TECHNOLOGY_LOGO_FALLBACKS: Record<string, string> = {
   react:
@@ -114,7 +115,7 @@ export function AboutSection() {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [philosophies, setPhilosophies] = useState<Philosophy[]>([]);
   const [aboutMe, setAboutMe] = useState("");
-  const { t, locale } = useI18n();
+  const { t, locale, language } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -132,12 +133,23 @@ export function AboutSection() {
         ]);
 
         if (cancelled) return;
-        setAboutMe(profile.about_me ?? "");
-        setTechnologies(techs);
-        setExperience(exp);
-        setAchievements(ach);
-        setInterests(ints);
-        setPhilosophies(philo);
+        const localizedProfile = localizeObjectFields(profile, language, [
+          "name",
+          "professional_profile",
+          "about_me",
+          "location",
+        ]);
+
+        setAboutMe(localizedProfile.about_me ?? "");
+        setTechnologies(localizeArrayFields(techs, language, ["name"]));
+        setExperience(
+          localizeArrayFields(exp, language, ["position", "company"]),
+        );
+        setAchievements(
+          localizeArrayFields(ach, language, ["title", "subtitle"]),
+        );
+        setInterests(localizeArrayFields(ints, language, ["interest"]));
+        setPhilosophies(localizeArrayFields(philo, language, ["philosophy"]));
       } catch {
         if (!cancelled) {
           setTechnologies([]);
@@ -155,7 +167,7 @@ export function AboutSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [language]);
 
   const primaryPhilosophy = useMemo(() => philosophies[0], [philosophies]);
   const philosophyImage = primaryPhilosophy?.image?.trim() ?? "";

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.achievement_repository import AchievementRepository
 from schemas.achievements import AchievementCreate, AchievementRead, AchievementUpdate
 
@@ -31,8 +32,10 @@ async def _get_or_404(db: AsyncSession, achievement_id: int):
     description="Devuelve todos los logros registrados ordenados por id.",
     response_description="Listado de logros.",
 )
-async def list_achievements(db: AsyncSession = Depends(get_db)):
-    return await AchievementRepository(db).list_all()
+async def list_achievements(request: Request, db: AsyncSession = Depends(get_db)):
+    achievements = await AchievementRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(achievements, language, ["title", "subtitle"])
 
 
 @router.get(
@@ -43,8 +46,10 @@ async def list_achievements(db: AsyncSession = Depends(get_db)):
     response_description="Logro encontrado.",
     responses={404: {"description": "Logro no encontrado."}},
 )
-async def get_achievement(achievement_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, achievement_id)
+async def get_achievement(achievement_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    achievement = await _get_or_404(db, achievement_id)
+    language = get_requested_language(request)
+    return localize_object_fields(achievement, language, ["title", "subtitle"])
 
 
 @router.post(

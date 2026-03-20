@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.blog_category_repository import BlogCategoryRepository
 from schemas.blog_category import BlogCategoryCreate, BlogCategoryRead, BlogCategoryUpdate
 
@@ -31,8 +32,10 @@ async def _get_or_404(db: AsyncSession, category_id: int):
     description="Devuelve todas las categorias de blog ordenadas por id.",
     response_description="Listado de categorias.",
 )
-async def list_blog_categories(db: AsyncSession = Depends(get_db)):
-    return await BlogCategoryRepository(db).list_all()
+async def list_blog_categories(request: Request, db: AsyncSession = Depends(get_db)):
+    categories = await BlogCategoryRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(categories, language, ["name", "slug"])
 
 
 @router.get(
@@ -43,8 +46,10 @@ async def list_blog_categories(db: AsyncSession = Depends(get_db)):
     response_description="Categoria encontrada.",
     responses={404: {"description": "Categoria no encontrada."}},
 )
-async def get_blog_category(category_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, category_id)
+async def get_blog_category(category_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    category = await _get_or_404(db, category_id)
+    language = get_requested_language(request)
+    return localize_object_fields(category, language, ["name", "slug"])
 
 
 @router.post(

@@ -14,11 +14,20 @@ export class HttpError extends Error {
 
 export async function http<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers || {});
+  const language = localStorage.getItem("language");
   const isFormDataBody =
     typeof FormData !== "undefined" && options.body instanceof FormData;
 
   if (!isFormDataBody && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+
+  if (!headers.has("Accept-Language")) {
+    if (language === "en" || language === "es") {
+      headers.set("Accept-Language", language);
+    } else {
+      headers.set("Accept-Language", "es");
+    }
   }
 
   const response = await fetch(`${API_URL}${path}`, {

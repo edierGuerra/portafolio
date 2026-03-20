@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.blog_repository import BlogRepository
 from schemas.blog import BlogCreate, BlogRead, BlogReadWithCategory, BlogUpdate
 
@@ -24,6 +25,24 @@ async def _get_or_404(db: AsyncSession, blog_id: int):
     return obj
 
 
+def _localize_blog_item(blog: object, language: str) -> object:
+    localize_object_fields(
+        blog,
+        language,
+        ["title", "slug", "excerpt", "content", "seo_title", "seo_description"],
+    )
+
+    category = getattr(blog, "category", None)
+    if category is not None:
+        localize_object_fields(category, language, ["name", "slug"])
+
+    tags = getattr(blog, "tags", None) or []
+    for tag in tags:
+        localize_object_fields(tag, language, ["name", "slug"])
+
+    return blog
+
+
 @router.get(
     "",
     response_model=list[BlogReadWithCategory],
@@ -31,8 +50,11 @@ async def _get_or_404(db: AsyncSession, blog_id: int):
     description="Devuelve todas las publicaciones ordenadas por fecha descendente, incluyendo la categoria.",
     response_description="Listado de publicaciones con categoria.",
 )
-async def list_blogs(db: AsyncSession = Depends(get_db)):
-    return await BlogRepository(db).list_all(include_unpublished=False)
+async def list_blogs(request: Request, db: AsyncSession = Depends(get_db)):
+    blogs = await BlogRepository(db).list_all(include_unpublished=False)
+    language = get_requested_language(request)
+    blogs = localize_many(blogs, language, ["title", "slug", "excerpt", "content", "seo_title", "seo_description"])
+    return [_localize_blog_item(blog, language) for blog in blogs]
 
 
 @router.get(
@@ -44,10 +66,14 @@ async def list_blogs(db: AsyncSession = Depends(get_db)):
     responses={401: {"description": "No autenticado."}},
 )
 async def list_blogs_cms(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     _: None = Depends(require_authenticated_user),
 ):
-    return await BlogRepository(db).list_all(include_unpublished=True)
+    blogs = await BlogRepository(db).list_all(include_unpublished=True)
+    language = get_requested_language(request)
+    blogs = localize_many(blogs, language, ["title", "slug", "excerpt", "content", "seo_title", "seo_description"])
+    return [_localize_blog_item(blog, language) for blog in blogs]
 
 
 @router.get(
@@ -58,8 +84,10 @@ async def list_blogs_cms(
     response_description="Publicacion con categoria.",
     responses={404: {"description": "Publicacion no encontrada."}},
 )
-async def get_blog(blog_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, blog_id)
+async def get_blog(blog_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    blog = await _get_or_404(db, blog_id)
+    language = get_requested_language(request)
+    return _localize_blog_item(blog, language)
 
 
 @router.post(

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.interest_repository import InterestRepository
 from schemas.interests import InterestCreate, InterestRead, InterestUpdate
 
@@ -31,8 +32,10 @@ async def _get_or_404(db: AsyncSession, interest_id: int):
     description="Devuelve todos los intereses personales/profesionales ordenados por id.",
     response_description="Listado de intereses.",
 )
-async def list_interests(db: AsyncSession = Depends(get_db)):
-    return await InterestRepository(db).list_all()
+async def list_interests(request: Request, db: AsyncSession = Depends(get_db)):
+    interests = await InterestRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(interests, language, ["interest"])
 
 
 @router.get(
@@ -43,8 +46,10 @@ async def list_interests(db: AsyncSession = Depends(get_db)):
     response_description="Interes encontrado.",
     responses={404: {"description": "Interes no encontrado."}},
 )
-async def get_interest(interest_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, interest_id)
+async def get_interest(interest_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    interest = await _get_or_404(db, interest_id)
+    language = get_requested_language(request)
+    return localize_object_fields(interest, language, ["interest"])
 
 
 @router.post(

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from urllib.parse import unquote, urlparse
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.project_repository import ProjectRepository
 from schemas.projects import ProjectCreate, ProjectReadWithTechnologies, ProjectUpdate
 from services.object_storage_service import ObjectStorageService, StorageOperationError
@@ -102,6 +103,14 @@ async def _get_project_or_404(db: AsyncSession, project_id: int):
     return project
 
 
+def _localize_project_item(project: object, language: str) -> object:
+    localize_object_fields(project, language, ["title", "description", "state"])
+    technologies = getattr(project, "technologies", None) or []
+    for technology in technologies:
+        localize_object_fields(technology, language, ["name"])
+    return project
+
+
 @router.get(
     "",
     response_model=list[ProjectReadWithTechnologies],
@@ -110,18 +119,21 @@ async def _get_project_or_404(db: AsyncSession, project_id: int):
     response_description="Listado de proyectos.",
 )
 async def list_projects(
+    request: Request,
     published: bool | None = Query(default=None, description="Filtra por estado de publicacion"),
     db: AsyncSession = Depends(get_db),
 ):
     repository = ProjectRepository(db)
     projects = await repository.list_all(published=published)
+    language = get_requested_language(request)
+    projects = localize_many(projects, language, ["title", "description", "state"])
 
     # Para la parte publica devolvemos enlaces firmados y evitamos 403 por objetos privados.
     if published is True:
         for project in projects:
             project.image = _resolve_public_project_image(project.image)
 
-    return projects
+    return [_localize_project_item(project, language) for project in projects]
 
 
 @router.get(
@@ -134,8 +146,10 @@ async def list_projects(
         404: {"description": "Proyecto no encontrado."},
     },
 )
-async def get_project(project_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_project_or_404(db, project_id)
+async def get_project(project_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    project = await _get_project_or_404(db, project_id)
+    language = get_requested_language(request)
+    return _localize_project_item(project, language)
 
 
 @router.post(

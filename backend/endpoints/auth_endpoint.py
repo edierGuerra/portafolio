@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from schemas.auth import AuthTokenResponse, LoginRequest, LogoutRequest, MeRespo
 from repositories.admin_repository import AdminRepository
 from services.auth_service import AuthService
 from services.security import hash_password
+from endpoints.i18n_utils import get_requested_language, localize_object_fields
 
 
 router = APIRouter(
@@ -170,10 +171,16 @@ async def logout(
         404: {"description": "Perfil no encontrado."},
     },
 )
-async def get_public_profile(db: AsyncSession = Depends(get_db)):
+async def get_public_profile(request: Request, db: AsyncSession = Depends(get_db)):
     repository = AdminRepository(db)
     user = await repository.get_first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Perfil no encontrado")
+    language = get_requested_language(request)
+    localize_object_fields(
+        user,
+        language,
+        ["name", "professional_profile", "about_me", "location"],
+    )
     return PublicProfileRead.model_validate(user)
     return None

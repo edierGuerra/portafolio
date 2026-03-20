@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_config import get_db
 from endpoints.dependencies import require_authenticated_user
+from endpoints.i18n_utils import get_requested_language, localize_many, localize_object_fields
 from repositories.my_philosophy_repository import MyPhilosophyRepository
 from schemas.my_philosophy import MyPhilosophyCreate, MyPhilosophyRead, MyPhilosophyUpdate
 
@@ -31,8 +32,10 @@ async def _get_or_404(db: AsyncSession, philosophy_id: int):
     description="Devuelve todos los registros de filosofia personal/profesional.",
     response_description="Listado de filosofias.",
 )
-async def list_philosophy(db: AsyncSession = Depends(get_db)):
-    return await MyPhilosophyRepository(db).list_all()
+async def list_philosophy(request: Request, db: AsyncSession = Depends(get_db)):
+    philosophies = await MyPhilosophyRepository(db).list_all()
+    language = get_requested_language(request)
+    return localize_many(philosophies, language, ["philosophy"])
 
 
 @router.get(
@@ -43,8 +46,10 @@ async def list_philosophy(db: AsyncSession = Depends(get_db)):
     response_description="Filosofia encontrada.",
     responses={404: {"description": "Filosofia no encontrada."}},
 )
-async def get_philosophy(philosophy_id: int, db: AsyncSession = Depends(get_db)):
-    return await _get_or_404(db, philosophy_id)
+async def get_philosophy(philosophy_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    philosophy = await _get_or_404(db, philosophy_id)
+    language = get_requested_language(request)
+    return localize_object_fields(philosophy, language, ["philosophy"])
 
 
 @router.post(

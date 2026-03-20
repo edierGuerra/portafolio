@@ -15,9 +15,10 @@ import {
 import { getServices, type Service } from "../api/services";
 import { getFaqs, type Faq } from "../api/faq";
 import { useI18n } from "../i18n/I18nContext";
+import { localizeArrayFields } from "../i18n/dynamicI18n";
 
 export function ContactSection() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [contactInfo, setContactInfo] = useState<ContactInfo[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [faqs, setFaqs] = useState<Faq[]>([]);
@@ -48,9 +49,27 @@ export function ContactSection() {
           getFaqs(),
         ]);
         if (cancelled) return;
-        setContactInfo(contactData);
-        setServices(servicesData);
-        setFaqs(faqsData);
+        setContactInfo(
+          localizeArrayFields(
+            contactData as Array<Record<string, unknown>>,
+            language,
+            ["email", "phone", "location", "availability"],
+          ) as ContactInfo[],
+        );
+        setServices(
+          localizeArrayFields(
+            servicesData as Array<Record<string, unknown>>,
+            language,
+            ["service"],
+          ) as Service[],
+        );
+        setFaqs(
+          localizeArrayFields(
+            faqsData as Array<Record<string, unknown>>,
+            language,
+            ["question", "answer"],
+          ) as Faq[],
+        );
       } catch {
         // fallback silente — secciones muestran estado vacío
       } finally {
@@ -59,8 +78,10 @@ export function ContactSection() {
     };
 
     void load();
-    return () => { cancelled = true; };
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
 
   const primaryContact = contactInfo[0] ?? null;
 
