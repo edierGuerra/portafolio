@@ -26,6 +26,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getSocialNetworks, type SocialNetwork } from "../api/contact";
+import { useI18n } from "../i18n/I18nContext";
 
 function getSocialIcon(name: string): LucideIcon {
   const n = name.trim().toLowerCase();
@@ -80,6 +81,7 @@ export function Navigation({
 }: NavigationProps) {
   const currentYear = new Date().getFullYear();
   const [socialNetworks, setSocialNetworks] = useState<SocialNetwork[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -90,11 +92,11 @@ export function Navigation({
   }, []);
 
   const navItems = [
-    { id: "home", label: "Inicio", icon: Home },
-    { id: "about", label: "Sobre mí", icon: User },
-    { id: "projects", label: "Proyectos", icon: Briefcase },
+    { id: "home", label: t("nav.home"), icon: Home },
+    { id: "about", label: t("nav.about"), icon: User },
+    { id: "projects", label: t("nav.projects"), icon: Briefcase },
     { id: "blog", label: "Blog", icon: FileText },
-    { id: "contact", label: "Contacto", icon: MessageCircle },
+    { id: "contact", label: t("nav.contact"), icon: MessageCircle },
   ];
 
   const handleNavClick = (sectionId: string) => {
@@ -128,7 +130,7 @@ export function Navigation({
       {socialNetworks.length > 0 && (
         <div className="px-4">
           <h4 className="mb-4 text-sm font-medium text-muted-foreground">
-            Social
+            {t("nav.social")}
           </h4>
           <div className="space-y-2">
             {socialNetworks.map((network) => {
@@ -159,7 +161,7 @@ export function Navigation({
   const SidebarFooter = () => (
     <div className="border-t px-4 py-4 text-center">
       <p className="text-xs text-muted-foreground">
-        © {currentYear} Edier Guerra. Todos los derechos reservados.
+        © {currentYear} Edier Guerra. {t("nav.footer")}
       </p>
     </div>
   );
@@ -169,7 +171,7 @@ export function Navigation({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent side="left" className="w-64 p-0 flex flex-col">
           <SheetHeader className="px-4 py-6 border-b">
-            <SheetTitle>Navegación</SheetTitle>
+            <SheetTitle>{t("nav.navigation")}</SheetTitle>
           </SheetHeader>
           <NavigationContent />
           <SidebarFooter />

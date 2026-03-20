@@ -7,6 +7,7 @@ import { AboutSection } from "./components/AboutSection";
 import { ProjectsSection } from "./components/ProjectsSection";
 import { BlogSection } from "./components/BlogSection";
 import { ContactSection } from "./components/ContactSection";
+import { I18nProvider } from "./i18n/I18nContext";
 
 const VALID_SECTIONS = ["home", "about", "projects", "blog", "contact"];
 
@@ -115,41 +116,43 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header
-        darkMode={darkMode}
-        toggleDarkMode={toggleDarkMode}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
+    <I18nProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <Header
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
 
-      <div className="flex">
-        {/* Desktop Navigation */}
-        <div
-          className="hidden lg:block self-start"
-          style={{
-            position: "sticky",
-            top: "4rem",
-            height: "calc(100vh - 4rem)",
-          }}
-        >
+        <div className="flex">
+          {/* Desktop Navigation */}
+          <div
+            className="hidden lg:block self-start"
+            style={{
+              position: "sticky",
+              top: "4rem",
+              height: "calc(100vh - 4rem)",
+            }}
+          >
+            <Navigation
+              activeSection={activeSection}
+              setActiveSection={setActiveSection}
+            />
+          </div>
+
+          {/* Mobile Navigation */}
           <Navigation
             activeSection={activeSection}
             setActiveSection={setActiveSection}
+            isMobile={true}
+            isOpen={mobileMenuOpen}
+            onClose={() => setMobileMenuOpen(false)}
           />
+
+          <main className="flex-1 min-h-screen">{renderActiveSection()}</main>
         </div>
-
-        {/* Mobile Navigation */}
-        <Navigation
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          isMobile={true}
-          isOpen={mobileMenuOpen}
-          onClose={() => setMobileMenuOpen(false)}
-        />
-
-        <main className="flex-1 min-h-screen">{renderActiveSection()}</main>
       </div>
-    </div>
+    </I18nProvider>
   );
 }

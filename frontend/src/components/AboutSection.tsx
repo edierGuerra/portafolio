@@ -18,6 +18,7 @@ import {
   getTechnologies,
   type Technology,
 } from "../api/profile";
+import { useI18n } from "../i18n/I18nContext";
 
 const TECHNOLOGY_LOGO_FALLBACKS: Record<string, string> = {
   react:
@@ -26,11 +27,11 @@ const TECHNOLOGY_LOGO_FALLBACKS: Record<string, string> = {
     "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
 };
 
-function formatDateLabel(rawDate: string): string {
+function formatDateLabel(rawDate: string, locale: string): string {
   if (!rawDate) return "";
   const parsed = new Date(rawDate);
   if (Number.isNaN(parsed.getTime())) return rawDate;
-  return parsed.toLocaleDateString("es-ES", {
+  return parsed.toLocaleDateString(locale, {
     month: "short",
     year: "numeric",
   });
@@ -113,6 +114,7 @@ export function AboutSection() {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [philosophies, setPhilosophies] = useState<Philosophy[]>([]);
   const [aboutMe, setAboutMe] = useState("");
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -164,10 +166,10 @@ export function AboutSection() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 lg:mb-12">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
-            Sobre mi
+            {t("about.title")}
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-            Trayectoria profesional, stack tecnologico y enfoque de trabajo.
+            {t("about.subtitle")}
           </p>
           {aboutMe && (
             <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-3xl mx-auto px-4 leading-relaxed">
@@ -182,17 +184,17 @@ export function AboutSection() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <Calendar className="h-5 w-5" />
-                  Experiencia profesional
+                  {t("about.experience")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
                 {loading ? (
                   <p className="text-sm text-muted-foreground">
-                    Cargando experiencia...
+                    {t("about.loadingExperience")}
                   </p>
                 ) : experience.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Aun no hay experiencia registrada.
+                    {t("about.emptyExperience")}
                   </p>
                 ) : (
                   experience.map((job) => (
@@ -209,8 +211,8 @@ export function AboutSection() {
                           {job.company}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                          {formatDateLabel(job.start_date)} -{" "}
-                          {formatDateLabel(job.end_date)}
+                          {formatDateLabel(job.start_date, locale)} -{" "}
+                          {formatDateLabel(job.end_date, locale)}
                         </p>
                       </div>
                     </div>
@@ -223,17 +225,17 @@ export function AboutSection() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <Target className="h-5 w-5" />
-                  Habilidades tecnicas
+                  {t("about.skills")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <p className="text-sm text-muted-foreground">
-                    Cargando tecnologias...
+                    {t("about.loadingTech")}
                   </p>
                 ) : technologies.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No hay tecnologias registradas.
+                    {t("about.emptyTech")}
                   </p>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -272,11 +274,11 @@ export function AboutSection() {
                   </div>
                 ) : null}
                 <h3 className="font-semibold mb-3 text-base sm:text-lg">
-                  Mi filosofia
+                  {t("about.philosophy")}
                 </h3>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   {philosophyText ||
-                    "Construyo experiencias digitales con foco en claridad, rendimiento y valor real para las personas."}
+                    t("about.philosophyFallback")}
                 </p>
               </CardContent>
             </Card>
@@ -286,13 +288,13 @@ export function AboutSection() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Award className="h-5 w-5" />
-                    Logros destacados
+                    {t("about.achievements")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {loading ? (
                     <p className="text-sm text-muted-foreground">
-                      Cargando logros...
+                      {t("about.loadingAchievements")}
                     </p>
                   ) : (
                     achievements.map((achievement) => (
@@ -312,17 +314,17 @@ export function AboutSection() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Heart className="h-5 w-5" />
-                  Intereses
+                  {t("about.interests")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <p className="text-sm text-muted-foreground">
-                    Cargando intereses...
+                    {t("about.loadingInterests")}
                   </p>
                 ) : interests.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Sin intereses registrados.
+                    {t("about.emptyInterests")}
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-2">

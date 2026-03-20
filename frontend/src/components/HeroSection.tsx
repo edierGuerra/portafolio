@@ -11,44 +11,35 @@ import {
   type Technology,
   type AvailabilityStatus,
 } from "../api/profile";
+import { useI18n } from "../i18n/I18nContext";
 
-const AVAILABILITY_CONFIG: Record<
+const AVAILABILITY_STYLE_CONFIG: Record<
   AvailabilityStatus,
   {
-    label: string;
-    shortLabel: string;
     gradient: string;
     textColor: string;
     borderColor: string;
   }
 > = {
   available: {
-    label: "🚀 Disponible",
-    shortLabel: "🚀 Disponible",
     gradient:
       "linear-gradient(135deg, rgba(16,185,129,0.72), rgba(5,150,105,0.58))",
     textColor: "#ffffff",
     borderColor: "rgba(110,231,183,0.55)",
   },
   not_available: {
-    label: "⛔ No disponible",
-    shortLabel: "⛔ No disp.",
     gradient:
       "linear-gradient(135deg, rgba(244,63,94,0.72), rgba(225,29,72,0.58))",
     textColor: "#ffffff",
     borderColor: "rgba(251,113,133,0.55)",
   },
   busy: {
-    label: "🔧 Trabajando",
-    shortLabel: "🔧 Trabajando",
     gradient:
       "linear-gradient(135deg, rgba(245,158,11,0.72), rgba(217,119,6,0.58))",
     textColor: "#111827",
     borderColor: "rgba(252,211,77,0.6)",
   },
   open_to_talk: {
-    label: "💬 En conversaciones",
-    shortLabel: "💬 Conversando",
     gradient:
       "linear-gradient(135deg, rgba(14,165,233,0.72), rgba(2,132,199,0.58))",
     textColor: "#ffffff",
@@ -63,6 +54,7 @@ interface HeroSectionProps {
 export function HeroSection({ onNavigate }: HeroSectionProps) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [technologies, setTechnologies] = useState<Technology[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     getPublicProfile()
@@ -84,8 +76,18 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
   const profileImage = profile?.profile_image?.trim() ?? "";
 
   const availabilityKey = profile?.availability_status ?? "available";
-  const availability =
-    AVAILABILITY_CONFIG[availabilityKey] ?? AVAILABILITY_CONFIG.available;
+  const availabilityStyle =
+    AVAILABILITY_STYLE_CONFIG[availabilityKey] ?? AVAILABILITY_STYLE_CONFIG.available;
+
+  const availabilityLabelMap: Record<AvailabilityStatus, string> = {
+    available: t("hero.available"),
+    not_available: t("hero.notAvailable"),
+    busy: t("hero.busy"),
+    open_to_talk: t("hero.openToTalk"),
+  };
+
+  const availabilityLabel =
+    availabilityLabelMap[availabilityKey] ?? availabilityLabelMap.available;
 
   return (
     <div
@@ -140,7 +142,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
                   className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
                   onClick={() => onNavigate?.("projects")}
                 >
-                  Ver mi trabajo
+                  {t("hero.viewWork")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
@@ -150,7 +152,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
                   onClick={() => onNavigate?.("contact")}
                 >
                   <Coffee className="mr-2 h-4 w-4" />
-                  Charlemos
+                  {t("hero.letsTalk")}
                 </Button>
               </div>
             </div>
@@ -171,14 +173,13 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
                 <div
                   className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 px-3 py-2 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg"
                   style={{
-                    background: availability.gradient,
-                    color: availability.textColor,
-                    border: `1px solid ${availability.borderColor}`,
+                    background: availabilityStyle.gradient,
+                    color: availabilityStyle.textColor,
+                    border: `1px solid ${availabilityStyle.borderColor}`,
                     backdropFilter: "blur(2px)",
                   }}
                 >
-                  <span className="hidden sm:inline">{availability.label}</span>
-                  <span className="sm:hidden">{availability.shortLabel}</span>
+                  <span>{availabilityLabel}</span>
                 </div>
               </div>
             </div>

@@ -10,11 +10,15 @@ import {
   PublicBlogPost,
 } from "../api/blog";
 import "./BlogSection.css";
+import { useI18n } from "../i18n/I18nContext";
+
+const ALL_CATEGORY_ID = "__all__";
 
 export function BlogSection() {
+  const { t, locale } = useI18n();
   const [posts, setPosts] = useState<PublicBlogPost[]>([]);
-  const [categories, setCategories] = useState<string[]>(["Todos"]);
-  const [activeCategory, setActiveCategory] = useState("Todos");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY_ID);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
@@ -36,13 +40,10 @@ export function BlogSection() {
         if (cancelled) return;
 
         setPosts(postsData);
-        setCategories([
-          "Todos",
-          ...categoriesData.map((category) => category.name),
-        ]);
+        setCategories(categoriesData.map((category) => category.name));
       } catch {
         if (!cancelled) {
-          setError("No se pudieron cargar las publicaciones del blog.");
+          setError(t("blog.error"));
         }
       } finally {
         if (!cancelled) {
@@ -62,7 +63,7 @@ export function BlogSection() {
       const sourceForReading = (post.content || post.excerpt || "").trim();
       const wordCount = sourceForReading.split(/\s+/).filter(Boolean).length;
       const computedReadTime = Math.max(1, Math.ceil(wordCount / 180));
-      const formattedDate = new Date(post.date).toLocaleDateString("es-ES", {
+      const formattedDate = new Date(post.date).toLocaleDateString(locale, {
         day: "numeric",
         month: "short",
         year: "numeric",
@@ -73,10 +74,10 @@ export function BlogSection() {
         excerpt: post.excerpt,
         category: post.category?.name ?? "General",
         dateLabel: formattedDate,
-        readTimeLabel: `${post.read_time_minutes || computedReadTime} min`,
+        readTimeLabel: `${post.read_time_minutes || computedReadTime} ${t("blog.reading")}`,
       };
     });
-  }, [posts]);
+  }, [posts, locale, t]);
 
   const selectedPost = useMemo(
     () => normalizedPosts.find((post) => post.id === selectedPostId) ?? null,
@@ -158,7 +159,7 @@ export function BlogSection() {
   }, [selectedPostId]);
 
   const categoryFilteredPosts = useMemo(() => {
-    if (activeCategory === "Todos") {
+    if (activeCategory === ALL_CATEGORY_ID) {
       return normalizedPosts;
     }
     return normalizedPosts.filter((post) => post.category === activeCategory);
@@ -200,16 +201,23 @@ export function BlogSection() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 lg:mb-12">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
-                Blog
+                {t("blog.title")}
               </h2>
               <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-                Reflexiones, tutoriales y experiencias del mundo del desarrollo
-                y diseño
+                {t("blog.subtitle")}
               </p>
             </div>
 
             {/* Filtros de categoría */}
             <div className="flex flex-wrap justify-center gap-2 mb-6 lg:mb-8 px-4">
+              <Button
+                key={ALL_CATEGORY_ID}
+                variant={ALL_CATEGORY_ID === activeCategory ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveCategory(ALL_CATEGORY_ID)}
+              >
+                {t("blog.all")}
+              </Button>
               {categories.map((category) => (
                 <Button
                   key={category}
@@ -225,7 +233,7 @@ export function BlogSection() {
             {loading && (
               <Card className="mx-4 lg:mx-0">
                 <CardContent className="py-12 text-center text-muted-foreground">
-                  Cargando publicaciones...
+                  {t("blog.loading")}
                 </CardContent>
               </Card>
             )}
@@ -241,7 +249,7 @@ export function BlogSection() {
             {!loading && !error && categoryFilteredPosts.length === 0 && (
               <Card className="mx-4 lg:mx-0">
                 <CardContent className="py-12 text-center text-muted-foreground">
-                  Aun no hay publicaciones para esta categoria.
+                  {t("blog.empty")}
                 </CardContent>
               </Card>
             )}
@@ -250,7 +258,7 @@ export function BlogSection() {
             {!loading && !error && featuredPosts.length > 0 && (
               <div className="blog-featured-section space-y-5 lg:space-y-6 mb-8 lg:mb-10">
                 <h3 className="text-xl sm:text-2xl font-semibold px-4 lg:px-0">
-                  Artículos Destacados
+                  {t("blog.featured")}
                 </h3>
                 <div className="grid lg:grid-cols-2 gap-5 lg:gap-6">
                   {featuredPosts.map((post) => (
@@ -275,7 +283,7 @@ export function BlogSection() {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {post.readTimeLabel} lectura
+                              {post.readTimeLabel}
                             </span>
                           </div>
                         </div>
@@ -293,7 +301,7 @@ export function BlogSection() {
                             className="blog-featured-readmore p-0"
                             onClick={() => setSelectedPostId(post.id)}
                           >
-                            Leer más
+                            {t("blog.readMore")}
                             <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
                           <Button
@@ -315,7 +323,7 @@ export function BlogSection() {
             {!loading && !error && regularPosts.length > 0 && (
               <div className="space-y-6">
                 <h3 className="text-xl sm:text-2xl font-semibold px-4 lg:px-0">
-                  Todos los Artículos
+                  {t("blog.allArticles")}
                 </h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {regularPosts.map((post) => (
@@ -364,7 +372,7 @@ export function BlogSection() {
                             className="p-0 h-auto"
                             onClick={() => setSelectedPostId(post.id)}
                           >
-                            Leer más
+                            {t("blog.readMore")}
                             <ArrowRight className="ml-1 h-3 w-3" />
                           </Button>
                           <Button
@@ -386,7 +394,7 @@ export function BlogSection() {
             {!loading && !error && categoryFilteredPosts.length > 0 && (
               <div className="text-center mt-12">
                 <Button size="lg" variant="outline">
-                  Ver todos los artículos
+                  {t("blog.viewAll")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -406,7 +414,7 @@ export function BlogSection() {
                   onClick={() => setSelectedPostId(null)}
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Volver
+                  {t("blog.back")}
                 </Button>
               </div>
 
@@ -427,7 +435,7 @@ export function BlogSection() {
                       <span className="blog-detail-meta-separator">•</span>
                       <span className="blog-detail-meta-item">
                         <Clock className="h-3 w-3" />
-                        {selectedPost.readTimeLabel} lectura
+                        {selectedPost.readTimeLabel}
                       </span>
                     </div>
                   </header>
@@ -524,12 +532,12 @@ export function BlogSection() {
                 {suggestedRecentPosts.length > 0 && (
                   <aside
                     className="blog-detail-rail"
-                    aria-label="Posts sugeridos y recientes"
+                    aria-label={t("blog.suggestedRecent")}
                   >
                     <div className="blog-detail-rail-panel">
-                      <p className="blog-detail-rail-eyebrow">Sigue leyendo</p>
+                      <p className="blog-detail-rail-eyebrow">{t("blog.continueReading")}</p>
                       <h3 className="blog-detail-rail-title">
-                        Posts sugeridos y recientes
+                        {t("blog.suggestedRecent")}
                       </h3>
 
                       <div className="blog-detail-rail-list">
@@ -556,8 +564,8 @@ export function BlogSection() {
                                   <div className="blog-detail-rail-item-top">
                                     <span className="blog-detail-rail-badge">
                                       {isSameCategory
-                                        ? "Relacionado"
-                                        : "Reciente"}
+                                        ? t("blog.related")
+                                        : t("blog.recent")}
                                     </span>
                                     <span className="blog-detail-rail-date">
                                       {post.dateLabel}

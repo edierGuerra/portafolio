@@ -14,8 +14,10 @@ import {
 } from "../api/contact";
 import { getServices, type Service } from "../api/services";
 import { getFaqs, type Faq } from "../api/faq";
+import { useI18n } from "../i18n/I18nContext";
 
 export function ContactSection() {
+  const { t } = useI18n();
   const [contactInfo, setContactInfo] = useState<ContactInfo[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [faqs, setFaqs] = useState<Faq[]>([]);
@@ -66,25 +68,25 @@ export function ContactSection() {
     ? [
         {
           icon: Mail,
-          label: "Email",
+          label: t("contact.email"),
           value: primaryContact.email,
           href: `mailto:${primaryContact.email}`,
         },
         {
           icon: Phone,
-          label: "Teléfono",
+          label: t("contact.phone"),
           value: primaryContact.phone,
           href: `tel:${primaryContact.phone.replace(/\s/g, "")}`,
         },
         {
           icon: MapPin,
-          label: "Ubicación",
+          label: t("contact.location"),
           value: primaryContact.location,
           href: null as string | null,
         },
         {
           icon: Clock,
-          label: "Disponibilidad",
+          label: t("contact.availability"),
           value: primaryContact.availability,
           href: null as string | null,
         },
@@ -105,7 +107,7 @@ export function ContactSection() {
     if (!form.name.trim() || !form.email.trim() || !form.subject.trim() || !form.message.trim()) {
       setSubmitFeedback({
         type: "error",
-        message: "Completa los campos obligatorios: nombre, email, asunto y mensaje.",
+        message: t("contact.validationRequired"),
       });
       return;
     }
@@ -113,7 +115,7 @@ export function ContactSection() {
     if (form.message.trim().length < 10) {
       setSubmitFeedback({
         type: "error",
-        message: "El mensaje debe tener al menos 10 caracteres.",
+        message: t("contact.validationMinLength"),
       });
       return;
     }
@@ -131,7 +133,7 @@ export function ContactSection() {
 
       setSubmitFeedback({
         type: "success",
-        message: "Mensaje enviado. Te responderé lo antes posible.",
+        message: t("contact.sent"),
       });
       setForm({
         name: "",
@@ -142,7 +144,7 @@ export function ContactSection() {
         message: "",
       });
     } catch (error) {
-      const detail = error instanceof Error ? error.message : "No se pudo enviar el mensaje.";
+      const detail = error instanceof Error ? error.message : t("contact.sendError");
       setSubmitFeedback({
         type: "error",
         message: detail,
@@ -156,9 +158,9 @@ export function ContactSection() {
     <div className="min-h-screen p-4 lg:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 lg:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Hablemos</h2>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">{t("contact.title")}</h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-            ¿Tienes un proyecto en mente? Me encantaría conocer más detalles y ver cómo puedo ayudarte
+            {t("contact.subtitle")}
           </p>
         </div>
 
@@ -169,14 +171,14 @@ export function ContactSection() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <MessageCircle className="h-5 w-5" />
-                  Información de Contacto
+                  {t("contact.info")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {loading ? (
-                  <p className="text-sm text-muted-foreground">Cargando...</p>
+                  <p className="text-sm text-muted-foreground">{t("contact.loading")}</p>
                 ) : contactRows.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sin datos de contacto aún.</p>
+                  <p className="text-sm text-muted-foreground">{t("contact.noContact")}</p>
                 ) : (
                   contactRows.map((info) => {
                     const Icon = info.icon;
@@ -204,13 +206,13 @@ export function ContactSection() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Servicios Disponibles</CardTitle>
+                <CardTitle className="text-base sm:text-lg">{t("contact.services")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <p className="text-sm text-muted-foreground">Cargando...</p>
+                  <p className="text-sm text-muted-foreground">{t("contact.loading")}</p>
                 ) : services.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sin servicios registrados.</p>
+                  <p className="text-sm text-muted-foreground">{t("contact.noServices")}</p>
                 ) : (
                   <div className="space-y-2">
                     {services.map((s) => (
@@ -229,29 +231,29 @@ export function ContactSection() {
           <div className="lg:col-span-2 order-1 lg:order-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Envíame un mensaje</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">{t("contact.messageTitle")}</CardTitle>
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  Cuéntame sobre tu proyecto y te responderé lo antes posible
+                  {t("contact.messageSubtitle")}
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
                 <form className="space-y-6" onSubmit={handleSubmitMessage}>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm sm:text-base">Nombre completo</Label>
+                    <Label htmlFor="name" className="text-sm sm:text-base">{t("contact.fullName")}</Label>
                     <Input
                       id="name"
-                      placeholder="Tu nombre"
+                      placeholder={t("contact.namePlaceholder")}
                       value={form.name}
                       onChange={(event) => handleFormChange("name", event.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
+                    <Label htmlFor="email" className="text-sm sm:text-base">{t("contact.email")}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="tu@email.com"
+                      placeholder={t("contact.emailPlaceholder")}
                       value={form.email}
                       onChange={(event) => handleFormChange("email", event.target.value)}
                     />
@@ -260,19 +262,19 @@ export function ContactSection() {
                 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="company" className="text-sm sm:text-base">Empresa (opcional)</Label>
+                    <Label htmlFor="company" className="text-sm sm:text-base">{t("contact.company")}</Label>
                     <Input
                       id="company"
-                      placeholder="Tu empresa"
+                      placeholder={t("contact.companyPlaceholder")}
                       value={form.company}
                       onChange={(event) => handleFormChange("company", event.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="budget" className="text-sm sm:text-base">Presupuesto estimado</Label>
+                    <Label htmlFor="budget" className="text-sm sm:text-base">{t("contact.budget")}</Label>
                     <Input
                       id="budget"
-                      placeholder="ej. €5,000 - €10,000"
+                      placeholder={t("contact.budgetPlaceholder")}
                       value={form.budget}
                       onChange={(event) => handleFormChange("budget", event.target.value)}
                     />
@@ -280,20 +282,20 @@ export function ContactSection() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subject" className="text-sm sm:text-base">Asunto</Label>
+                  <Label htmlFor="subject" className="text-sm sm:text-base">{t("contact.subject")}</Label>
                   <Input
                     id="subject"
-                    placeholder="¿En qué puedo ayudarte?"
+                    placeholder={t("contact.subjectPlaceholder")}
                     value={form.subject}
                     onChange={(event) => handleFormChange("subject", event.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message" className="text-sm sm:text-base">Mensaje</Label>
+                  <Label htmlFor="message" className="text-sm sm:text-base">{t("contact.message")}</Label>
                   <Textarea 
                     id="message" 
-                    placeholder="Describe tu proyecto, objetivos, timeline y cualquier detalle relevante..."
+                    placeholder={t("contact.messagePlaceholder")}
                     className="min-h-32"
                     value={form.message}
                     onChange={(event) => handleFormChange("message", event.target.value)}
@@ -302,18 +304,18 @@ export function ContactSection() {
 
                 <div className="space-y-4">
                   <div className="text-xs sm:text-sm text-muted-foreground">
-                    <p>📋 Para obtener una respuesta más precisa, incluye:</p>
+                    <p>📋 {t("contact.tipTitle")}</p>
                     <ul className="list-disc list-inside mt-2 space-y-1">
-                      <li>Tipo de proyecto (web, móvil, consultoría)</li>
-                      <li>Timeline esperado</li>
-                      <li>Funcionalidades principales</li>
-                      <li>Si tienes diseños existentes</li>
+                      <li>{t("contact.tip1")}</li>
+                      <li>{t("contact.tip2")}</li>
+                      <li>{t("contact.tip3")}</li>
+                      <li>{t("contact.tip4")}</li>
                     </ul>
                   </div>
 
                   <Button className="w-full" size="lg" type="submit" disabled={isSubmitting}>
                     <Send className="mr-2 h-4 w-4" />
-                    {isSubmitting ? "Enviando..." : "Enviar mensaje"}
+                    {isSubmitting ? t("contact.sending") : t("contact.send")}
                   </Button>
 
                   {submitFeedback && (
@@ -329,7 +331,7 @@ export function ContactSection() {
                   )}
 
                   <p className="text-xs sm:text-sm text-muted-foreground text-center">
-                    Normalmente respondo en menos de 24 horas
+                    {t("contact.replyTime")}
                   </p>
                 </div>
                 </form>
@@ -342,13 +344,13 @@ export function ContactSection() {
         <div className="mt-8 lg:mt-12">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Preguntas Frecuentes</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">{t("contact.faq")}</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <p className="text-sm text-muted-foreground">Cargando preguntas...</p>
+                <p className="text-sm text-muted-foreground">{t("contact.loadingFaq")}</p>
               ) : faqs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin preguntas frecuentes registradas.</p>
+                <p className="text-sm text-muted-foreground">{t("contact.noFaq")}</p>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-4 lg:gap-6">
                   {faqs.map((faq) => (

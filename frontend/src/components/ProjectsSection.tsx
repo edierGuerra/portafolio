@@ -6,6 +6,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { ExternalLink, Calendar, Users, Github, Lock } from "lucide-react";
 import { http } from "../api/http";
 import "./ProjectsSection.css";
+import { useI18n } from "../i18n/I18nContext";
 
 type ApiTechnology = {
   id: number;
@@ -38,7 +39,7 @@ type UiProject = {
   repositoryUrl: string | null;
   status: "En desarrollo" | "Completado";
   date: string;
-  team: string;
+  team: number;
   featured: boolean;
 };
 
@@ -102,12 +103,13 @@ function mapProjectToUi(project: ApiProject): UiProject {
     repositoryUrl: normalizeExternalUrl(project.repository_url),
     status: project.state,
     date: String(project.year),
-    team: project.team === 1 ? "1 persona" : `${project.team} personas`,
+    team: project.team,
     featured: project.main,
   };
 }
 
 export function ProjectsSection() {
+  const { language, t } = useI18n();
   const [projects, setProjects] = useState<UiProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [missingDemoProject, setMissingDemoProject] =
@@ -161,28 +163,43 @@ export function ProjectsSection() {
     }
   };
 
+  const getStatusLabel = (status: UiProject["status"]) => {
+    if (language === "en") {
+      return status === "Completado"
+        ? t("projects.statusCompleted")
+        : t("projects.statusInProgress");
+    }
+    return status;
+  };
+
+  const getTeamLabel = (team: number) =>
+    team === 1 ? `1 ${t("projects.person")}` : `${team} ${t("projects.people")}`;
+
+  const missingDemoDescription = missingDemoProject
+    ? t("projects.noDemoDesc").replace("{title}", missingDemoProject.title)
+    : "";
+
   return (
     <div className="min-h-screen p-4 lg:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 lg:mb-12">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
-            Mis Proyectos
+            {t("projects.title")}
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-            Una selección de proyectos que demuestran mis habilidades técnicas y
-            creatividad
+            {t("projects.subtitle")}
           </p>
         </div>
 
         {loading && (
           <div className="text-center text-muted-foreground py-8">
-            Cargando proyectos...
+            {t("projects.loading")}
           </div>
         )}
 
         {!loading && projects.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
-            Aún no hay proyectos publicados para mostrar.
+            {t("projects.empty")}
           </div>
         )}
 
@@ -207,7 +224,7 @@ export function ProjectsSection() {
                       <div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
                           <Badge className={getStatusColor(project.status)}>
-                            {project.status}
+                            {getStatusLabel(project.status)}
                           </Badge>
                           <div className="flex items-center text-xs sm:text-sm text-muted-foreground gap-3 sm:gap-4">
                             <span className="flex items-center gap-1">
@@ -216,7 +233,7 @@ export function ProjectsSection() {
                             </span>
                             <span className="flex items-center gap-1">
                               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                              {project.team}
+                              {getTeamLabel(project.team)}
                             </span>
                           </div>
                         </div>
@@ -231,7 +248,7 @@ export function ProjectsSection() {
                         <div className="flex flex-wrap gap-2 mb-6">
                           {(project.technologies.length > 0
                             ? project.technologies
-                            : ["Sin tecnologias"]
+                            : [t("projects.noTech")]
                           ).map((tech) => (
                             <Badge
                               key={tech}
@@ -253,18 +270,18 @@ export function ProjectsSection() {
                               rel="noreferrer"
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
-                              Ver sitio
+                              {t("projects.viewSite")}
                             </a>
                           </Button>
                         ) : (
                           <Button
                             className="flex-1 opacity-60"
                             aria-disabled="true"
-                            title="Este proyecto no cuenta con demo"
+                            title={t("projects.noDemoTitle")}
                             onClick={() => setMissingDemoProject(project)}
                           >
                             <Lock className="mr-2 h-4 w-4" />
-                            Sin demo
+                            {t("projects.noDemo")}
                           </Button>
                         )}
                         {project.repositoryUrl && (
@@ -275,7 +292,7 @@ export function ProjectsSection() {
                               rel="noreferrer"
                             >
                               <Github className="mr-2 h-4 w-4" />
-                              Repositorio
+                              {t("projects.repo")}
                             </a>
                           </Button>
                         )}
@@ -289,7 +306,7 @@ export function ProjectsSection() {
             {/* Otros proyectos */}
             <div className="space-y-6">
               <h3 className="text-xl sm:text-2xl font-semibold">
-                Otros Proyectos
+                {t("projects.other")}
               </h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {otherProjects.map((project) => (
@@ -307,7 +324,7 @@ export function ProjectsSection() {
                     <CardContent className="p-6">
                       <div className="flex items-center gap-3 mb-3">
                         <Badge className={getStatusColor(project.status)}>
-                          {project.status}
+                          {getStatusLabel(project.status)}
                         </Badge>
                         <div className="flex items-center text-sm text-muted-foreground gap-3">
                           <span className="flex items-center gap-1">
@@ -316,7 +333,7 @@ export function ProjectsSection() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {project.team}
+                            {getTeamLabel(project.team)}
                           </span>
                         </div>
                       </div>
@@ -329,7 +346,7 @@ export function ProjectsSection() {
                       <div className="flex flex-wrap gap-1 mb-4">
                         {(project.technologies.length > 0
                           ? project.technologies.slice(0, 3)
-                          : ["Sin tecnologias"]
+                          : [t("projects.noTech")]
                         ).map((tech) => (
                           <Badge
                             key={tech}
@@ -355,7 +372,7 @@ export function ProjectsSection() {
                               rel="noreferrer"
                             >
                               <ExternalLink className="mr-1 h-3 w-3" />
-                              Ver sitio
+                              {t("projects.viewSite")}
                             </a>
                           </Button>
                         ) : (
@@ -363,11 +380,11 @@ export function ProjectsSection() {
                             size="sm"
                             className="flex-1 opacity-60"
                             aria-disabled="true"
-                            title="Este proyecto no cuenta con demo"
+                            title={t("projects.noDemoTitle")}
                             onClick={() => setMissingDemoProject(project)}
                           >
                             <Lock className="mr-1 h-3 w-3" />
-                            Sin demo
+                            {t("projects.noDemo")}
                           </Button>
                         )}
                         {project.repositoryUrl && (
@@ -383,7 +400,7 @@ export function ProjectsSection() {
                               rel="noreferrer"
                             >
                               <Github className="mr-1 h-3 w-3" />
-                              Repo
+                              {t("projects.repoShort")}
                             </a>
                           </Button>
                         )}
@@ -416,19 +433,18 @@ export function ProjectsSection() {
               className="projects-demo-modal"
               role="dialog"
               aria-modal="true"
-              aria-label="Proyecto sin demo"
+              aria-label={t("projects.noDemoTitle")}
               onClick={(event) => event.stopPropagation()}
             >
               <h4 className="projects-demo-modal-title">
-                Este proyecto no cuenta con demo
+                {t("projects.noDemoTitle")}
               </h4>
               <p className="projects-demo-modal-description">
-                El proyecto "{missingDemoProject.title}" no tiene un enlace de
-                demo disponible por ahora.
+                {missingDemoDescription}
               </p>
               <div className="projects-demo-modal-actions">
                 <Button onClick={() => setMissingDemoProject(null)}>
-                  Entendido
+                  {t("projects.understood")}
                 </Button>
               </div>
             </div>

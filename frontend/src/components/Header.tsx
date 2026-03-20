@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { getPublicProfile } from "../api/profile";
 import { Moon, Sun, Download, Globe, Menu } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useI18n } from "../i18n/I18nContext";
 
 interface HeaderProps {
   darkMode: boolean;
@@ -12,8 +13,8 @@ interface HeaderProps {
 }
 
 export function Header({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenuOpen }: HeaderProps) {
-  const [language, setLanguage] = useState("es");
   const [cvUrl, setCvUrl] = useState("");
+  const { language, setLanguage, t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -50,14 +51,14 @@ export function Header({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenu
           </Button>
           
           <div className="flex items-center space-x-2">
-            <h1 className="text-lg lg:text-xl font-semibold">Portfolio</h1>
+            <h1 className="text-lg lg:text-xl font-semibold">{t("header.portfolio")}</h1>
           </div>
         </div>
         
         <div className="flex items-center space-x-2 lg:space-x-4">
           {/* Language selector - hidden on small screens */}
           <div className="hidden sm:block">
-            <Select value={language} onValueChange={setLanguage}>
+            <Select value={language} onValueChange={(value) => setLanguage(value as "es" | "en") }>
               <SelectTrigger className="w-24 lg:w-32">
                 <div className="flex items-center space-x-2">
                   <Globe className="h-4 w-4" />
@@ -65,8 +66,8 @@ export function Header({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenu
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="es">Español</SelectItem>
-                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">{t("header.languageSpanish")}</SelectItem>
+                <SelectItem value="en">{t("header.languageEnglish")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -84,13 +85,13 @@ export function Header({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenu
             <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
               <a href={cvUrl} target="_blank" rel="noopener noreferrer">
                 <Download className="mr-2 h-4 w-4" />
-                <span className="hidden lg:inline">CV</span>
+                <span className="hidden lg:inline">{t("header.cv")}</span>
               </a>
             </Button>
           ) : (
             <Button variant="outline" size="sm" className="hidden sm:flex" disabled>
               <Download className="mr-2 h-4 w-4" />
-              <span className="hidden lg:inline">CV</span>
+              <span className="hidden lg:inline">{t("header.cv")}</span>
             </Button>
           )}
         </div>
