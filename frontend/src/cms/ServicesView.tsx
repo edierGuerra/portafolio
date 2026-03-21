@@ -37,6 +37,7 @@ export function ServicesView({
 
   const [editing, setEditing] = useState<AvailableService | null>(null);
   const [serviceValue, setServiceValue] = useState("");
+  const [serviceValueEn, setServiceValueEn] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,15 +84,22 @@ export function ServicesView({
     setSaving(true);
     try {
       if (editing) {
-        await updateServiceCms(editing.id, { service: trimmed });
+        await updateServiceCms(editing.id, {
+          service: trimmed,
+          service_en: serviceValueEn.trim() || null,
+        });
         toast.success("Servicio actualizado");
       } else {
-        await createServiceCms({ service: trimmed });
+        await createServiceCms({
+          service: trimmed,
+          service_en: serviceValueEn.trim() || null,
+        });
         toast.success("Servicio creado");
       }
 
       setEditing(null);
       setServiceValue("");
+      setServiceValueEn("");
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo guardar");
@@ -103,6 +111,7 @@ export function ServicesView({
   const handleEdit = (item: AvailableService) => {
     setEditing(item);
     setServiceValue(item.service);
+    setServiceValueEn(item.service_en ?? "");
   };
 
   const handleDelete = async (item: AvailableService) => {
@@ -145,6 +154,12 @@ export function ServicesView({
               onChange={(event) => setServiceValue(event.target.value)}
               placeholder="Ej. Desarrollo de aplicaciones web"
             />
+            <Input
+              className="cms-input h-9 text-sm"
+              value={serviceValueEn}
+              onChange={(event) => setServiceValueEn(event.target.value)}
+              placeholder="Ej. Web application development (English)"
+            />
             <div className="flex gap-2">
               <Button
                 type="submit"
@@ -165,6 +180,7 @@ export function ServicesView({
                   onClick={() => {
                     setEditing(null);
                     setServiceValue("");
+                    setServiceValueEn("");
                   }}
                 >
                   Cancelar

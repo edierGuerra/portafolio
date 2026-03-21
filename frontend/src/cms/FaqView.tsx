@@ -33,7 +33,9 @@ export function FaqView({
 
   const [editing, setEditing] = useState<FrequentlyAskedQuestion | null>(null);
   const [question, setQuestion] = useState("");
+  const [questionEn, setQuestionEn] = useState("");
   const [answer, setAnswer] = useState("");
+  const [answerEn, setAnswerEn] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,20 +91,26 @@ export function FaqView({
       if (editing) {
         await updateFaqCms(editing.id, {
           question: normalizedQuestion,
+          question_en: questionEn.trim() || null,
           answer: normalizedAnswer,
+          answer_en: answerEn.trim() || null,
         });
         toast.success("FAQ actualizada");
       } else {
         await createFaqCms({
           question: normalizedQuestion,
+          question_en: questionEn.trim() || null,
           answer: normalizedAnswer,
+          answer_en: answerEn.trim() || null,
         });
         toast.success("FAQ creada");
       }
 
       setEditing(null);
       setQuestion("");
+      setQuestionEn("");
       setAnswer("");
+      setAnswerEn("");
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo guardar FAQ");
@@ -114,7 +122,9 @@ export function FaqView({
   const handleEdit = (item: FrequentlyAskedQuestion) => {
     setEditing(item);
     setQuestion(item.question);
+    setQuestionEn(item.question_en ?? "");
     setAnswer(item.answer);
+    setAnswerEn(item.answer_en ?? "");
   };
 
   const handleDelete = async (item: FrequentlyAskedQuestion) => {
@@ -153,11 +163,23 @@ export function FaqView({
               onChange={(event) => setQuestion(event.target.value)}
               placeholder="Pregunta"
             />
+            <Input
+              className="cms-input h-9 text-sm"
+              value={questionEn}
+              onChange={(event) => setQuestionEn(event.target.value)}
+              placeholder="Question (English)"
+            />
             <Textarea
               className="cms-input min-h-[90px] text-sm"
               value={answer}
               onChange={(event) => setAnswer(event.target.value)}
               placeholder="Respuesta"
+            />
+            <Textarea
+              className="cms-input min-h-[90px] text-sm"
+              value={answerEn}
+              onChange={(event) => setAnswerEn(event.target.value)}
+              placeholder="Answer (English)"
             />
             <div className="flex gap-2">
               <Button
@@ -179,7 +201,9 @@ export function FaqView({
                   onClick={() => {
                     setEditing(null);
                     setQuestion("");
+                    setQuestionEn("");
                     setAnswer("");
+                    setAnswerEn("");
                   }}
                 >
                   Cancelar

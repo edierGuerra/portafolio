@@ -58,11 +58,14 @@ const EMPTY_CONTACT_FORM = {
   email: "",
   phone: "",
   location: "",
+  location_en: "",
   availability: "",
+  availability_en: "",
 };
 
 const EMPTY_NETWORK_FORM = {
   name: "",
+  name_en: "",
   url: "",
   icon: "globe",
 };
@@ -335,6 +338,17 @@ export function ContactView({
               />
               <Input
                 className="cms-input h-9 text-sm"
+                value={contactForm.location_en}
+                onChange={(event) =>
+                  setContactForm((prev) => ({
+                    ...prev,
+                    location_en: event.target.value,
+                  }))
+                }
+                placeholder="Location (English)"
+              />
+              <Input
+                className="cms-input h-9 text-sm"
                 value={contactForm.availability}
                 onChange={(event) =>
                   setContactForm((prev) => ({
@@ -343,6 +357,17 @@ export function ContactView({
                   }))
                 }
                 placeholder="Disponibilidad"
+              />
+              <Input
+                className="cms-input h-9 text-sm"
+                value={contactForm.availability_en}
+                onChange={(event) =>
+                  setContactForm((prev) => ({
+                    ...prev,
+                    availability_en: event.target.value,
+                  }))
+                }
+                placeholder="Availability (English)"
               />
 
               <div className="flex gap-2">
@@ -409,7 +434,9 @@ export function ContactView({
                             email: item.email,
                             phone: item.phone,
                             location: item.location,
+                            location_en: item.location_en ?? "",
                             availability: item.availability,
+                            availability_en: item.availability_en ?? "",
                           });
                         }}
                       >
@@ -450,6 +477,17 @@ export function ContactView({
                   }))
                 }
                 placeholder="Nombre"
+              />
+              <Input
+                className="cms-input h-9 text-sm"
+                value={networkForm.name_en}
+                onChange={(event) =>
+                  setNetworkForm((prev) => ({
+                    ...prev,
+                    name_en: event.target.value,
+                  }))
+                }
+                placeholder="Name (English)"
               />
               <Input
                 className="cms-input h-9 text-sm"
@@ -564,6 +602,7 @@ export function ContactView({
                           setEditingNetwork(item);
                           setNetworkForm({
                             name: item.name,
+                            name_en: item.name_en ?? "",
                             url: item.url,
                             icon: item.icon,
                           });

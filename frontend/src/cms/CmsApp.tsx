@@ -126,6 +126,7 @@ import {
   uploadAdminProfileImageCms,
   uploadProjectImageCms,
   uploadTechnologyLogoCms,
+  translateBatchCms,
   updateTechnologyCms,
   updateProjectCms,
 } from "./api";
@@ -1249,6 +1250,12 @@ const EMPTY_PROJECT_FORM: ProjectCreate = {
   main: false,
   published: true,
   technology_ids: [],
+  title_en: "",
+  description_en: "",
+  state_en: "",
+  title_en_reviewed: false,
+  description_en_reviewed: false,
+  state_en_reviewed: false,
 };
 
 function CmsModalShell({
@@ -2105,6 +2112,152 @@ function ProjectsView({
                 <option value="En desarrollo">En desarrollo</option>
                 <option value="Completado">Completado</option>
               </select>
+            </div>
+
+            <div className="cms-translation-panel mt-1">
+              <div className="cms-translation-header">
+                <div>
+                  <p className="cms-translation-title">Traducciones EN</p>
+                  <p className="cms-translation-helper">
+                    Genera traducciones automáticas y marca cuando revises.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cms-outline-btn h-7 text-xs"
+                  onClick={async () => {
+                    const fieldsToTranslate = [
+                      form.title,
+                      form.description,
+                    ].filter((f) => f && f.trim());
+
+                    if (fieldsToTranslate.length === 0) {
+                      toast.error("Completa los campos en español primero");
+                      return;
+                    }
+
+                    setSaving(true);
+                    try {
+                      const translations = await translateBatchCms(
+                        fieldsToTranslate.map((text) => ({ text })),
+                      );
+                      let titleEN = form.title_en;
+                      let descEN = form.description_en;
+
+                      for (let i = 0; i < translations.length; i++) {
+                        if (translations[i].status === "success") {
+                          if (i === 0)
+                            titleEN = translations[i].translated_text;
+                          if (i === 1) descEN = translations[i].translated_text;
+                        }
+                      }
+
+                      setForm((f) => ({
+                        ...f,
+                        title_en: titleEN,
+                        description_en: descEN,
+                        title_en_reviewed: false,
+                        description_en_reviewed: false,
+                      }));
+
+                      toast.success(
+                        "Traducciones generadas. Revísalas antes de guardar.",
+                      );
+                    } catch {
+                      toast.error("Error al traducir. Intenta manualmente.");
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  disabled={saving || uploadingImage}
+                >
+                  Generar EN
+                </Button>
+              </div>
+
+              <div className="cms-translation-field">
+                <div className="cms-translation-label-row">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Titulo EN
+                  </Label>
+                  {form.title_en && (
+                    <span
+                      className={`cms-translation-status ${form.title_en_reviewed ? "is-reviewed" : "is-draft"}`}
+                    >
+                      {form.title_en_reviewed ? "Revisado" : "Draft"}
+                    </span>
+                  )}
+                </div>
+                <Input
+                  className="cms-input h-8 text-sm"
+                  value={form.title_en ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      title_en: e.target.value,
+                      title_en_reviewed: false,
+                    }))
+                  }
+                  placeholder="English title"
+                />
+                <label className="cms-translation-check">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-zinc-600 accent-emerald-500"
+                    checked={form.title_en_reviewed ?? false}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        title_en_reviewed: e.target.checked,
+                      }))
+                    }
+                  />
+                  <span>He revisado esta traducción</span>
+                </label>
+              </div>
+
+              <div className="cms-translation-field">
+                <div className="cms-translation-label-row">
+                  <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                    Descripcion EN
+                  </Label>
+                  {form.description_en && (
+                    <span
+                      className={`cms-translation-status ${form.description_en_reviewed ? "is-reviewed" : "is-draft"}`}
+                    >
+                      {form.description_en_reviewed ? "Revisado" : "Draft"}
+                    </span>
+                  )}
+                </div>
+                <textarea
+                  className="cms-input w-full rounded-md px-3 py-2 text-sm resize-none"
+                  rows={3}
+                  value={form.description_en ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      description_en: e.target.value,
+                      description_en_reviewed: false,
+                    }))
+                  }
+                  placeholder="English description..."
+                />
+                <label className="cms-translation-check">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-zinc-600 accent-emerald-500"
+                    checked={form.description_en_reviewed ?? false}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        description_en_reviewed: e.target.checked,
+                      }))
+                    }
+                  />
+                  <span>He revisado esta traducción</span>
+                </label>
+              </div>
             </div>
 
             <div className="space-y-2">
