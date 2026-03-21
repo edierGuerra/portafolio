@@ -45,7 +45,7 @@ def run_migrations() -> None:
     try:
         logger.info("🔄 Ejecutando migraciones de Alembic...")
         result = subprocess.run(
-            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            [sys.executable, "-m", "alembic", "upgrade", "heads"],
             cwd=os.path.dirname(os.path.abspath(__file__)),
             capture_output=True,
             text=True,
