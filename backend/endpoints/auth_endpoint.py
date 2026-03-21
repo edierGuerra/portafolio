@@ -193,3 +193,51 @@ async def get_public_profile(request: Request, db: AsyncSession = Depends(get_db
         ["name", "professional_profile", "about_me", "location"],
     )
     return PublicProfileRead.model_validate(user)
+
+@router.patch(
+    "/admin-profile",
+    response_model=MeResponse,
+    summary="Actualizar perfil del admin",
+    description="Actualiza el perfil del usuario administrador con soporte para traducciones al inglés.",
+    response_description="Perfil del admin actualizado.",
+    responses={
+        401: {"description": "Access token invalido o ausente."},
+    },
+)
+async def update_admin_profile(
+    payload: UserUpdate,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Actualiza el perfil del administrador.
+    Soporta todos los campos incluyendo traducciones al inglés y sus flags de revisión.
+    Cuando se actualiza un campo en español, automáticamente marca el campo en inglés como no revisado.
+    """
+    token = _extract_bearer_token(credentials)
+    user = await auth_service.get_current_user(db=db, token=token)
+
+    updates = payload.model_dump(exclude_unset=True)
+    if not updates:
+        return MeResponse(user=UserRead.model_validate(user))
+
+    if "password" in updates:
+        password = updates.get("password")
+        if password is None or not str(password).strip():
+            del updates["password"]
+        else:
+            updates["password"] = hash_password(str(password))
+
+    # Reset reviewed flags when source language (ES) fields change
+    if "name" in updates:
+        updates["name_en_reviewed"] = False
+    if "professional_profile" in updates:
+        updates["professional_profile_en_reviewed"] = False
+    if "about_me" in updates:
+        updates["about_me_en_reviewed"] = False
+    if "location" in updates:
+        updates["location_en_reviewed"] = False
+
+    repository = AdminRepository(db)
+    updated_user = await repository.update_user(user, updates)
+    return MeResponse(user=UserRead.model_validate(updated_user))
