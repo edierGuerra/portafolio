@@ -1,4 +1,4 @@
-"""Translation service using LibreTranslate API for i18n content."""
+"""Translation service using multiple providers for i18n content."""
 import asyncio
 import os
 from typing import Optional
@@ -8,13 +8,22 @@ import requests
 
 
 class TranslationService:
-    """Service for translating content using LibreTranslate API"""
+    """Service for translating content using multiple providers with fallback."""
 
     _base_url = os.getenv("LIBRETRANSLATE_BASE_URL", "http://libretranslate:5000").rstrip("/")
     LIBRETRANSLATE_API_URL = os.getenv(
         "LIBRETRANSLATE_API_URL",
         f"{_base_url}/translate",
     )
+    LIBRETRANSLATE_PUBLIC_API_URL = os.getenv(
+        "LIBRETRANSLATE_PUBLIC_API_URL",
+        "https://translate.argosopentech.com/translate",
+    )
+    LIBRETRANSLATE_API_KEY = os.getenv("LIBRETRANSLATE_API_KEY", "")
+    REQUEST_HEADERS = {
+        "User-Agent": "portfolio-cms-translation/1.0",
+        "Accept": "application/json",
+    }
     SOURCE_LANGUAGE = "es"
     TARGET_LANGUAGE = "en"
 
@@ -30,6 +39,7 @@ class TranslationService:
         url = "https://translate.googleapis.com/translate_a/single"
         response = requests.get(
             f"{url}?{urlencode(params)}",
+            headers=TranslationService.REQUEST_HEADERS,
             timeout=10,
         )
         if response.status_code != 200:
@@ -50,10 +60,15 @@ class TranslationService:
         }
 
     @staticmethod
-    def _post_translation(payload: dict) -> Optional[dict]:
+    def _post_libretranslate(url: str, payload: dict) -> Optional[dict]:
+        request_payload = dict(payload)
+        if TranslationService.LIBRETRANSLATE_API_KEY:
+            request_payload["api_key"] = TranslationService.LIBRETRANSLATE_API_KEY
+
         response = requests.post(
-            TranslationService.LIBRETRANSLATE_API_URL,
-            json=payload,
+            url,
+            json=request_payload,
+            headers=TranslationService.REQUEST_HEADERS,
             timeout=10,
         )
         if response.status_code != 200:
@@ -69,6 +84,14 @@ class TranslationService:
             "confidence": 0.7,
             "is_draft": True,
         }
+
+    @staticmethod
+    async def _try_provider(provider_name: str, callback) -> Optional[dict]:
+        try:
+            return await asyncio.to_thread(callback)
+        except Exception as error:
+            print(f"Translation provider '{provider_name}' failed: {str(error)}")
+            return None
     
     @staticmethod
     async def translate_text(text: str) -> Optional[dict]:
@@ -96,23 +119,34 @@ class TranslationService:
             "target": TranslationService.TARGET_LANGUAGE,
         }
         
-        try:
-            result = await asyncio.to_thread(TranslationService._post_translation, payload)
+        providers = [
+            (
+                "libretranslate_internal",
+                lambda: TranslationService._post_libretranslate(
+                    TranslationService.LIBRETRANSLATE_API_URL,
+                    payload,
+                ),
+            ),
+            (
+                "libretranslate_public",
+                lambda: TranslationService._post_libretranslate(
+                    TranslationService.LIBRETRANSLATE_PUBLIC_API_URL,
+                    payload,
+                ),
+            ),
+            (
+                "google_public",
+                lambda: TranslationService._post_google_translation(text),
+            ),
+        ]
+
+        for provider_name, provider_callback in providers:
+            result = await TranslationService._try_provider(
+                provider_name,
+                provider_callback,
+            )
             if result:
                 return result
-            # Fallback provider when LibreTranslate is unavailable.
-            result = await asyncio.to_thread(TranslationService._post_google_translation, text)
-            if result:
-                return result
-        except Exception as e:
-            print(f"Translation error: {str(e)}")
-            try:
-                result = await asyncio.to_thread(TranslationService._post_google_translation, text)
-                if result:
-                    return result
-            except Exception as fallback_error:
-                print(f"Fallback translation error: {str(fallback_error)}")
-                return None
         
         return None
     

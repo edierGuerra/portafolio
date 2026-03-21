@@ -3279,6 +3279,16 @@ function AdminProfileView({
                         fieldsToTranslate.map((text) => ({ text })),
                       );
 
+                      const successfulTranslations = translations.filter(
+                        (item) => item.status === "success",
+                      );
+                      if (successfulTranslations.length === 0) {
+                        toast.error(
+                          "No fue posible traducir automaticamente en este momento.",
+                        );
+                        return;
+                      }
+
                       const nextNameEn =
                         translations[0]?.status === "success"
                           ? translations[0].translated_text
@@ -3308,9 +3318,15 @@ function AdminProfileView({
                         about_me_en_reviewed: false,
                       }));
 
-                      toast.success(
-                        "Traducciones EN generadas. Revisa antes de guardar.",
-                      );
+                      if (successfulTranslations.length < translations.length) {
+                        toast.warning(
+                          "Algunas traducciones fallaron. Revisa y completa manualmente.",
+                        );
+                      } else {
+                        toast.success(
+                          "Traducciones EN generadas. Revisa antes de guardar.",
+                        );
+                      }
                     } catch {
                       toast.error("No se pudieron generar las traducciones.");
                     } finally {
