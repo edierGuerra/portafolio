@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class SocialNetworkBase(BaseModel):
     name: str
+    name_en: Optional[str] = None
     url: str
     icon: str
 
@@ -15,6 +16,7 @@ class SocialNetworkCreate(SocialNetworkBase):
 
 class SocialNetworkUpdate(BaseModel):
     name: Optional[str] = None
+    name_en: Optional[str] = None
     url: Optional[str] = None
     icon: Optional[str] = None
 

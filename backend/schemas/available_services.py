@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class AvailableServiceBase(BaseModel):
     service: str
+    service_en: Optional[str] = None
 
 
 class AvailableServiceCreate(AvailableServiceBase):
@@ -13,6 +14,7 @@ class AvailableServiceCreate(AvailableServiceBase):
 
 class AvailableServiceUpdate(BaseModel):
     service: Optional[str] = None
+    service_en: Optional[str] = None
 
 
 class AvailableServiceRead(AvailableServiceBase):

@@ -9,4 +9,6 @@ class ContactInfo(Base):
     email:Mapped[str] = mapped_column(String(50), nullable=False)
     phone:Mapped[str] = mapped_column(String(50), nullable=False)
     location:Mapped[str] = mapped_column(String(50), nullable=False)
+    location_en:Mapped[str | None] = mapped_column(String(50), nullable=True)
     availability:Mapped[str] = mapped_column(String(50), nullable=False)
+    availability_en:Mapped[str | None] = mapped_column(String(50), nullable=True)

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class BlogTagBase(BaseModel):
     name: str
+    name_en: Optional[str] = None
     slug: str
 
 
@@ -14,6 +15,7 @@ class BlogTagCreate(BlogTagBase):
 
 class BlogTagUpdate(BaseModel):
     name: Optional[str] = None
+    name_en: Optional[str] = None
     slug: Optional[str] = None
 
 

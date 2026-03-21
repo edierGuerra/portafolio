@@ -5,7 +5,9 @@ from pydantic import BaseModel, ConfigDict
 
 class FrequentlyAskedQuestionBase(BaseModel):
     question: str
+    question_en: Optional[str] = None
     answer: str
+    answer_en: Optional[str] = None
 
 
 class FrequentlyAskedQuestionCreate(FrequentlyAskedQuestionBase):
@@ -14,7 +16,9 @@ class FrequentlyAskedQuestionCreate(FrequentlyAskedQuestionBase):
 
 class FrequentlyAskedQuestionUpdate(BaseModel):
     question: Optional[str] = None
+    question_en: Optional[str] = None
     answer: Optional[str] = None
+    answer_en: Optional[str] = None
 
 
 class FrequentlyAskedQuestionRead(FrequentlyAskedQuestionBase):

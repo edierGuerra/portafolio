@@ -18,13 +18,27 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _has_column(inspector: sa.Inspector, table_name: str, column_name: str) -> bool:
+    return any(column.get("name") == column_name for column in inspector.get_columns(table_name))
+
+
 def upgrade() -> None:
     """Upgrade schema."""
-    op.add_column("projects", sa.Column("demo_url", sa.String(length=250), nullable=True))
-    op.add_column("projects", sa.Column("repository_url", sa.String(length=250), nullable=True))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if not _has_column(inspector, "projects", "demo_url"):
+        op.add_column("projects", sa.Column("demo_url", sa.String(length=250), nullable=True))
+    if not _has_column(inspector, "projects", "repository_url"):
+        op.add_column("projects", sa.Column("repository_url", sa.String(length=250), nullable=True))
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_column("projects", "repository_url")
-    op.drop_column("projects", "demo_url")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if _has_column(inspector, "projects", "repository_url"):
+        op.drop_column("projects", "repository_url")
+    if _has_column(inspector, "projects", "demo_url"):
+        op.drop_column("projects", "demo_url")

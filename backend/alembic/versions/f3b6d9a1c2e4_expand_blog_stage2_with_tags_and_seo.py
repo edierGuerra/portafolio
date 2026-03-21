@@ -63,10 +63,15 @@ def upgrade() -> None:
         op.add_column("blog", sa.Column("seo_description", sa.String(length=300), nullable=True))
 
     op.alter_column("blog", "title", type_=sa.String(length=120), existing_nullable=False)
-    op.alter_column("blog", "description", type_=sa.String(length=2000), existing_nullable=False)
+    has_description_column = _has_column(inspector, "blog", "description")
+    if has_description_column:
+        op.alter_column("blog", "description", type_=sa.String(length=2000), existing_nullable=False)
 
     op.execute("UPDATE blog SET slug = CONCAT('post-', id) WHERE slug = '' OR slug IS NULL")
-    op.execute("UPDATE blog SET excerpt = LEFT(description, 500) WHERE excerpt = '' OR excerpt IS NULL")
+    if has_description_column:
+        op.execute("UPDATE blog SET excerpt = LEFT(description, 500) WHERE excerpt = '' OR excerpt IS NULL")
+    else:
+        op.execute("UPDATE blog SET excerpt = LEFT(title, 500) WHERE excerpt = '' OR excerpt IS NULL")
 
     inspector = sa.inspect(bind)
     if not _has_index(inspector, "blog", "ix_blog_slug"):

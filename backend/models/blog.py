@@ -17,9 +17,12 @@ class Blog(Base):
     __tablename__ = "blog"
     id:Mapped[int] = mapped_column(Integer, primary_key=True)
     title:Mapped[str] = mapped_column(String(120), nullable=False)
+    title_en:Mapped[str | None] = mapped_column(String(120), nullable=True)
     slug:Mapped[str] = mapped_column(String(140), nullable=False, unique=True)
     excerpt:Mapped[str] = mapped_column(String(500), nullable=False)
+    excerpt_en:Mapped[str | None] = mapped_column(String(500), nullable=True)
     content:Mapped[str | None] = mapped_column(Text, nullable=True)
+    content_en:Mapped[str | None] = mapped_column(Text, nullable=True)
     image:Mapped[str] = mapped_column(String(250), nullable=False)
     date:Mapped[DateType] = mapped_column(Date, nullable=False) # Fecha editorial definida por usuario
     status:Mapped[BlogStatus] = mapped_column(
@@ -34,7 +37,14 @@ class Blog(Base):
     read_time_minutes:Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     seo_title:Mapped[str | None] = mapped_column(String(160), nullable=True)
+    seo_title_en:Mapped[str | None] = mapped_column(String(160), nullable=True)
     seo_description:Mapped[str | None] = mapped_column(String(300), nullable=True)
+    seo_description_en:Mapped[str | None] = mapped_column(String(300), nullable=True)
+    title_en_reviewed:Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    excerpt_en_reviewed:Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    content_en_reviewed:Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    seo_title_en_reviewed:Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    seo_description_en_reviewed:Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Relación con la tabla de categorías de blog
     category_id: Mapped[int] = mapped_column(ForeignKey("blog_category.id"), nullable=False) # Clave foránea a la categoría del blog

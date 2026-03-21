@@ -7,5 +7,6 @@ class SocialNetworks(Base):
     __tablename__ = "social_networks"
     id:Mapped[int] = mapped_column(Integer, primary_key=True)
     name:Mapped[str] = mapped_column(String(50), nullable=False)
+    name_en:Mapped[str | None] = mapped_column(String(50), nullable=True)
     url:Mapped[str] = mapped_column(String(250), nullable=False)
     icon:Mapped[str] = mapped_column(String(250), nullable=False)

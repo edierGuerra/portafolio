@@ -7,4 +7,6 @@ class FrequentlyAskedQuestion(Base):
     __tablename__ = "frequently_asked_questions"
     id:Mapped[int] = mapped_column(Integer, primary_key=True)
     question:Mapped[str] = mapped_column(String(250), nullable=False)
+    question_en:Mapped[str | None] = mapped_column(String(250), nullable=True)
     answer:Mapped[str] = mapped_column(String(250), nullable=False)
+    answer_en:Mapped[str | None] = mapped_column(String(250), nullable=True)

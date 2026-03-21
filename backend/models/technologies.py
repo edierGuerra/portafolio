@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer
+from sqlalchemy import String, Integer, Boolean
 from config.database_config import Base
 
 class Technologies(Base):
@@ -7,7 +7,9 @@ class Technologies(Base):
     __tablename__ = "technologies"
     id:Mapped[int] = mapped_column(Integer, primary_key=True)
     name:Mapped[str] = mapped_column(String(50), nullable=False)
+    name_en:Mapped[str | None] = mapped_column(String(50), nullable=True)
     logo:Mapped[str] = mapped_column(String(250), nullable=False)
+    name_en_reviewed:Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Se relaciona con projects, ya que un proyecto puede tener varias tecnologías y una tecnología puede estar en varios proyectos.
     projects = relationship("Projects", secondary="projects_technologies", back_populates="technologies")

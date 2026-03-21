@@ -6,10 +6,18 @@ from pydantic import BaseModel, ConfigDict
 class UserBase(BaseModel):
     email: str
     name: str
+    name_en: Optional[str] = None
+    name_en_reviewed: bool = False
     professional_profile: str
+    professional_profile_en: Optional[str] = None
+    professional_profile_en_reviewed: bool = False
     about_me: str
+    about_me_en: Optional[str] = None
+    about_me_en_reviewed: bool = False
     profile_image: str
     location: str
+    location_en: Optional[str] = None
+    location_en_reviewed: bool = False
     cv_file: Optional[str] = None
     availability_status: str = "available"
 
@@ -22,10 +30,18 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
     name: Optional[str] = None
+    name_en: Optional[str] = None
+    name_en_reviewed: Optional[bool] = None
     professional_profile: Optional[str] = None
+    professional_profile_en: Optional[str] = None
+    professional_profile_en_reviewed: Optional[bool] = None
     about_me: Optional[str] = None
+    about_me_en: Optional[str] = None
+    about_me_en_reviewed: Optional[bool] = None
     profile_image: Optional[str] = None
     location: Optional[str] = None
+    location_en: Optional[str] = None
+    location_en_reviewed: Optional[bool] = None
     cv_file: Optional[str] = None
     availability_status: Optional[str] = None
 
@@ -41,10 +57,14 @@ class UserReadWithPassword(UserRead):
 
 class PublicProfileRead(BaseModel):
     name: str
+    name_en: Optional[str] = None
     professional_profile: str
+    professional_profile_en: Optional[str] = None
     about_me: str
+    about_me_en: Optional[str] = None
     profile_image: str
     location: str
+    location_en: Optional[str] = None
     cv_file: Optional[str] = None
     availability_status: str = "available"
     model_config = ConfigDict(from_attributes=True)

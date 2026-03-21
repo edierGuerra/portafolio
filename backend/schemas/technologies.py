@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class TechnologyBase(BaseModel):
     name: str
+    name_en: Optional[str] = None
     logo: str
 
 
@@ -14,6 +15,7 @@ class TechnologyCreate(TechnologyBase):
 
 class TechnologyUpdate(BaseModel):
     name: Optional[str] = None
+    name_en: Optional[str] = None
     logo: Optional[str] = None
 
 

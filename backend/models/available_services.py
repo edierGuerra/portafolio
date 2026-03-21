@@ -7,3 +7,4 @@ class AvailableService(Base):
     __tablename__ = "available_services"
     id:Mapped[int] = mapped_column(Integer, primary_key=True)
     service:Mapped[str] = mapped_column(String(50), nullable=False)
+    service_en:Mapped[str | None] = mapped_column(String(50), nullable=True)
