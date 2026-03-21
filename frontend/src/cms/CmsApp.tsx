@@ -122,7 +122,7 @@ import {
   logoutCms,
   setProjectPublishedCms,
   replyContactMessageCms,
-  updateMeCms,
+  updateAdminProfileCms,
   uploadAdminProfileImageCms,
   uploadProjectImageCms,
   uploadTechnologyLogoCms,
@@ -2954,10 +2954,18 @@ function TechnologiesView({
 type AdminProfileForm = Pick<
   CmsUser,
   | "name"
+  | "name_en"
+  | "name_en_reviewed"
   | "email"
   | "professional_profile"
+  | "professional_profile_en"
+  | "professional_profile_en_reviewed"
   | "location"
+  | "location_en"
+  | "location_en_reviewed"
   | "about_me"
+  | "about_me_en"
+  | "about_me_en_reviewed"
   | "profile_image"
   | "availability_status"
 >;
@@ -2965,10 +2973,19 @@ type AdminProfileForm = Pick<
 function mapUserToAdminProfileForm(user: CmsUser): AdminProfileForm {
   return {
     name: user.name,
+    name_en: user.name_en ?? "",
+    name_en_reviewed: user.name_en_reviewed ?? false,
     email: user.email,
     professional_profile: user.professional_profile,
+    professional_profile_en: user.professional_profile_en ?? "",
+    professional_profile_en_reviewed:
+      user.professional_profile_en_reviewed ?? false,
     location: user.location,
+    location_en: user.location_en ?? "",
+    location_en_reviewed: user.location_en_reviewed ?? false,
     about_me: user.about_me,
+    about_me_en: user.about_me_en ?? "",
+    about_me_en_reviewed: user.about_me_en_reviewed ?? false,
     profile_image: user.profile_image,
     availability_status: user.availability_status,
   };
@@ -3022,10 +3039,22 @@ function AdminProfileView({
   const hasChanges = useMemo(
     () =>
       form.name !== user.name ||
+      (form.name_en ?? "") !== (user.name_en ?? "") ||
+      (form.name_en_reviewed ?? false) !== (user.name_en_reviewed ?? false) ||
       form.email !== user.email ||
       form.professional_profile !== user.professional_profile ||
+      (form.professional_profile_en ?? "") !==
+        (user.professional_profile_en ?? "") ||
+      (form.professional_profile_en_reviewed ?? false) !==
+        (user.professional_profile_en_reviewed ?? false) ||
       form.location !== user.location ||
+      (form.location_en ?? "") !== (user.location_en ?? "") ||
+      (form.location_en_reviewed ?? false) !==
+        (user.location_en_reviewed ?? false) ||
       form.about_me !== user.about_me ||
+      (form.about_me_en ?? "") !== (user.about_me_en ?? "") ||
+      (form.about_me_en_reviewed ?? false) !==
+        (user.about_me_en_reviewed ?? false) ||
       form.profile_image !== user.profile_image ||
       form.availability_status !== user.availability_status ||
       pendingProfileImageFile !== null,
@@ -3066,7 +3095,7 @@ function AdminProfileView({
         clearLocalProfileImagePreview();
       }
 
-      const response = await updateMeCms(nextForm);
+      const response = await updateAdminProfileCms(nextForm);
       onUserUpdate(response.user);
       toast.success("Perfil actualizado", {
         description:
@@ -3216,6 +3245,250 @@ function AdminProfileView({
                   placeholder="Ciudad, Pais"
                   required
                 />
+              </div>
+            </div>
+
+            <div className="cms-translation-panel mt-1">
+              <div className="cms-translation-header">
+                <div>
+                  <p className="cms-translation-title">Traducciones EN</p>
+                  <p className="cms-translation-helper">
+                    Puedes editarlas manualmente o generarlas automaticamente.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cms-outline-btn h-7 text-xs"
+                  onClick={async () => {
+                    const fieldsToTranslate = [
+                      form.name,
+                      form.professional_profile,
+                      form.location,
+                      form.about_me,
+                    ].filter((field) => field && field.trim());
+
+                    if (fieldsToTranslate.length === 0) {
+                      toast.error("Completa los campos en español primero");
+                      return;
+                    }
+
+                    setSaving(true);
+                    try {
+                      const translations = await translateBatchCms(
+                        fieldsToTranslate.map((text) => ({ text })),
+                      );
+
+                      const nextNameEn =
+                        translations[0]?.status === "success"
+                          ? translations[0].translated_text
+                          : form.name_en;
+                      const nextProfessionalProfileEn =
+                        translations[1]?.status === "success"
+                          ? translations[1].translated_text
+                          : form.professional_profile_en;
+                      const nextLocationEn =
+                        translations[2]?.status === "success"
+                          ? translations[2].translated_text
+                          : form.location_en;
+                      const nextAboutMeEn =
+                        translations[3]?.status === "success"
+                          ? translations[3].translated_text
+                          : form.about_me_en;
+
+                      setForm((currentForm) => ({
+                        ...currentForm,
+                        name_en: nextNameEn,
+                        name_en_reviewed: false,
+                        professional_profile_en: nextProfessionalProfileEn,
+                        professional_profile_en_reviewed: false,
+                        location_en: nextLocationEn,
+                        location_en_reviewed: false,
+                        about_me_en: nextAboutMeEn,
+                        about_me_en_reviewed: false,
+                      }));
+
+                      toast.success(
+                        "Traducciones EN generadas. Revisa antes de guardar.",
+                      );
+                    } catch {
+                      toast.error("No se pudieron generar las traducciones.");
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  disabled={saving || uploadingProfileImage}
+                >
+                  Generar EN
+                </Button>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="cms-translation-field">
+                  <div className="cms-translation-label-row">
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                      Nombre EN
+                    </Label>
+                    {form.name_en && (
+                      <span
+                        className={`cms-translation-status ${form.name_en_reviewed ? "is-reviewed" : "is-draft"}`}
+                      >
+                        {form.name_en_reviewed ? "Revisado" : "Draft"}
+                      </span>
+                    )}
+                  </div>
+                  <Input
+                    className="cms-input h-8 text-sm"
+                    value={form.name_en ?? ""}
+                    onChange={(event) =>
+                      setForm((currentForm) => ({
+                        ...currentForm,
+                        name_en: event.target.value,
+                        name_en_reviewed: false,
+                      }))
+                    }
+                    placeholder="Admin name in English"
+                  />
+                  <label className="cms-translation-check">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-zinc-600 accent-emerald-500"
+                      checked={form.name_en_reviewed ?? false}
+                      onChange={(event) =>
+                        setForm((currentForm) => ({
+                          ...currentForm,
+                          name_en_reviewed: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>He revisado esta traduccion</span>
+                  </label>
+                </div>
+
+                <div className="cms-translation-field">
+                  <div className="cms-translation-label-row">
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                      Perfil profesional EN
+                    </Label>
+                    {form.professional_profile_en && (
+                      <span
+                        className={`cms-translation-status ${form.professional_profile_en_reviewed ? "is-reviewed" : "is-draft"}`}
+                      >
+                        {form.professional_profile_en_reviewed
+                          ? "Revisado"
+                          : "Draft"}
+                      </span>
+                    )}
+                  </div>
+                  <Input
+                    className="cms-input h-8 text-sm"
+                    value={form.professional_profile_en ?? ""}
+                    onChange={(event) =>
+                      setForm((currentForm) => ({
+                        ...currentForm,
+                        professional_profile_en: event.target.value,
+                        professional_profile_en_reviewed: false,
+                      }))
+                    }
+                    placeholder="Professional profile in English"
+                  />
+                  <label className="cms-translation-check">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-zinc-600 accent-emerald-500"
+                      checked={form.professional_profile_en_reviewed ?? false}
+                      onChange={(event) =>
+                        setForm((currentForm) => ({
+                          ...currentForm,
+                          professional_profile_en_reviewed: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>He revisado esta traduccion</span>
+                  </label>
+                </div>
+
+                <div className="cms-translation-field">
+                  <div className="cms-translation-label-row">
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                      Ubicacion EN
+                    </Label>
+                    {form.location_en && (
+                      <span
+                        className={`cms-translation-status ${form.location_en_reviewed ? "is-reviewed" : "is-draft"}`}
+                      >
+                        {form.location_en_reviewed ? "Revisado" : "Draft"}
+                      </span>
+                    )}
+                  </div>
+                  <Input
+                    className="cms-input h-8 text-sm"
+                    value={form.location_en ?? ""}
+                    onChange={(event) =>
+                      setForm((currentForm) => ({
+                        ...currentForm,
+                        location_en: event.target.value,
+                        location_en_reviewed: false,
+                      }))
+                    }
+                    placeholder="Location in English"
+                  />
+                  <label className="cms-translation-check">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-zinc-600 accent-emerald-500"
+                      checked={form.location_en_reviewed ?? false}
+                      onChange={(event) =>
+                        setForm((currentForm) => ({
+                          ...currentForm,
+                          location_en_reviewed: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>He revisado esta traduccion</span>
+                  </label>
+                </div>
+
+                <div className="cms-translation-field sm:col-span-2">
+                  <div className="cms-translation-label-row">
+                    <Label className="text-xs uppercase tracking-wider text-zinc-500">
+                      Sobre mi EN
+                    </Label>
+                    {form.about_me_en && (
+                      <span
+                        className={`cms-translation-status ${form.about_me_en_reviewed ? "is-reviewed" : "is-draft"}`}
+                      >
+                        {form.about_me_en_reviewed ? "Revisado" : "Draft"}
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    className="cms-input min-h-[110px] w-full resize-y px-3 py-2 text-sm"
+                    value={form.about_me_en ?? ""}
+                    onChange={(event) =>
+                      setForm((currentForm) => ({
+                        ...currentForm,
+                        about_me_en: event.target.value,
+                        about_me_en_reviewed: false,
+                      }))
+                    }
+                    placeholder="Short professional bio in English"
+                  />
+                  <label className="cms-translation-check">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-zinc-600 accent-emerald-500"
+                      checked={form.about_me_en_reviewed ?? false}
+                      onChange={(event) =>
+                        setForm((currentForm) => ({
+                          ...currentForm,
+                          about_me_en_reviewed: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>He revisado esta traduccion</span>
+                  </label>
+                </div>
               </div>
             </div>
 

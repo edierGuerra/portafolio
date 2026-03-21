@@ -101,6 +101,37 @@ export async function updateMeCms(
   });
 }
 
+export async function updateAdminProfileCms(
+  payload: Partial<
+    Pick<
+      CmsUser,
+      | "name"
+      | "name_en"
+      | "name_en_reviewed"
+      | "email"
+      | "professional_profile"
+      | "professional_profile_en"
+      | "professional_profile_en_reviewed"
+      | "location"
+      | "location_en"
+      | "location_en_reviewed"
+      | "about_me"
+      | "about_me_en"
+      | "about_me_en_reviewed"
+      | "profile_image"
+      | "cv_file"
+      | "availability_status"
+    >
+  > & {
+    password?: string;
+  },
+): Promise<MeResponse> {
+  return httpWithAuth<MeResponse>("/api/auth/admin-profile", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function refreshCms(
   payload: RefreshTokenPayload,
 ): Promise<AuthTokenResponse> {
