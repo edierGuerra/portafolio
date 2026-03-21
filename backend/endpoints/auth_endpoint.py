@@ -133,14 +133,10 @@ async def update_me(
             updates["password"] = hash_password(str(password))
 
     # Reset reviewed flags when source language (ES) fields change
-    if "name" in updates:
-        updates["name_en_reviewed"] = False
     if "professional_profile" in updates:
         updates["professional_profile_en_reviewed"] = False
     if "about_me" in updates:
         updates["about_me_en_reviewed"] = False
-    if "location" in updates:
-        updates["location_en_reviewed"] = False
 
     repository = AdminRepository(db)
     updated_user = await repository.update_user(user, updates)
@@ -198,7 +194,7 @@ async def get_public_profile(request: Request, db: AsyncSession = Depends(get_db
     "/admin-profile",
     response_model=MeResponse,
     summary="Actualizar perfil del admin",
-    description="Actualiza el perfil del usuario administrador con soporte para traducciones al inglés.",
+    description="Actualiza el perfil del usuario administrador con soporte para traducciones EN del perfil profesional y sobre mí.",
     response_description="Perfil del admin actualizado.",
     responses={
         401: {"description": "Access token invalido o ausente."},
@@ -211,8 +207,8 @@ async def update_admin_profile(
 ):
     """
     Actualiza el perfil del administrador.
-    Soporta todos los campos incluyendo traducciones al inglés y sus flags de revisión.
-    Cuando se actualiza un campo en español, automáticamente marca el campo en inglés como no revisado.
+    Soporta actualización del perfil admin y traducciones EN de perfil profesional y sobre mí.
+    Cuando se actualiza un campo en español con traducción EN asociada, marca la traducción como no revisada.
     """
     token = _extract_bearer_token(credentials)
     user = await auth_service.get_current_user(db=db, token=token)
@@ -229,14 +225,10 @@ async def update_admin_profile(
             updates["password"] = hash_password(str(password))
 
     # Reset reviewed flags when source language (ES) fields change
-    if "name" in updates:
-        updates["name_en_reviewed"] = False
     if "professional_profile" in updates:
         updates["professional_profile_en_reviewed"] = False
     if "about_me" in updates:
         updates["about_me_en_reviewed"] = False
-    if "location" in updates:
-        updates["location_en_reviewed"] = False
 
     repository = AdminRepository(db)
     updated_user = await repository.update_user(user, updates)

@@ -46,8 +46,6 @@ export interface CmsUser {
   id: number;
   email: string;
   name: string;
-  name_en?: string | null;
-  name_en_reviewed?: boolean;
   professional_profile: string;
   professional_profile_en?: string | null;
   professional_profile_en_reviewed?: boolean;
@@ -56,8 +54,6 @@ export interface CmsUser {
   about_me_en_reviewed?: boolean;
   profile_image: string;
   location: string;
-  location_en?: string | null;
-  location_en_reviewed?: boolean;
   cv_file?: string | null;
   availability_status: AvailabilityStatus;
 }

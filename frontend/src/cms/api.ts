@@ -80,12 +80,10 @@ export async function updateMeCms(
     Pick<
       CmsUser,
       | "name"
-      | "name_en"
       | "email"
       | "professional_profile"
       | "professional_profile_en"
       | "location"
-      | "location_en"
       | "about_me"
       | "about_me_en"
       | "profile_image"
@@ -106,15 +104,11 @@ export async function updateAdminProfileCms(
     Pick<
       CmsUser,
       | "name"
-      | "name_en"
-      | "name_en_reviewed"
       | "email"
       | "professional_profile"
       | "professional_profile_en"
       | "professional_profile_en_reviewed"
       | "location"
-      | "location_en"
-      | "location_en_reviewed"
       | "about_me"
       | "about_me_en"
       | "about_me_en_reviewed"
