@@ -22,7 +22,11 @@ class BlogCategoryRepository:
         return result.scalar_one_or_none()
 
     async def create(self, payload: BlogCategoryCreate) -> BlogCategory:
-        category = BlogCategory(name=payload.name)
+        category = BlogCategory(
+            name=payload.name,
+            name_en=payload.name_en,
+            name_en_reviewed=payload.name_en_reviewed,
+        )
         self.db.add(category)
         await self.db.commit()
         await self.db.refresh(category)
