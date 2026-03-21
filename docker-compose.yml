@@ -16,13 +16,25 @@ services:
       retries: 10
       start_period: 20s
 
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    restart: unless-stopped
+    environment:
+      LT_LOAD_ONLY: en,es
+      LT_DISABLE_WEB_UI: "true"
+
   backend:
     build:
       context: ./backend
     restart: unless-stopped
+    env_file: ./backend/.env.development
+    environment:
+      LIBRETRANSLATE_BASE_URL: http://libretranslate:5000
     depends_on:
       db:
         condition: service_healthy
+      libretranslate:
+        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/health')"]
       interval: 15s
