@@ -38,6 +38,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [language]);
 
   const setLanguage = useCallback((nextLanguage: Language) => {
+    // Persistimos inmediatamente para que requests disparados en el mismo ciclo
+    // usen el idioma correcto sin esperar al useEffect.
+    localStorage.setItem(STORAGE_KEY, nextLanguage);
+    document.documentElement.lang = nextLanguage;
     setLanguageState(nextLanguage);
   }, []);
 
