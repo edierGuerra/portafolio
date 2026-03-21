@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -15,8 +15,163 @@ import { localizeArrayFields } from "../i18n/dynamicI18n";
 
 const ALL_CATEGORY_ID = "__all__";
 
+type DetailContentBlock =
+  | { kind: "heading"; value: string }
+  | { kind: "quote"; value: string }
+  | { kind: "code"; value: string }
+  | { kind: "image"; value: string; alt: string }
+  | { kind: "paragraph"; value: string };
+
+function parseMarkdownImageLine(
+  line: string,
+): { alt: string; src: string } | null {
+  const match = line.match(/^!\[([^\]]*)\]\((\S+)(?:\s+"[^"]*")?\)$/);
+  if (!match) return null;
+
+  const alt = match[1]?.trim() ?? "";
+  let src = match[2]?.trim() ?? "";
+  if (src.startsWith("<") && src.endsWith(">")) {
+    src = src.slice(1, -1);
+  }
+  if (!src) return null;
+
+  return { alt, src };
+}
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const pieces = text
+    .split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g)
+    .filter(Boolean);
+
+  return pieces.map((piece, index) => {
+    if (/^`[^`]+`$/.test(piece)) {
+      return (
+        <code key={`inline-code-${index}`} className="blog-detail-inline-code">
+          {piece.slice(1, -1)}
+        </code>
+      );
+    }
+    if (/^\*\*[^*]+\*\*$/.test(piece)) {
+      return (
+        <strong key={`inline-strong-${index}`}>{piece.slice(2, -2)}</strong>
+      );
+    }
+    if (/^\*[^*]+\*$/.test(piece)) {
+      return <em key={`inline-em-${index}`}>{piece.slice(1, -1)}</em>;
+    }
+    return <span key={`inline-text-${index}`}>{piece}</span>;
+  });
+}
+
+function parseDetailContent(content?: string | null): DetailContentBlock[] {
+  const raw = (content ?? "").trim();
+  if (!raw) return [];
+
+  // Compatibilidad con posts antiguos guardados como JSON por bloques.
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((item) => item && typeof item === "object")
+        .map((item) => {
+          const type = typeof item.type === "string" ? item.type : "paragraph";
+          const value = typeof item.value === "string" ? item.value.trim() : "";
+          if (!value) return null;
+          if (type === "heading")
+            return { kind: "heading", value } as DetailContentBlock;
+          if (type === "quote")
+            return { kind: "quote", value } as DetailContentBlock;
+          if (type === "code")
+            return { kind: "code", value } as DetailContentBlock;
+          if (type === "image") {
+            return {
+              kind: "image",
+              value,
+              alt: "Imagen de contenido",
+            } as DetailContentBlock;
+          }
+          return { kind: "paragraph", value } as DetailContentBlock;
+        })
+        .filter((block): block is DetailContentBlock => Boolean(block));
+    }
+  } catch {
+    // Si no es JSON, se interpreta como documento de texto formateado.
+  }
+
+  const blocks: DetailContentBlock[] = [];
+  const lines = raw.split(/\r?\n/);
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) {
+      i += 1;
+      continue;
+    }
+
+    if (line.startsWith("```")) {
+      const codeLines: string[] = [];
+      i += 1;
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i += 1;
+      }
+      blocks.push({ kind: "code", value: codeLines.join("\n") });
+      i += 1;
+      continue;
+    }
+
+    const imageData = parseMarkdownImageLine(line);
+    if (imageData) {
+      blocks.push({
+        kind: "image",
+        value: imageData.src,
+        alt: imageData.alt || "Imagen de contenido",
+      });
+      i += 1;
+      continue;
+    }
+
+    if (
+      line.startsWith("# ") ||
+      line.startsWith("## ") ||
+      line.startsWith("### ")
+    ) {
+      blocks.push({ kind: "heading", value: line.replace(/^#{1,3}\s+/, "") });
+      i += 1;
+      continue;
+    }
+
+    if (line.startsWith(">")) {
+      blocks.push({ kind: "quote", value: line.replace(/^>\s?/, "") });
+      i += 1;
+      continue;
+    }
+
+    const paragraphLines: string[] = [line];
+    i += 1;
+    while (i < lines.length) {
+      const next = lines[i].trim();
+      if (
+        !next ||
+        next.startsWith("#") ||
+        next.startsWith(">") ||
+        next.startsWith("```") ||
+        Boolean(parseMarkdownImageLine(next))
+      ) {
+        break;
+      }
+      paragraphLines.push(next);
+      i += 1;
+    }
+    blocks.push({ kind: "paragraph", value: paragraphLines.join(" ") });
+  }
+
+  return blocks;
+}
+
 export function BlogSection() {
-  const { t, locale } = useI18n();
+  const { t, locale, language } = useI18n();
   const [posts, setPosts] = useState<PublicBlogPost[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY_ID);
@@ -75,10 +230,19 @@ export function BlogSection() {
           ["name"],
         );
 
-        setPosts(localizedPosts);
-        setCategories(
-          localizedCategories.map((category) => String(category.name || "")),
+        // Filtrar categorías vacías (que no tienen posts asociados)
+        const categoriesWithPosts = new Set<number>(
+          localizedPosts
+            .map((post) => post.category_id)
+            .filter((id) => id !== null && id !== undefined),
         );
+
+        const filteredCategories = localizedCategories
+          .filter((cat) => categoriesWithPosts.has(cat.id))
+          .map((category) => String(category.name || ""));
+
+        setPosts(localizedPosts);
+        setCategories(filteredCategories);
       } catch {
         if (!cancelled) {
           setError(t("blog.error"));
@@ -123,27 +287,7 @@ export function BlogSection() {
   );
 
   const selectedPostContentBlocks = useMemo(() => {
-    if (!selectedPost?.content?.trim()) {
-      return [] as Array<{ type: string; value: string }>;
-    }
-
-    try {
-      const parsed = JSON.parse(selectedPost.content);
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-
-      return parsed
-        .filter((item) => item && typeof item === "object")
-        .map((item) => {
-          const type = typeof item.type === "string" ? item.type : "paragraph";
-          const value = typeof item.value === "string" ? item.value.trim() : "";
-          return { type, value };
-        })
-        .filter((block) => block.value.length > 0);
-    } catch {
-      return [];
-    }
+    return parseDetailContent(selectedPost?.content);
   }, [selectedPost]);
 
   const suggestedRecentPosts = useMemo(() => {
@@ -250,7 +394,9 @@ export function BlogSection() {
             <div className="flex flex-wrap justify-center gap-2 mb-6 lg:mb-8 px-4">
               <Button
                 key={ALL_CATEGORY_ID}
-                variant={ALL_CATEGORY_ID === activeCategory ? "default" : "outline"}
+                variant={
+                  ALL_CATEGORY_ID === activeCategory ? "default" : "outline"
+                }
                 size="sm"
                 onClick={() => setActiveCategory(ALL_CATEGORY_ID)}
               >
@@ -491,29 +637,29 @@ export function BlogSection() {
                   {selectedPostContentBlocks.length > 0 ? (
                     <div className="blog-detail-content">
                       {selectedPostContentBlocks.map((block, index) => {
-                        if (block.type === "heading") {
+                        if (block.kind === "heading") {
                           return (
                             <h2
                               key={`${selectedPost.id}-heading-${index}`}
                               className="blog-detail-heading"
                             >
-                              {block.value}
+                              {renderInlineMarkdown(block.value)}
                             </h2>
                           );
                         }
 
-                        if (block.type === "quote") {
+                        if (block.kind === "quote") {
                           return (
                             <blockquote
                               key={`${selectedPost.id}-quote-${index}`}
                               className="blog-detail-quote"
                             >
-                              {block.value}
+                              {renderInlineMarkdown(block.value)}
                             </blockquote>
                           );
                         }
 
-                        if (block.type === "code") {
+                        if (block.kind === "code") {
                           return (
                             <pre
                               key={`${selectedPost.id}-code-${index}`}
@@ -524,7 +670,7 @@ export function BlogSection() {
                           );
                         }
 
-                        if (block.type === "image") {
+                        if (block.kind === "image") {
                           return (
                             <figure
                               key={`${selectedPost.id}-image-${index}`}
@@ -532,21 +678,13 @@ export function BlogSection() {
                             >
                               <ImageWithFallback
                                 src={block.value}
-                                alt={`${selectedPost.title} - imagen ${index + 1}`}
+                                alt={
+                                  block.alt ||
+                                  `${selectedPost.title} - imagen ${index + 1}`
+                                }
                                 className="blog-detail-content-image"
                               />
                             </figure>
-                          );
-                        }
-
-                        if (block.type === "note" || block.type === "warning") {
-                          return (
-                            <div
-                              key={`${selectedPost.id}-${block.type}-${index}`}
-                              className={`blog-detail-callout blog-detail-callout-${block.type}`}
-                            >
-                              {block.value}
-                            </div>
                           );
                         }
 
@@ -555,7 +693,7 @@ export function BlogSection() {
                             key={`${selectedPost.id}-paragraph-${index}`}
                             className="blog-detail-paragraph"
                           >
-                            {block.value}
+                            {renderInlineMarkdown(block.value)}
                           </p>
                         );
                       })}
@@ -573,7 +711,9 @@ export function BlogSection() {
                     aria-label={t("blog.suggestedRecent")}
                   >
                     <div className="blog-detail-rail-panel">
-                      <p className="blog-detail-rail-eyebrow">{t("blog.continueReading")}</p>
+                      <p className="blog-detail-rail-eyebrow">
+                        {t("blog.continueReading")}
+                      </p>
                       <h3 className="blog-detail-rail-title">
                         {t("blog.suggestedRecent")}
                       </h3>
