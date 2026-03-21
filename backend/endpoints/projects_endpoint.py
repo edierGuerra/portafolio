@@ -195,6 +195,12 @@ async def update_project(
 ):
     repository = ProjectRepository(db)
     project = await _get_project_or_404(db, project_id)
+    if payload.title is not None:
+        payload.title_en_reviewed = False
+    if payload.description is not None:
+        payload.description_en_reviewed = False
+    if payload.state is not None:
+        payload.state_en_reviewed = False
     try:
         return await repository.update(project, payload)
     except ValueError as exc:

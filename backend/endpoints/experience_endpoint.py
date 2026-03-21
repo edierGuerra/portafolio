@@ -96,6 +96,10 @@ async def update_experience(
 ):
     repository = ExperienceRepository(db)
     experience = await _get_experience_or_404(db, experience_id)
+    if payload.position is not None:
+        payload.position_en_reviewed = False
+    if payload.company is not None:
+        payload.company_en_reviewed = False
     return await repository.update(experience, payload)
 
 

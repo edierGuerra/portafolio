@@ -125,6 +125,16 @@ async def update_blog(
     _: None = Depends(require_authenticated_user),
 ):
     obj = await _get_or_404(db, blog_id)
+    if payload.title is not None:
+        payload.title_en_reviewed = False
+    if payload.excerpt is not None:
+        payload.excerpt_en_reviewed = False
+    if payload.content is not None:
+        payload.content_en_reviewed = False
+    if payload.seo_title is not None:
+        payload.seo_title_en_reviewed = False
+    if payload.seo_description is not None:
+        payload.seo_description_en_reviewed = False
     try:
         return await BlogRepository(db).update(obj, payload)
     except ValueError as exc:

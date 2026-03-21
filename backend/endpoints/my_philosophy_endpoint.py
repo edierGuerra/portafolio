@@ -35,7 +35,7 @@ async def _get_or_404(db: AsyncSession, philosophy_id: int):
 async def list_philosophy(request: Request, db: AsyncSession = Depends(get_db)):
     philosophies = await MyPhilosophyRepository(db).list_all()
     language = get_requested_language(request)
-    return localize_many(philosophies, language, ["philosophy"])
+    return localize_many(list(philosophies), language, ["philosophy"])
 
 
 @router.get(
@@ -84,6 +84,8 @@ async def update_philosophy(
     _: None = Depends(require_authenticated_user),
 ):
     obj = await _get_or_404(db, philosophy_id)
+    if payload.philosophy is not None:
+        payload.philosophy_en_reviewed = False
     return await MyPhilosophyRepository(db).update(obj, payload)
 
 

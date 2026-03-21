@@ -84,6 +84,10 @@ async def update_achievement(
     _: None = Depends(require_authenticated_user),
 ):
     obj = await _get_or_404(db, achievement_id)
+    if payload.title is not None:
+        payload.title_en_reviewed = False
+    if payload.subtitle is not None:
+        payload.subtitle_en_reviewed = False
     return await AchievementRepository(db).update(obj, payload)
 
 

@@ -132,6 +132,16 @@ async def update_me(
         else:
             updates["password"] = hash_password(str(password))
 
+    # Reset reviewed flags when source language (ES) fields change
+    if "name" in updates:
+        updates["name_en_reviewed"] = False
+    if "professional_profile" in updates:
+        updates["professional_profile_en_reviewed"] = False
+    if "about_me" in updates:
+        updates["about_me_en_reviewed"] = False
+    if "location" in updates:
+        updates["location_en_reviewed"] = False
+
     repository = AdminRepository(db)
     updated_user = await repository.update_user(user, updates)
     return MeResponse(user=UserRead.model_validate(updated_user))
@@ -183,4 +193,3 @@ async def get_public_profile(request: Request, db: AsyncSession = Depends(get_db
         ["name", "professional_profile", "about_me", "location"],
     )
     return PublicProfileRead.model_validate(user)
-    return None

@@ -84,6 +84,8 @@ async def update_interest(
     _: None = Depends(require_authenticated_user),
 ):
     obj = await _get_or_404(db, interest_id)
+    if payload.interest is not None:
+        payload.interest_en_reviewed = False
     return await InterestRepository(db).update(obj, payload)
 
 

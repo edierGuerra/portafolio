@@ -29,6 +29,7 @@ from endpoints import (
     social_networks_router,
     technologies_router,
 )
+from endpoints.translation_endpoint import router as translation_router
 from repositories.admin_repository import AdminRepository
 from services.security import hash_password
 
@@ -233,6 +234,7 @@ api_routers = [
     my_philosophy_router,
     social_networks_router,
     file_storage_router,
+    translation_router,
 ]
 
 for router in api_routers:
