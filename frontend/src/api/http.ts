@@ -1,4 +1,6 @@
-const API_URL = (import.meta.env.VITE_API_URL || window.location.origin).replace(/\/$/, "");
+const API_URL = (
+  import.meta.env.VITE_API_URL || window.location.origin
+).replace(/\/$/, "");
 
 export class HttpError extends Error {
   status: number;
@@ -6,15 +8,32 @@ export class HttpError extends Error {
 
   constructor(message: string, status: number, data?: unknown) {
     super(message);
-    this.name = 'HttpError';
+    this.name = "HttpError";
     this.status = status;
     this.data = data;
   }
 }
 
-export async function http<T>(path: string, options: RequestInit = {}): Promise<T> {
+function getRequestLanguage(): "es" | "en" {
+  const htmlLang = (document?.documentElement?.lang || "").toLowerCase();
+  if (htmlLang === "es" || htmlLang === "en") {
+    return htmlLang;
+  }
+
+  const stored = localStorage.getItem("language");
+  if (stored === "es" || stored === "en") {
+    return stored;
+  }
+
+  return "es";
+}
+
+export async function http<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const headers = new Headers(options.headers || {});
-  const language = localStorage.getItem("language");
+  const language = getRequestLanguage();
   const isFormDataBody =
     typeof FormData !== "undefined" && options.body instanceof FormData;
 
@@ -23,11 +42,7 @@ export async function http<T>(path: string, options: RequestInit = {}): Promise<
   }
 
   if (!headers.has("Accept-Language")) {
-    if (language === "en" || language === "es") {
-      headers.set("Accept-Language", language);
-    } else {
-      headers.set("Accept-Language", "es");
-    }
+    headers.set("Accept-Language", language);
   }
 
   const response = await fetch(`${API_URL}${path}`, {
@@ -40,8 +55,8 @@ export async function http<T>(path: string, options: RequestInit = {}): Promise<
   }
 
   let payload: unknown;
-  const contentType = response.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
     payload = await response.json();
   } else {
     payload = await response.text();
@@ -49,7 +64,7 @@ export async function http<T>(path: string, options: RequestInit = {}): Promise<
 
   if (!response.ok) {
     const detail =
-      typeof payload === 'object' && payload !== null && 'detail' in payload
+      typeof payload === "object" && payload !== null && "detail" in payload
         ? String((payload as { detail: unknown }).detail)
         : `Error HTTP ${response.status}`;
     throw new HttpError(detail, response.status, payload);

@@ -50,6 +50,8 @@ import type {
   Technology,
   TechnologyCreate,
   TechnologyUpdate,
+  TranslationRequest,
+  TranslationResult,
 } from "./types";
 
 export async function loginCms(
@@ -78,10 +80,14 @@ export async function updateMeCms(
     Pick<
       CmsUser,
       | "name"
+      | "name_en"
       | "email"
       | "professional_profile"
+      | "professional_profile_en"
       | "location"
+      | "location_en"
       | "about_me"
+      | "about_me_en"
       | "profile_image"
       | "cv_file"
     >
@@ -194,6 +200,15 @@ export async function uploadAdminCvFileCms(
   return httpWithAuth<FileUploadResponse>("/api/files/upload", {
     method: "POST",
     body: formData,
+  });
+}
+
+export async function translateBatchCms(
+  payload: TranslationRequest[],
+): Promise<TranslationResult[]> {
+  return httpWithAuth<TranslationResult[]>("/api/translate-batch", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

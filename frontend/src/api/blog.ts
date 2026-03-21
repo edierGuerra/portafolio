@@ -3,6 +3,8 @@ import { http } from "./http";
 export interface PublicBlogCategory {
   id: number;
   name: string;
+  name_en?: string | null;
+  name_en_reviewed?: boolean;
 }
 
 export interface PublicBlogPost {
