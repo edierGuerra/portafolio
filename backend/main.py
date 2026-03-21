@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import os
+import subprocess
+import sys
 
 # Importar la configuración centralizada
 from config import get_config
@@ -36,6 +38,36 @@ from services.security import hash_password
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def run_migrations() -> None:
+    """Ejecuta las migraciones de Alembic para actualizar el esquema de la base de datos."""
+    try:
+        logger.info("🔄 Ejecutando migraciones de Alembic...")
+        result = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        
+        if result.returncode == 0:
+            logger.info("✅ Migraciones ejecutadas correctamente")
+            if result.stdout:
+                logger.debug(f"Alembic output: {result.stdout}")
+        else:
+            logger.warning(f"⚠️ Migraciones completadas con mensajes: {result.stderr}")
+            if "No new revisions" in result.stderr or "Already at head" in result.stderr:
+                logger.info("✅ Base de datos ya estaba actualizada")
+            else:
+                logger.warning(f"Posible error en migraciones: {result.stderr}")
+    except subprocess.TimeoutExpired:
+        logger.error("❌ Error: Las migraciones tardaron demasiado tiempo (timeout)")
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error ejecutando migraciones: {str(e)}")
+        raise
 
 
 async def ensure_default_admin_user() -> None:
@@ -168,9 +200,13 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Inicializando aplicación...")
     try:
-        # Crear todas las tablas en la base de datos
+        # Ejecutar migraciones de Alembic
+        run_migrations()
+        
+        # Crear todas las tablas en la base de datos (por si hay nuevos modelos sin migración)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        
         await ensure_default_admin_user()
         logger.info("✅ Base de datos inicializada")
     except Exception as e:
