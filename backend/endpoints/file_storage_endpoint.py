@@ -115,20 +115,11 @@ async def upload_file(
 
     content_type = file.content_type or "application/octet-stream"
 
+
+    # Permitir cualquier archivo, sin importar el tipo ni el variant
     normalized_variant = (image_variant or "cover").strip().lower()
     if normalized_variant not in {"cover", "content"}:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="image_variant invalida. Usa 'cover' o 'content'.",
-        )
-
-    if normalized_variant == "content":
-        if not content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Para image_variant='content' debes subir una imagen.",
-            )
-        content, content_type = _resize_content_image(content)
+        normalized_variant = "cover"
 
     upload_folder = folder
     if not upload_folder:
