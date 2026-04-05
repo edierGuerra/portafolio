@@ -110,31 +110,31 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
   return (
     <div
       style={{ paddingTop: "0", paddingBottom: "0" }}
-      className="min-h-screen flex items-center justify-center p-4 lg:p-6"
+      className="hero-section"
     >
       <Card className="max-w-6xl w-full">
-        <CardContent className="p-6 sm:p-8 lg:p-12">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="order-2 lg:order-1 space-y-6 text-center lg:text-left">
+        <CardContent className="hero-card-content">
+          <div className="hero-grid">
+            <div className="hero-content-col order-2 lg:order-1 text-center lg:text-left">
               <div>
                 {location && (
-                  <div className="flex items-center justify-center lg:justify-start space-x-2 text-muted-foreground mb-4">
+                  <div className="hero-location flex items-center justify-center lg:justify-start space-x-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
                     <span className="text-sm sm:text-base">{location}</span>
                   </div>
                 )}
                 {name && (
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4">
+                  <h1 className="hero-name text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold">
                     {name}
                   </h1>
                 )}
                 {professionalProfile && (
-                  <h2 className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mb-6">
+                  <h2 className="hero-role text-muted-foreground">
                     {professionalProfile}
                   </h2>
                 )}
                 {aboutMe && (
-                  <p className="text-base sm:text-lg leading-relaxed text-muted-foreground max-w-2xl mx-auto lg:mx-0">
+                  <p className="hero-about text-muted-foreground max-w-2xl mx-auto lg:mx-0">
                     {aboutMe}
                   </p>
                 )}
@@ -154,7 +154,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <div className="hero-actions justify-center lg:justify-start">
                 <Button
                   size="lg"
                   className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
@@ -177,7 +177,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
 
             <div className="order-1 lg:order-2 flex justify-center">
               <div className="relative">
-                <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-4 border-border shadow-2xl">
+                <div className="hero-image-wrap rounded-full overflow-hidden border-4 border-border shadow-2xl">
                   {profileImage ? (
                     <ImageWithFallback
                       src={profileImage}

@@ -35,6 +35,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pageViewFired = useRef(false);
+  const isHomeSection = activeSection === "home";
 
   // Registrar visita inicial (una sola vez por session)
   useEffect(() => {
@@ -117,7 +118,13 @@ export default function App() {
 
   return (
     <I18nProvider>
-      <div className="min-h-screen bg-background text-foreground">
+      <div
+        className={
+          isHomeSection
+            ? "app-root app-root--home bg-background text-foreground"
+            : "app-root bg-background text-foreground"
+        }
+      >
         <Header
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
@@ -150,7 +157,15 @@ export default function App() {
             onClose={() => setMobileMenuOpen(false)}
           />
 
-          <main className="flex-1 min-h-screen">{renderActiveSection()}</main>
+          <main
+            className={
+              isHomeSection
+                ? "app-main app-main--home"
+                : "app-main"
+            }
+          >
+            {renderActiveSection()}
+          </main>
         </div>
       </div>
     </I18nProvider>

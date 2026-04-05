@@ -3081,3 +3081,146 @@ html {
     transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
   }
 }
+
+/* Home layout (CSS-driven, no Tailwind utilities needed for these adjustments) */
+.app-root {
+  min-height: 100vh;
+}
+
+.app-root--home {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 100vh;
+}
+
+.app-main--home {
+  height: calc(100dvh - 4rem - 1px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hero-section {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 0.75rem;
+}
+
+.hero-card-content {
+  padding: 1rem;
+}
+
+.hero-grid {
+  display: grid;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.hero-content-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hero-location {
+  margin-bottom: 0.75rem;
+}
+
+.hero-name {
+  margin-bottom: 0.75rem;
+}
+
+.hero-role {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.hero-about {
+  font-size: 0.875rem;
+  line-height: 1.625;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hero-image-wrap {
+  width: 13rem;
+  height: 13rem;
+}
+
+@media (min-width: 640px) {
+  .hero-section {
+    padding: 1rem;
+  }
+
+  .hero-card-content {
+    padding: 2rem;
+  }
+
+  .hero-content-col {
+    gap: 1.5rem;
+  }
+
+  .hero-location {
+    margin-bottom: 1rem;
+  }
+
+  .hero-name {
+    margin-bottom: 1rem;
+  }
+
+  .hero-role {
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .hero-about {
+    font-size: 1.125rem;
+  }
+
+  .hero-actions {
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .hero-image-wrap {
+    width: 18rem;
+    height: 18rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-section {
+    padding: 1.5rem;
+  }
+
+  .hero-card-content {
+    padding: 3rem;
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+
+  .hero-role {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .hero-image-wrap {
+    width: 24rem;
+    height: 24rem;
+  }
+}
