@@ -2,6 +2,8 @@
   ChangeEvent,
   DragEvent,
   FormEvent,
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -130,13 +132,43 @@ import {
   updateTechnologyCms,
   updateProjectCms,
 } from "./api";
-import { AboutContentView } from "./AboutContentView";
-import { BlogView } from "./BlogView";
-import { ConfigurationView } from "./ConfigurationView";
-import { ContactView } from "./ContactView";
-import { FaqView } from "./FaqView";
-import { ServicesView } from "./ServicesView";
 import "./cms-theme.css";
+
+const AboutContentView = lazy(() =>
+  import("./AboutContentView").then((module) => ({
+    default: module.AboutContentView,
+  })),
+);
+
+const BlogView = lazy(() =>
+  import("./BlogView").then((module) => ({
+    default: module.BlogView,
+  })),
+);
+
+const ConfigurationView = lazy(() =>
+  import("./ConfigurationView").then((module) => ({
+    default: module.ConfigurationView,
+  })),
+);
+
+const ContactView = lazy(() =>
+  import("./ContactView").then((module) => ({
+    default: module.ContactView,
+  })),
+);
+
+const FaqView = lazy(() =>
+  import("./FaqView").then((module) => ({
+    default: module.FaqView,
+  })),
+);
+
+const ServicesView = lazy(() =>
+  import("./ServicesView").then((module) => ({
+    default: module.ServicesView,
+  })),
+);
 
 type ModuleItem = {
   id: string;
@@ -1233,6 +1265,16 @@ function SummaryAnalyticsView() {
         </Card>
       </div>
     </section>
+  );
+}
+
+function CmsModuleLoadingFallback() {
+  return (
+    <Card className="cms-panel-card">
+      <CardContent className="p-6 text-sm text-zinc-400">
+        Cargando modulo...
+      </CardContent>
+    </Card>
   );
 }
 
@@ -4569,15 +4611,25 @@ function DashboardView({
               onTechnologiesCountChange={setTechnologiesCount}
             />
           ) : activeModule === "experience" ? (
-            <AboutContentView onTotalRecordsChange={setAboutCount} />
+            <Suspense fallback={<CmsModuleLoadingFallback />}>
+              <AboutContentView onTotalRecordsChange={setAboutCount} />
+            </Suspense>
           ) : activeModule === "blog" ? (
-            <BlogView onBlogsCountChange={setBlogsCount} />
+            <Suspense fallback={<CmsModuleLoadingFallback />}>
+              <BlogView onBlogsCountChange={setBlogsCount} />
+            </Suspense>
           ) : activeModule === "services" ? (
-            <ServicesView onServicesCountChange={setServicesCount} />
+            <Suspense fallback={<CmsModuleLoadingFallback />}>
+              <ServicesView onServicesCountChange={setServicesCount} />
+            </Suspense>
           ) : activeModule === "faq" ? (
-            <FaqView onFaqCountChange={setFaqCount} />
+            <Suspense fallback={<CmsModuleLoadingFallback />}>
+              <FaqView onFaqCountChange={setFaqCount} />
+            </Suspense>
           ) : activeModule === "contact" ? (
-            <ContactView onContactCountChange={setContactCount} />
+            <Suspense fallback={<CmsModuleLoadingFallback />}>
+              <ContactView onContactCountChange={setContactCount} />
+            </Suspense>
           ) : activeModule === "technologies" ? (
             <TechnologiesView
               onTechnologiesCountChange={setTechnologiesCount}
@@ -4588,10 +4640,12 @@ function DashboardView({
               onUserUpdate={handleUserUpdate}
             />
           ) : activeModule === "configuration" ? (
-            <ConfigurationView
-              user={currentUser}
-              onUserUpdate={handleUserUpdate}
-            />
+            <Suspense fallback={<CmsModuleLoadingFallback />}>
+              <ConfigurationView
+                user={currentUser}
+                onUserUpdate={handleUserUpdate}
+              />
+            </Suspense>
           ) : (
             <>
               {/* Grid principal: tabla + config */}
