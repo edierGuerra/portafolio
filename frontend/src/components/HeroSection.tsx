@@ -112,7 +112,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
       style={{ paddingTop: "0", paddingBottom: "0" }}
       className="hero-section"
     >
-      <Card className="max-w-6xl w-full">
+      <Card className="hero-surface max-w-6xl w-full">
         <CardContent className="hero-card-content">
           <div className="hero-grid">
             <div className="hero-content-col order-2 lg:order-1 text-center lg:text-left">

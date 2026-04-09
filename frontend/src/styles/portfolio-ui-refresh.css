@@ -1,0 +1,277 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap");
+
+:root {
+  --background: #f4f7fb;
+  --foreground: #0d1b2a;
+  --card: rgba(255, 255, 255, 0.84);
+  --card-foreground: #0d1b2a;
+  --muted: #e8eef6;
+  --muted-foreground: #4a5f79;
+  --accent: #dce9fb;
+  --border: rgba(18, 40, 67, 0.14);
+  --primary: #0f4c81;
+  --primary-foreground: #f5fbff;
+  --ring: #3b82c4;
+}
+
+.dark {
+  --background: #07111f;
+  --foreground: #e7f0ff;
+  --card: rgba(11, 23, 40, 0.82);
+  --card-foreground: #e7f0ff;
+  --muted: #101f33;
+  --muted-foreground: #8ca5c4;
+  --accent: #122741;
+  --border: rgba(136, 173, 219, 0.2);
+  --primary: #79b9ff;
+  --primary-foreground: #05111f;
+  --ring: #79b9ff;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: "Outfit", "Segoe UI", sans-serif;
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at 8% 10%, rgba(123, 182, 255, 0.18), transparent 33%),
+    radial-gradient(circle at 90% 0%, rgba(56, 189, 248, 0.16), transparent 30%),
+    linear-gradient(180deg, color-mix(in oklab, var(--background) 78%, #ffffff), var(--background));
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Space Grotesk", "Outfit", sans-serif;
+  letter-spacing: -0.015em;
+}
+
+.app-root {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-root::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(63, 150, 255, 0.09), transparent 35%),
+    linear-gradient(300deg, rgba(16, 185, 129, 0.08), transparent 30%);
+}
+
+.portfolio-main {
+  position: relative;
+}
+
+.section-shell {
+  position: relative;
+  animation: sectionFadeIn 380ms ease both;
+}
+
+.section-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 196, 0.08), transparent 46%);
+}
+
+.portfolio-header {
+  border-bottom-color: color-mix(in oklab, var(--border) 75%, transparent);
+  box-shadow: 0 8px 30px rgba(7, 18, 36, 0.09);
+}
+
+.portfolio-header-inner {
+  max-width: 88rem;
+}
+
+.portfolio-brand-title {
+  letter-spacing: -0.025em;
+}
+
+.portfolio-header-actions {
+  gap: 0.65rem;
+}
+
+.portfolio-select-trigger,
+.portfolio-icon-btn,
+.portfolio-cv-btn {
+  border-color: color-mix(in oklab, var(--border) 75%, transparent);
+  background: color-mix(in oklab, var(--card) 76%, transparent);
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.portfolio-select-trigger:hover,
+.portfolio-icon-btn:hover,
+.portfolio-cv-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+  box-shadow: 0 8px 16px rgba(8, 27, 49, 0.14);
+}
+
+.portfolio-nav,
+.portfolio-nav-mobile {
+  background: color-mix(in oklab, var(--muted) 52%, transparent);
+  border-right-color: color-mix(in oklab, var(--border) 78%, transparent);
+}
+
+.portfolio-nav-btn {
+  border: 1px solid transparent;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.portfolio-nav-btn:hover {
+  border-color: color-mix(in oklab, var(--primary) 20%, var(--border));
+  background: color-mix(in oklab, var(--accent) 58%, transparent);
+  transform: translateX(2px);
+}
+
+.portfolio-nav-btn--active {
+  border-color: color-mix(in oklab, var(--primary) 38%, var(--border));
+  background: color-mix(in oklab, var(--primary) 14%, var(--muted));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 28%, transparent);
+}
+
+.portfolio-social-btn {
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.portfolio-social-btn:hover {
+  transform: translateX(2px);
+}
+
+.hero-surface {
+  border-color: color-mix(in oklab, var(--border) 80%, transparent);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.12), transparent 42%),
+    color-mix(in oklab, var(--card) 88%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 50px rgba(4, 22, 48, 0.14);
+}
+
+.hero-name {
+  text-wrap: balance;
+  line-height: 0.98;
+}
+
+.hero-role {
+  max-width: 32ch;
+}
+
+.hero-about {
+  max-width: 60ch;
+}
+
+.hero-image-wrap {
+  box-shadow: 0 20px 40px rgba(8, 28, 54, 0.24);
+}
+
+[data-slot="card"] {
+  border-color: color-mix(in oklab, var(--border) 80%, transparent);
+  background: color-mix(in oklab, var(--card) 90%, transparent);
+  backdrop-filter: blur(6px);
+  transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+  animation: cardReveal 420ms ease both;
+}
+
+[data-slot="card"]:hover {
+  border-color: color-mix(in oklab, var(--primary) 26%, var(--border));
+  box-shadow: 0 16px 36px rgba(4, 20, 40, 0.14);
+}
+
+.section-shell [data-slot="card"]:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.section-shell [data-slot="card"]:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.section-shell [data-slot="card"]:nth-child(4) {
+  animation-delay: 140ms;
+}
+
+.projects-featured-card,
+.blog-featured-card {
+  overflow: hidden;
+}
+
+.projects-featured-image,
+.blog-featured-image {
+  transition: transform 300ms ease;
+}
+
+.projects-featured-card:hover .projects-featured-image,
+.blog-featured-card:hover .blog-featured-image {
+  transform: scale(1.04);
+}
+
+@keyframes sectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 1023px) {
+  .app-root--home {
+    overflow: auto;
+  }
+
+  .app-main--home {
+    height: auto;
+    min-height: calc(100dvh - 4rem);
+    overflow: visible;
+  }
+
+  .hero-section {
+    min-height: calc(100dvh - 5.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-shell,
+  [data-slot="card"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .section-shell {
+    padding-inline: 0.5rem;
+  }
+
+  .hero-name {
+    font-size: clamp(2rem, 9vw, 2.7rem);
+  }
+
+  .portfolio-header-actions {
+    gap: 0.45rem;
+  }
+}

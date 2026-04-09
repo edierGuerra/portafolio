@@ -176,7 +176,7 @@ export function ContactSection() {
   };
 
   return (
-    <div className="min-h-screen p-4 lg:p-6">
+    <div className="section-shell min-h-screen p-4 lg:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8 lg:mb-12">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">{t("contact.title")}</h2>

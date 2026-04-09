@@ -53,6 +53,23 @@
     build: {
       target: "esnext",
       outDir: "build",
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return undefined;
+
+            if (id.includes("lucide-react")) {
+              return "vendor-icons";
+            }
+
+            if (id.includes("@radix-ui")) {
+              return "vendor-radix";
+            }
+
+            return undefined;
+          },
+        },
+      },
     },
     server: {
       port: 3000,

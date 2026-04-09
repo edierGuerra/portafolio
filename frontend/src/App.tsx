@@ -1,13 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { trackPageView, trackSectionView } from "./analytics/tracker";
 import { Header } from "./components/Header";
 import { Navigation } from "./components/Navigation";
 import { HeroSection } from "./components/HeroSection";
-import { AboutSection } from "./components/AboutSection";
-import { ProjectsSection } from "./components/ProjectsSection";
-import { BlogSection } from "./components/BlogSection";
-import { ContactSection } from "./components/ContactSection";
 import { I18nProvider } from "./i18n/I18nContext";
+
+const AboutSection = lazy(() =>
+  import("./components/AboutSection").then((module) => ({
+    default: module.AboutSection,
+  })),
+);
+
+const ProjectsSection = lazy(() =>
+  import("./components/ProjectsSection").then((module) => ({
+    default: module.ProjectsSection,
+  })),
+);
+
+const BlogSection = lazy(() =>
+  import("./components/BlogSection").then((module) => ({
+    default: module.BlogSection,
+  })),
+);
+
+const ContactSection = lazy(() =>
+  import("./components/ContactSection").then((module) => ({
+    default: module.ContactSection,
+  })),
+);
 
 const VALID_SECTIONS = ["home", "about", "projects", "blog", "contact"];
 
@@ -28,6 +48,18 @@ function getInitialSection(): string {
   if (isValidSection(sectionFromStorage)) return sectionFromStorage;
 
   return "home";
+}
+
+function SectionLoadingFallback() {
+  return (
+    <div className="section-shell min-h-screen p-4 lg:p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="rounded-xl border border-border bg-card/70 p-8 text-center text-muted-foreground">
+          Cargando seccion...
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -104,13 +136,29 @@ export default function App() {
       case "home":
         return <HeroSection onNavigate={setActiveSection} />;
       case "about":
-        return <AboutSection />;
+        return (
+          <Suspense fallback={<SectionLoadingFallback />}>
+            <AboutSection />
+          </Suspense>
+        );
       case "projects":
-        return <ProjectsSection />;
+        return (
+          <Suspense fallback={<SectionLoadingFallback />}>
+            <ProjectsSection />
+          </Suspense>
+        );
       case "blog":
-        return <BlogSection />;
+        return (
+          <Suspense fallback={<SectionLoadingFallback />}>
+            <BlogSection />
+          </Suspense>
+        );
       case "contact":
-        return <ContactSection />;
+        return (
+          <Suspense fallback={<SectionLoadingFallback />}>
+            <ContactSection />
+          </Suspense>
+        );
       default:
         return <HeroSection onNavigate={setActiveSection} />;
     }
@@ -160,8 +208,8 @@ export default function App() {
           <main
             className={
               isHomeSection
-                ? "app-main app-main--home"
-                : "app-main"
+                ? "app-main app-main--home portfolio-main"
+                : "app-main portfolio-main"
             }
           >
             {renderActiveSection()}

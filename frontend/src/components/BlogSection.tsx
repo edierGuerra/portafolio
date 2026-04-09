@@ -379,7 +379,7 @@ export function BlogSection() {
   return (
     <div className="relative min-h-screen">
       {!isDetailViewOpen && (
-        <div className="min-h-screen p-4 lg:p-6 transition-all duration-300 opacity-100 translate-x-0">
+        <div className="section-shell min-h-screen p-4 lg:p-6 transition-all duration-300 opacity-100 translate-x-0">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 lg:mb-12">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
@@ -588,7 +588,7 @@ export function BlogSection() {
       )}
 
       {selectedPost && (
-        <div className="blog-detail-page relative z-20 transition-all duration-300 opacity-100 translate-x-0 min-h-screen">
+        <div className="section-shell blog-detail-page relative z-20 transition-all duration-300 opacity-100 translate-x-0 min-h-screen">
           <div className="blog-detail-scroll min-h-screen p-4 lg:p-6">
             <div className="blog-detail-shell mx-auto max-w-6xl">
               <div className="blog-detail-back-row mb-6">

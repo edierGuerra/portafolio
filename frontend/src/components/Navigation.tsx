@@ -107,15 +107,16 @@ export function Navigation({
   };
 
   const NavigationContent = () => (
-    <ScrollArea className="flex-1 min-h-0 py-6">
+    <ScrollArea className="portfolio-nav-scroll flex-1 min-h-0 py-6">
       <div className="space-y-2 px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const isActive = activeSection === item.id;
           return (
             <Button
               key={item.id}
-              variant={activeSection === item.id ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              variant={isActive ? "secondary" : "ghost"}
+              className={`portfolio-nav-btn w-full justify-start ${isActive ? "portfolio-nav-btn--active" : ""}`}
               onClick={() => handleNavClick(item.id)}
             >
               <Icon className="mr-2 h-4 w-4" />
@@ -142,7 +143,7 @@ export function Navigation({
                   key={network.id}
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start"
+                  className="portfolio-social-btn w-full justify-start"
                   asChild
                 >
                   <a href={network.url} target="_blank" rel="noopener noreferrer">
@@ -169,7 +170,7 @@ export function Navigation({
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-64 p-0 flex flex-col">
+        <SheetContent side="left" className="portfolio-nav-mobile w-64 p-0 flex flex-col">
           <SheetHeader className="px-4 py-6 border-b">
             <SheetTitle>{t("nav.navigation")}</SheetTitle>
           </SheetHeader>
@@ -181,7 +182,7 @@ export function Navigation({
   }
 
   return (
-    <div className="w-64 h-full bg-muted/30 border-r flex flex-col">
+    <div className="portfolio-nav w-64 h-full bg-muted/30 border-r flex flex-col">
       <NavigationContent />
       <SidebarFooter />
     </div>
