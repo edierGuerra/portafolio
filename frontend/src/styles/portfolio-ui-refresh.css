@@ -260,6 +260,62 @@ select:focus-visible {
   padding-inline: 0.9rem;
 }
 
+.section-state-card {
+  border-color: color-mix(in oklab, var(--border) 84%, transparent);
+  background: color-mix(in oklab, var(--card) 88%, transparent);
+}
+
+.section-state-card--loading {
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--primary) 6%, transparent), transparent 45%),
+    color-mix(in oklab, var(--card) 90%, transparent);
+}
+
+.section-state-card--empty {
+  border-style: dashed;
+}
+
+.section-state-card--error {
+  border-color: color-mix(in oklab, #ef4444 32%, var(--border));
+  background: color-mix(in oklab, #ef4444 8%, var(--card));
+}
+
+.section-inline-state {
+  border: 1px solid color-mix(in oklab, var(--border) 86%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--muted) 58%, transparent);
+  padding: 0.7rem 0.8rem;
+}
+
+.section-inline-state--empty {
+  border-style: dashed;
+}
+
+.section-skeleton-line {
+  height: 0.7rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.28), rgba(148, 163, 184, 0.5), rgba(148, 163, 184, 0.28));
+  background-size: 220% 100%;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+.section-skeleton-line--title {
+  height: 1rem;
+  width: min(18rem, 78%);
+  margin-inline: auto;
+}
+
+.section-skeleton-line--body {
+  width: min(34rem, 92%);
+  margin-top: 0.85rem;
+  margin-inline: auto;
+}
+
+.section-skeleton-line--body.short,
+.section-skeleton-line.short {
+  width: min(24rem, 72%);
+}
+
 .projects-featured-image,
 .blog-featured-image {
   transition: transform 300ms ease;
@@ -294,6 +350,23 @@ select:focus-visible {
   }
 }
 
+@keyframes skeletonPulse {
+  0% {
+    background-position: 100% 0;
+    opacity: 0.65;
+  }
+
+  50% {
+    background-position: 0 0;
+    opacity: 1;
+  }
+
+  100% {
+    background-position: -100% 0;
+    opacity: 0.65;
+  }
+}
+
 @media (max-width: 1023px) {
   .app-root--home {
     overflow: auto;
@@ -315,6 +388,10 @@ select:focus-visible {
   [data-slot="card"] {
     animation: none !important;
     transition: none !important;
+  }
+
+  .section-skeleton-line {
+    animation: none !important;
   }
 }
 

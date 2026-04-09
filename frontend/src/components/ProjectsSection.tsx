@@ -206,14 +206,14 @@ export function ProjectsSection() {
         </div>
 
         {loading && (
-          <div className="text-center text-muted-foreground py-8">
-            {t("projects.loading")}
+          <div className="section-state-card section-state-card--loading text-center text-muted-foreground py-8 px-6 rounded-xl border border-border bg-card/70">
+            <p>{t("projects.loading")}</p>
           </div>
         )}
 
         {!loading && projects.length === 0 && (
-          <div className="text-center text-muted-foreground py-8">
-            {t("projects.empty")}
+          <div className="section-state-card section-state-card--empty text-center text-muted-foreground py-8 px-6 rounded-xl border border-dashed border-border bg-card/60">
+            <p>{t("projects.empty")}</p>
           </div>
         )}
 

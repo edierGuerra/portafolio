@@ -201,11 +201,11 @@ export function AboutSection() {
               </CardHeader>
               <CardContent className="space-y-5">
                 {loading ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="section-inline-state section-inline-state--loading text-sm text-muted-foreground">
                     {t("about.loadingExperience")}
                   </p>
                 ) : experience.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="section-inline-state section-inline-state--empty text-sm text-muted-foreground">
                     {t("about.emptyExperience")}
                   </p>
                 ) : (
@@ -242,11 +242,11 @@ export function AboutSection() {
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="section-inline-state section-inline-state--loading text-sm text-muted-foreground">
                     {t("about.loadingTech")}
                   </p>
                 ) : technologies.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="section-inline-state section-inline-state--empty text-sm text-muted-foreground">
                     {t("about.emptyTech")}
                   </p>
                 ) : (

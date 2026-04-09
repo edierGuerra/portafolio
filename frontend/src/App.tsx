@@ -52,10 +52,13 @@ function getInitialSection(): string {
 
 function SectionLoadingFallback() {
   return (
-    <div className="section-shell min-h-screen p-4 lg:p-6">
+    <div className="section-shell min-h-screen p-4 lg:p-6" aria-busy="true" aria-live="polite">
       <div className="max-w-6xl mx-auto">
-        <div className="rounded-xl border border-border bg-card/70 p-8 text-center text-muted-foreground">
-          Cargando seccion...
+        <div className="section-state-card section-state-card--loading rounded-xl border border-border bg-card/70 p-8">
+          <div className="section-skeleton-line section-skeleton-line--title" />
+          <div className="section-skeleton-line section-skeleton-line--body" />
+          <div className="section-skeleton-line section-skeleton-line--body short" />
+          <p className="mt-4 text-center text-sm text-muted-foreground">Cargando seccion...</p>
         </div>
       </div>
     </div>

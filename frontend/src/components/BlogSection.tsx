@@ -417,7 +417,7 @@ export function BlogSection() {
             </div>
 
             {loading && (
-              <Card className="mx-4 lg:mx-0">
+              <Card className="section-state-card section-state-card--loading mx-4 lg:mx-0">
                 <CardContent className="py-12 text-center text-muted-foreground">
                   {t("blog.loading")}
                 </CardContent>
@@ -425,7 +425,7 @@ export function BlogSection() {
             )}
 
             {!loading && error && (
-              <Card className="mx-4 lg:mx-0">
+              <Card className="section-state-card section-state-card--error mx-4 lg:mx-0">
                 <CardContent className="py-12 text-center text-red-500">
                   {error}
                 </CardContent>
@@ -433,7 +433,7 @@ export function BlogSection() {
             )}
 
             {!loading && !error && categoryFilteredPosts.length === 0 && (
-              <Card className="mx-4 lg:mx-0">
+              <Card className="section-state-card section-state-card--empty mx-4 lg:mx-0">
                 <CardContent className="py-12 text-center text-muted-foreground">
                   {t("blog.empty")}
                 </CardContent>
