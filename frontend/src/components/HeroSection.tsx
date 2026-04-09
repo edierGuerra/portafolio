@@ -141,12 +141,12 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
               </div>
 
               {technologies.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                <div className="hero-tech-list flex flex-wrap gap-2 justify-center lg:justify-start">
                   {technologies.map((technology) => (
                     <Badge
                       key={technology.id}
                       variant="secondary"
-                      className="text-xs sm:text-sm"
+                      className="hero-tech-chip text-xs sm:text-sm"
                     >
                       {technology.name}
                     </Badge>
@@ -157,7 +157,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
               <div className="hero-actions justify-center lg:justify-start">
                 <Button
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+                  className="hero-action-btn bg-primary hover:bg-primary/90 w-full sm:w-auto"
                   onClick={() => onNavigate?.("projects")}
                 >
                   {t("hero.viewWork")}
@@ -166,7 +166,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto"
+                  className="hero-action-btn w-full sm:w-auto"
                   onClick={() => onNavigate?.("contact")}
                 >
                   <Coffee className="mr-2 h-4 w-4" />

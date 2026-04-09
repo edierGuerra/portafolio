@@ -326,7 +326,7 @@ export function ProjectsSection() {
                 {otherProjects.map((project) => (
                   <Card
                     key={project.id}
-                    className="overflow-hidden group hover:shadow-lg transition-shadow"
+                    className="projects-compact-card overflow-hidden group hover:shadow-lg transition-shadow"
                   >
                     <div className="aspect-video">
                       <ImageWithFallback
@@ -377,9 +377,9 @@ export function ProjectsSection() {
                         )}
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="projects-compact-actions flex gap-2">
                         {project.demoUrl ? (
-                          <Button size="sm" className="flex-1" asChild>
+                          <Button size="sm" className="projects-action-btn flex-1" asChild>
                             <a
                               href={project.demoUrl}
                               target="_blank"
@@ -392,7 +392,7 @@ export function ProjectsSection() {
                         ) : (
                           <Button
                             size="sm"
-                            className="flex-1 opacity-60"
+                            className="projects-action-btn flex-1 opacity-60"
                             aria-disabled="true"
                             title={t("projects.noDemoTitle")}
                             onClick={() => setMissingDemoProject(project)}
@@ -404,7 +404,7 @@ export function ProjectsSection() {
                         {project.repositoryUrl && (
                           <Button
                             size="sm"
-                            className="flex-1"
+                            className="projects-action-btn flex-1"
                             variant="outline"
                             asChild
                           >

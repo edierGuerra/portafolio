@@ -199,6 +199,14 @@ select:focus-visible {
   max-width: 60ch;
 }
 
+.hero-tech-chip {
+  border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
+}
+
+.hero-action-btn {
+  min-height: 2.75rem;
+}
+
 .hero-image-wrap {
   box-shadow: 0 20px 40px rgba(8, 28, 54, 0.24);
 }
@@ -231,6 +239,25 @@ select:focus-visible {
 .projects-featured-card,
 .blog-featured-card {
   overflow: hidden;
+}
+
+.projects-compact-card,
+.blog-compact-card {
+  border-color: color-mix(in oklab, var(--border) 84%, transparent);
+}
+
+.projects-action-btn {
+  min-height: 2.4rem;
+}
+
+.blog-filter-wrap {
+  row-gap: 0.6rem;
+}
+
+.blog-filter-btn {
+  min-height: 2.25rem;
+  border-radius: 999px;
+  padding-inline: 0.9rem;
 }
 
 .projects-featured-image,
@@ -293,11 +320,81 @@ select:focus-visible {
 
 @media (max-width: 639px) {
   .section-shell {
-    padding-inline: 0.5rem;
+    padding-inline: 0.4rem;
   }
 
   .hero-name {
     font-size: clamp(2rem, 9vw, 2.7rem);
+  }
+
+  .hero-card-content {
+    padding: 0.95rem;
+  }
+
+  .hero-content-col {
+    gap: 0.85rem;
+  }
+
+  .hero-tech-list {
+    justify-content: flex-start;
+    gap: 0.35rem;
+    max-height: 4.4rem;
+    overflow: auto;
+    padding-right: 0.1rem;
+    mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+  }
+
+  .hero-tech-chip {
+    font-size: 0.68rem;
+    line-height: 1.1;
+    padding-inline: 0.5rem;
+    padding-block: 0.32rem;
+  }
+
+  .hero-about {
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
+  .projects-featured-content {
+    gap: 0.8rem;
+  }
+
+  .projects-featured-description {
+    margin-bottom: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .projects-compact-card [data-slot="card-content"] {
+    padding: 0.95rem;
+  }
+
+  .projects-compact-actions {
+    gap: 0.45rem;
+  }
+
+  .blog-featured-card {
+    min-height: 18.5rem;
+  }
+
+  .blog-featured-content {
+    padding: 0.95rem !important;
+  }
+
+  .blog-featured-title {
+    font-size: 1.08rem !important;
+  }
+
+  .blog-compact-card [data-slot="card-content"] {
+    padding: 0.9rem;
+  }
+
+  .blog-filter-wrap {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-inline: 0.2rem;
+    scrollbar-width: thin;
   }
 
   .portfolio-header-actions {

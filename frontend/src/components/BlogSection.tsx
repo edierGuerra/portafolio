@@ -391,13 +391,14 @@ export function BlogSection() {
             </div>
 
             {/* Filtros de categoría */}
-            <div className="flex flex-wrap justify-center gap-2 mb-6 lg:mb-8 px-4">
+            <div className="blog-filter-wrap flex flex-wrap justify-center gap-2 mb-6 lg:mb-8 px-4">
               <Button
                 key={ALL_CATEGORY_ID}
                 variant={
                   ALL_CATEGORY_ID === activeCategory ? "default" : "outline"
                 }
                 size="sm"
+                className="blog-filter-btn"
                 onClick={() => setActiveCategory(ALL_CATEGORY_ID)}
               >
                 {t("blog.all")}
@@ -407,6 +408,7 @@ export function BlogSection() {
                   key={category}
                   variant={category === activeCategory ? "default" : "outline"}
                   size="sm"
+                  className="blog-filter-btn"
                   onClick={() => setActiveCategory(category)}
                 >
                   {category}
@@ -513,7 +515,7 @@ export function BlogSection() {
                   {regularPosts.map((post) => (
                     <Card
                       key={post.id}
-                      className="overflow-hidden group hover:shadow-md transition-shadow"
+                      className="blog-compact-card overflow-hidden group hover:shadow-md transition-shadow"
                     >
                       <div className="aspect-video">
                         <ImageWithFallback
