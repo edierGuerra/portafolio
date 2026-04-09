@@ -267,6 +267,7 @@ export function ContactSection() {
                       placeholder={t("contact.namePlaceholder")}
                       value={form.name}
                       onChange={(event) => handleFormChange("name", event.target.value)}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -277,6 +278,7 @@ export function ContactSection() {
                       placeholder={t("contact.emailPlaceholder")}
                       value={form.email}
                       onChange={(event) => handleFormChange("email", event.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -309,6 +311,7 @@ export function ContactSection() {
                     placeholder={t("contact.subjectPlaceholder")}
                     value={form.subject}
                     onChange={(event) => handleFormChange("subject", event.target.value)}
+                    required
                   />
                 </div>
 
@@ -320,6 +323,7 @@ export function ContactSection() {
                     className="min-h-32"
                     value={form.message}
                     onChange={(event) => handleFormChange("message", event.target.value)}
+                    required
                   />
                 </div>
 
@@ -341,6 +345,8 @@ export function ContactSection() {
 
                   {submitFeedback && (
                     <p
+                      role="status"
+                      aria-live="polite"
                       className={`text-xs sm:text-sm text-center ${
                         submitFeedback.type === "success"
                           ? "text-emerald-500"

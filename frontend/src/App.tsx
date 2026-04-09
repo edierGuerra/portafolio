@@ -173,6 +173,10 @@ export default function App() {
             : "app-root bg-background text-foreground"
         }
       >
+        <a href="#contenido-principal" className="skip-link">
+          Saltar al contenido principal
+        </a>
+
         <Header
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
@@ -206,6 +210,7 @@ export default function App() {
           />
 
           <main
+            id="contenido-principal"
             className={
               isHomeSection
                 ? "app-main app-main--home portfolio-main"

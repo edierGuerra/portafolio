@@ -47,6 +47,8 @@ export function Header({ darkMode, toggleDarkMode, mobileMenuOpen, setMobileMenu
             className="portfolio-icon-btn lg:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={t("nav.navigation")}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation-sheet"
           >
             <Menu className="h-6 w-6" />
           </Button>

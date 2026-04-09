@@ -70,6 +70,35 @@ h4 {
   position: relative;
 }
 
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 80;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--primary) 42%, var(--border));
+  background: color-mix(in oklab, var(--card) 95%, white);
+  color: var(--foreground);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: top 180ms ease;
+}
+
+.skip-link:focus-visible {
+  top: 1rem;
+}
+
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--ring) 75%, white);
+  outline-offset: 2px;
+}
+
 .section-shell {
   position: relative;
   animation: sectionFadeIn 380ms ease both;

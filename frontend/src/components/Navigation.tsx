@@ -107,7 +107,7 @@ export function Navigation({
   };
 
   const NavigationContent = () => (
-    <ScrollArea className="portfolio-nav-scroll flex-1 min-h-0 py-6">
+    <ScrollArea className="portfolio-nav-scroll flex-1 min-h-0 py-6" aria-label={t("nav.navigation")}>
       <div className="space-y-2 px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -118,6 +118,7 @@ export function Navigation({
               variant={isActive ? "secondary" : "ghost"}
               className={`portfolio-nav-btn w-full justify-start ${isActive ? "portfolio-nav-btn--active" : ""}`}
               onClick={() => handleNavClick(item.id)}
+              aria-current={isActive ? "page" : undefined}
             >
               <Icon className="mr-2 h-4 w-4" />
               {item.label}
@@ -170,7 +171,7 @@ export function Navigation({
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="left" className="portfolio-nav-mobile w-64 p-0 flex flex-col">
+        <SheetContent id="mobile-navigation-sheet" side="left" className="portfolio-nav-mobile w-64 p-0 flex flex-col">
           <SheetHeader className="px-4 py-6 border-b">
             <SheetTitle>{t("nav.navigation")}</SheetTitle>
           </SheetHeader>
@@ -182,9 +183,9 @@ export function Navigation({
   }
 
   return (
-    <div className="portfolio-nav w-64 h-full bg-muted/30 border-r flex flex-col">
+    <nav className="portfolio-nav w-64 h-full bg-muted/30 border-r flex flex-col" aria-label={t("nav.navigation")}>
       <NavigationContent />
       <SidebarFooter />
-    </div>
+    </nav>
   );
 }
