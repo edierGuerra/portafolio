@@ -116,6 +116,7 @@ select:focus-visible {
 .portfolio-header {
   border-bottom-color: color-mix(in oklab, var(--border) 75%, transparent);
   box-shadow: 0 8px 30px rgba(7, 18, 36, 0.09);
+  animation: headerDropIn 440ms ease both;
 }
 
 .portfolio-header-inner {
@@ -153,8 +154,21 @@ select:focus-visible {
 }
 
 .portfolio-nav-btn {
+  position: relative;
+  overflow: hidden;
   border: 1px solid transparent;
   transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.portfolio-nav-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: color-mix(in oklab, var(--primary) 72%, white);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 180ms ease;
 }
 
 .portfolio-nav-btn:hover {
@@ -167,6 +181,10 @@ select:focus-visible {
   border-color: color-mix(in oklab, var(--primary) 38%, var(--border));
   background: color-mix(in oklab, var(--primary) 14%, var(--muted));
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 28%, transparent);
+}
+
+.portfolio-nav-btn--active::before {
+  transform: scaleY(1);
 }
 
 .portfolio-social-btn {
@@ -184,6 +202,7 @@ select:focus-visible {
     color-mix(in oklab, var(--card) 88%, transparent);
   backdrop-filter: blur(8px);
   box-shadow: 0 20px 50px rgba(4, 22, 48, 0.14);
+  animation: heroScaleIn 520ms ease both;
 }
 
 .hero-name {
@@ -205,10 +224,37 @@ select:focus-visible {
 
 .hero-action-btn {
   min-height: 2.75rem;
+  transition: transform 180ms ease, box-shadow 220ms ease;
+}
+
+.hero-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(15, 76, 129, 0.24);
 }
 
 .hero-image-wrap {
   box-shadow: 0 20px 40px rgba(8, 28, 54, 0.24);
+  animation: avatarFloat 5.6s ease-in-out infinite;
+}
+
+.hero-availability-badge {
+  animation: badgeBreath 2.8s ease-in-out infinite;
+}
+
+.hero-content-col > * {
+  animation: heroChildIn 440ms ease both;
+}
+
+.hero-content-col > *:nth-child(1) {
+  animation-delay: 40ms;
+}
+
+.hero-content-col > *:nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.hero-content-col > *:nth-child(3) {
+  animation-delay: 140ms;
 }
 
 [data-slot="card"] {
@@ -239,6 +285,21 @@ select:focus-visible {
 .projects-featured-card,
 .blog-featured-card {
   overflow: hidden;
+}
+
+.projects-featured-card,
+.projects-compact-card,
+.blog-featured-card,
+.blog-compact-card {
+  will-change: transform;
+  transition: transform 220ms ease, box-shadow 240ms ease, border-color 220ms ease;
+}
+
+.projects-featured-card:hover,
+.projects-compact-card:hover,
+.blog-featured-card:hover,
+.blog-compact-card:hover {
+  transform: translateY(-3px);
 }
 
 .projects-compact-card,
@@ -338,6 +399,42 @@ select:focus-visible {
   }
 }
 
+@keyframes headerDropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroScaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes heroChildIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes cardReveal {
   from {
     opacity: 0;
@@ -347,6 +444,30 @@ select:focus-visible {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes avatarFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes badgeBreath {
+  0%,
+  100% {
+    filter: saturate(1);
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+
+  50% {
+    filter: saturate(1.08);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.24);
   }
 }
 
@@ -381,6 +502,10 @@ select:focus-visible {
   .hero-section {
     min-height: calc(100dvh - 5.5rem);
   }
+
+  .portfolio-nav {
+    animation: sectionFadeIn 340ms ease both;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -392,6 +517,20 @@ select:focus-visible {
 
   .section-skeleton-line {
     animation: none !important;
+  }
+
+  .portfolio-header,
+  .hero-surface,
+  .hero-content-col > *,
+  .hero-image-wrap,
+  .hero-availability-badge,
+  .projects-featured-card,
+  .projects-compact-card,
+  .blog-featured-card,
+  .blog-compact-card {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }
 
