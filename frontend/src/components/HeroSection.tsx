@@ -189,7 +189,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
                   )}
                 </div>
                 <div
-                  className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 px-3 py-2 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg"
+                  className="hero-availability-badge mt-3 sm:mt-0 w-fit mx-auto sm:mx-0 sm:absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center justify-center px-3 py-2 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg"
                   style={{
                     background: availabilityStyle.gradient,
                     color: availabilityStyle.textColor,
