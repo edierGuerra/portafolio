@@ -333,4 +333,4 @@ Este proyecto está bajo licencia MIT. Ver [LICENSE](LICENSE) para detalles.
 
 ---
 
-**Hecho con ❤️ por el equipo de desarrollo**
+**Hecho con ❤️ por el equipo de desarrollo(Yo + Copilot)**
